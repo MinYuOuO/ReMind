@@ -1,0 +1,7 @@
+{
+  "name": "friend-recorder",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
