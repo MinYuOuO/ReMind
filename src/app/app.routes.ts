@@ -1,17 +1,41 @@
 import { Routes } from '@angular/router';
+import { TabsPage } from './tabs/tabs.page';
 
 export const routes: Routes = [
   {
     path: '',
-    loadChildren: () => import('./tabs/tabs.routes').then((m) => m.routes),
+    component: TabsPage,
+    children: [
+      {
+        path: 'home',
+        loadComponent: () =>
+          import('../app/friend-list/friend-list.page').then(m => m.FriendListPage),
+      },
+      {
+        path: 'rsearch',
+        loadComponent: () =>
+          import('../app/search-list/search-list.page').then(m => m.RSearchPage),
+      },
+      {
+        path: 'roulette',
+        loadComponent: () =>
+          import('../app/roulette/roulette.page').then(m => m.RoulettePage),
+      },
+      {
+        path: 'settings',
+        loadComponent: () =>
+          import('../app/settings/settings.page').then(m => m.SettingsPage),
+      },
+      {
+        path: '',
+        redirectTo: '/home',
+        pathMatch: 'full',
+      },
+    ],
   },
   {
-    path: 'friend-list',
-    loadComponent: () => import('./pages/friend-list/friend-list.page').then( m => m.FriendListPage)
+    path: '',
+    redirectTo: '/home',
+    pathMatch: 'full',
   },
-  {
-    path: 'home',
-    loadComponent: () => import('./home/home.page').then( m => m.HomePage)
-  },
-
 ];

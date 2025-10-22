@@ -3,34 +3,36 @@ import { TabsPage } from './tabs.page';
 
 export const routes: Routes = [
   {
-    path: 'tabs',
+    path: '',
     component: TabsPage,
     children: [
       {
-        path: 'tab1',
+        path: 'home',
         loadComponent: () =>
-          import('../friend-list/tab1.page').then((m) => m.Tab1Page),
+          import('../friend-list/friend-list.page').then(
+            (m) => m.FriendListPage
+          ),
       },
       {
-        path: 'tab2',
+        path: 'rsearch',
         loadComponent: () =>
-          import('../search-list/tab2.page').then((m) => m.Tab2Page),
+          import('../search-list/search-list.page').then((m) => m.RSearchPage),
       },
       {
-        path: 'tab3',
+        path: 'roulette',
         loadComponent: () =>
-          import('../roulette/tab3.page').then((m) => m.Tab3Page),
+          import('../roulette/roulette.page').then((m) => m.RoulettePage),
       },
       {
-        path: '',
-        redirectTo: '/tabs/tab1',
-        pathMatch: 'full',
+        path: 'settings',
+        loadComponent: () =>
+          import('../settings/settings.page').then((m) => m.SettingsPage),
       },
     ],
   },
   {
     path: '',
-    redirectTo: '/tabs/tab1',
+    redirectTo: '/tabs/home',
     pathMatch: 'full',
   },
 ];

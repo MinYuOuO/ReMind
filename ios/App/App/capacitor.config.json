@@ -1,0 +1,14 @@
+{
+	"appId": "io.ionic.starter",
+	"appName": "friend-recorder",
+	"webDir": "www",
+	"packageClassList": [
+		"CapacitorSQLitePlugin",
+		"AppPlugin",
+		"HapticsPlugin",
+		"KeyboardPlugin",
+		"PreferencesPlugin",
+		"SplashScreenPlugin",
+		"StatusBarPlugin"
+	]
+}

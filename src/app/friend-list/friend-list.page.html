@@ -1,0 +1,41 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Friends</ion-title>
+    <ion-buttons slot="end">
+      <!-- Placeholder for future search/settings -->
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="ion-padding">
+
+  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- Empty state -->
+  <div *ngIf="!loading() && contacts().length === 0" class="empty">
+    <img src="assets/empty-friends.svg" alt="No friends" />
+    <h2>No friends yet</h2>
+    <p>Start by adding someone you care about.</p>
+    <ion-fab-button (click)="onAdd()">Add a friend</ion-fab-button>
+  </div>
+
+  <!-- List -->
+  <ion-list *ngIf="contacts().length > 0">
+    <ion-item *ngFor="let c of contacts()">
+      <ion-label>
+        <h2>{{ c.name }}</h2>
+        <p>{{ c.relationship }} · {{ c.contact_detail || 'no contact' }}</p>
+      </ion-label>
+    </ion-item>
+  </ion-list>
+
+  <!-- Add FAB -->
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button (click)="onAdd()">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+
+</ion-content>

@@ -1,0 +1,16 @@
+ion-tab-bar {
+  --background: linear-gradient(180deg, #f0f4fa 0%, #d9e2ef 100%);
+  --color: #3c5c5d;
+  --color-selected: #1a73e8;
+  border-top: 1px solid rgba(60, 92, 93, 0.1);
+  height: 68px;
+}
+
+ion-tab-button {
+  font-size: 12px;
+  --ripple-color: #1a73e8;
+}
+
+ion-icon {
+  font-size: 22px;
+}
