@@ -9,4 +9,9 @@ export const routes: Routes = [
     path: 'friend-list',
     loadComponent: () => import('./pages/friend-list/friend-list.page').then( m => m.FriendListPage)
   },
+  {
+    path: 'home',
+    loadComponent: () => import('./home/home.page').then( m => m.HomePage)
+  },
+
 ];
