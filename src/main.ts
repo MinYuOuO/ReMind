@@ -1,3 +1,6 @@
+import { Capacitor } from '@capacitor/core';
+import { CapacitorSQLite } from '@capacitor-community/sqlite';
+import { JeepSqlite } from 'jeep-sqlite/dist/components/jeep-sqlite';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { RouteReuseStrategy, provideRouter, withPreloading, PreloadAllModules } from '@angular/router';
 import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
@@ -8,6 +11,12 @@ import { homeOutline, searchOutline, shuffleOutline, settingsOutline, add as add
 
 import { routes } from './app/app.routes';
 import { AppComponent } from './app/app.component';
+
+if (Capacitor.getPlatform() === 'web') {
+  if (!customElements.get('jeep-sqlite')) {
+    customElements.define('jeep-sqlite', JeepSqlite);
+  }
+}
 
 bootstrapApplication(AppComponent, {
   providers: [

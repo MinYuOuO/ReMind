@@ -57,12 +57,7 @@ export class FriendListPage implements OnInit {
   async ngOnInit() {
     try {
       await this.platform.ready();
-      // Ensure DB is ready before queries
-      
-      // Initialize DB first
-    await this.dbInit.init();
-
-      await this.identity.ready(); // Add this method to UserIdentityService
+      await this.identity.ready();
       await this.initUser();
       await this.load();
     } catch (err) {
@@ -73,11 +68,7 @@ export class FriendListPage implements OnInit {
 
   private async initUser() {
     try {
-      // First ensure DB is initialized
-      await this.dbInit.init();
-      await this.db.open(); // Add this line to ensure DB connection is open
-
-      // Then get/create user
+      // Get/create user
       this.userId = await this.identity.ensureUserId();
 
       // Verify user exists in DB
@@ -130,11 +121,17 @@ export class FriendListPage implements OnInit {
     if (!this.newContact.name) return;
 
     try {
+      // First ensure user exists
+      await this.initUser();
+
+      // Then create the contact
       await this.contactsRepo.createMinimal(
         this.userId,
         this.newContact.name,
         this.newContact.relationship as Relationship
       );
+
+      // Reset form and update list
       this.showModal.set(false);
       this.newContact = {
         name: '',

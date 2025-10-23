@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { SqliteDbService } from './db.service';
 import { Platform } from '@ionic/angular';
+
 const SCHEMA_SQL = `
 
 -- USER
@@ -121,7 +122,8 @@ CREATE INDEX IF NOT EXISTS idx_log_status ON ai_processing_log(status);
 `;
 
 @Injectable({ providedIn: 'root' })
-export class DbInitService {
+export class DbInitService 
+{
   private initialized = false;
 
   constructor(
@@ -134,6 +136,7 @@ export class DbInitService {
       console.log('[DB] already initialized — skipping.');
       return;
     }
+    
 
     console.log('[DB] init starting...');
     const timerName = `[DB] init timer ${Date.now()}`;
@@ -148,9 +151,9 @@ export class DbInitService {
         console.log('[DB] Initializing web store...');
         try {
           await this.db.initWebStore();
-          console.log('[DB] Web store initialized');
+          console.log('[WEBSTORE] Web store initialized');
         } catch (e) {
-          console.error('[DB] Web store init failed:', e);
+          console.error('[WEBSTORE] Web store init failed:', e);
           throw e;
         }
       }

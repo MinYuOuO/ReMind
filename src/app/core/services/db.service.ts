@@ -15,26 +15,38 @@ export class SqliteDbService {
   private sqlite = new SQLiteConnection(CapacitorSQLite);
   private db: SQLiteDBConnection | undefined;
   private webStoreInitialized = false;
+  private initWebPromise: Promise<void> | null = null;
 
   constructor(private platform: Platform) { }
 
   async initWebStore(): Promise<void> {
+    // Return existing promise if initialization is in progress
+    if (this.initWebPromise) {
+      return this.initWebPromise;
+    }
+
     if (this.webStoreInitialized) {
-      console.log('[DB] Web store already initialized');
       return;
     }
 
-    // Check if we're on web/desktop (not hybrid/mobile)
-    if (!this.platform.is('hybrid') && !this.platform.is('mobile')) {
+    this.initWebPromise = (async () => {
       try {
+        // Wait for jeep-sqlite element
+        await customElements.whenDefined('jeep-sqlite');
+
+        // Initialize the web store
         await this.sqlite.initWebStore();
+
         this.webStoreInitialized = true;
-        console.log('[DB] WebStore initialized');
+        console.log('[WEBSTORE] WebStore successfully initialized');
       } catch (err) {
-        console.error('[DB] WebStore init failed:', err);
+        console.error('[WEBSTORE] WebStore init failed:', err);
+        this.initWebPromise = null;
         throw err;
       }
-    }
+    })();
+
+    return this.initWebPromise;
   }
 
   // Promise used to serialize concurrent open() calls

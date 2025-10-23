@@ -15,7 +15,7 @@
 
   <!-- Empty state -->
   <div *ngIf="!loading() && contacts().length === 0" class="empty">
-    <img src="assets/empty-friends.svg" alt="No friends" />
+    <img src="assets/add-friend.svg" alt="No friends" />
     <h2>No friends yet</h2>
     <p>Start by adding someone you care about.</p>
     <ion-fab-button (click)="onAdd()">Add a friend</ion-fab-button>
