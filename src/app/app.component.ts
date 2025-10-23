@@ -26,25 +26,20 @@ export class AppComponent {
   }
 
   private async initApp() {
-    try {
-      await this.platform.ready();
-      console.log('[App] Platform ready — initializing SQLite...');
-      
-      // Initialize web store first if needed
-      if (!this.platform.is('hybrid')) {
-        console.log('[App] Initializing web store...');
-        await this.db.initWebStore();
-      }
-
-      // Then initialize database
-      await this.dbInit.init();
-      console.log('[App] Database initialized.');
-      
-      await new Promise(r => setTimeout(r, 400));
-      await SplashScreen.hide();
-    } catch (err) {
-      console.error('[App] Initialization failed:', err);
-      try { await SplashScreen.hide(); } catch {}
-    }
+  try {
+    await this.platform.ready();
+    console.log('[App] Platform ready — initializing SQLite...');
+    
+    // Initialize database first (which handles web store init)
+    await this.dbInit.init();
+    console.log('[App] Database initialized.');
+    
+    await new Promise(r => setTimeout(r, 400));
+    await SplashScreen.hide();
+  } catch (err) {
+    console.error('[App] Initialization failed:', err);
+    try { await SplashScreen.hide(); } catch {}
   }
+}
+  
 }
