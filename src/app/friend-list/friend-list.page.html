@@ -38,4 +38,77 @@
     </ion-fab-button>
   </ion-fab>
 
+  <ion-modal [isOpen]="showModal()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>New Contact</ion-title>
+        <ion-buttons slot="start">
+          <ion-button (click)="showModal.set(false)">Cancel</ion-button>
+        </ion-buttons>
+        <ion-buttons slot="end">
+          <ion-button (click)="onSubmit()" [strong]="true">Save</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="ion-padding">
+      <ion-list>
+        <!-- Name -->
+        <ion-item>
+          <ion-input 
+            label="Name" 
+            labelPlacement="stacked"
+            placeholder="Enter name"
+            [(ngModel)]="newContact.name"
+            required>
+          </ion-input>
+        </ion-item>
+
+        <!-- Relationship -->
+        <ion-item>
+          <ion-select 
+            label="Relationship" 
+            labelPlacement="stacked"
+            [(ngModel)]="newContact.relationship">
+            <ion-select-option *ngFor="let rel of relationships" [value]="rel">
+              {{rel | titlecase}}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <!-- Contact Detail -->
+        <ion-item>
+          <ion-input 
+            label="Contact Detail" 
+            labelPlacement="stacked"
+            placeholder="Phone, email, etc."
+            [(ngModel)]="newContact.contact_detail">
+          </ion-input>
+        </ion-item>
+
+        <!-- Birthday -->
+        <ion-item>
+          <ion-datetime
+            label="Birthday"
+            labelPlacement="stacked"
+            presentation="date"
+            [(ngModel)]="newContact.birthday">
+          </ion-datetime>
+        </ion-item>
+
+        <!-- Notes -->
+        <ion-item>
+          <ion-input 
+            label="Notes" 
+            labelPlacement="stacked"
+            placeholder="Add notes"
+            [(ngModel)]="newContact.notes">
+          </ion-input>
+        </ion-item>
+      </ion-list>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
 </ion-content>

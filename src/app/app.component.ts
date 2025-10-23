@@ -14,26 +14,23 @@ export class AppComponent {
   private static alreadyInitialized = false;
 
   constructor(private platform: Platform, private dbInit: DbInitService) {
-    // Prevent duplicate initialization under hot reload
     if (!AppComponent.alreadyInitialized) {
       AppComponent.alreadyInitialized = true;
       this.initApp();
-    } else {
-      console.log('[App] Initialization skipped (HMR duplicate)');
     }
   }
 
   private async initApp() {
     try {
       await this.platform.ready();
-      console.log('Platform ready — initializing SQLite...');
+      console.log('[App] Platform ready — initializing SQLite...');
+      // Wait for DB initialization to complete
       await this.dbInit.init();
-      console.log('Database initialized successfully.');
+      console.log('[App] Database initialized.');
       await new Promise(r => setTimeout(r, 400));
       await SplashScreen.hide();
-      console.log('Splash screen hidden, app ready.');
     } catch (err) {
-      console.error('Initialization failed:', err);
+      console.error('[App] Initialization failed:', err);
       try { await SplashScreen.hide(); } catch {}
     }
   }

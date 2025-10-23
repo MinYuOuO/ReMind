@@ -12,26 +12,36 @@ export class UserIdentityService {
 
   /** Get or create a local user_id and ensure a row exists in user table. */
   async ensureUserId(): Promise<string> {
-    // Ensure DB schema/initialization completed before writing to the DB
-    try {
-      await this.dbInit.init();
-    } catch (e) {
-      console.warn('[UserIdentity] warning: db init failed or not ready', e);
-      // continue: the subsequent db call will either succeed after recovery retries or throw
-    }
+    await this.ready(); // Ensure DB is initialized
 
     const existing = await Preferences.get({ key: KEY_USER_ID });
-    if (existing.value) return existing.value;
+    if (existing.value) {
+      // Verify user exists in DB
+      const users = await this.db.query(
+        'SELECT user_id FROM user WHERE user_id = ?',
+        [existing.value]
+      );
+      
+      if (users.length) {
+        return existing.value;
+      }
+      // User not in DB, fall through to create new
+    }
 
     const newId = uid();
-    // create empty profile (username/contact_detail/birthday/notes empty)
+    
+    // Create user record first
     await this.db.run(
-      `INSERT OR IGNORE INTO user (user_id, username, contact_detail, birthday, notes)
-       VALUES (?, ?, ?, ?, ?)`,
-      [newId, '', '', null, '']
+      `INSERT INTO user (user_id, username) VALUES (?, ?)`,
+      [newId, 'Local User']
     );
 
+    // Only save ID after successful DB insert
     await Preferences.set({ key: KEY_USER_ID, value: newId });
     return newId;
+  }
+
+  async ready() {
+    await this.dbInit.init();
   }
 }

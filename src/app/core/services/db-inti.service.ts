@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SqliteDbService } from './db.service';
-
+import { Platform } from '@ionic/angular';
 const SCHEMA_SQL = `
 
 -- USER
@@ -124,7 +124,10 @@ CREATE INDEX IF NOT EXISTS idx_log_status ON ai_processing_log(status);
 export class DbInitService {
   private initialized = false;
 
-  constructor(private db: SqliteDbService) {}
+  constructor(
+    private db: SqliteDbService,
+    private platform: Platform
+  ) {}
 
   async init(): Promise<void> {
     if (this.initialized) {
@@ -137,6 +140,26 @@ export class DbInitService {
     console.time?.(timerName);
 
     try {
+      // Wait for platform ready
+      await this.platform.ready();
+
+      // Initialize web store first if needed (non-native platforms)
+      if (!this.platform.is('hybrid')) {
+        console.log('[DB] Initializing web store...');
+        try {
+          await this.db.initWebStore();
+          console.log('[DB] Web store initialized');
+        } catch (e) {
+          console.error('[DB] Web store init failed:', e);
+          throw e;
+        }
+      }
+
+      // Now open the database
+      console.log('[DB] Opening database connection...');
+      await this.db.open();
+      console.log('[DB] Database connection opened');
+
       // Try to enable FKs early (non-fatal if it throws)
       try { await this.db.execute('PRAGMA foreign_keys = ON;'); }
       catch (e) { console.warn('[DB] warning: could not set FK PRAGMA early', e); }

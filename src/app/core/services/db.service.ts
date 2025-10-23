@@ -5,6 +5,7 @@ import {
   SQLiteConnection,
   SQLiteDBConnection
 } from '@capacitor-community/sqlite';
+import { Platform } from '@ionic/angular';
 
 const DB_NAME = 'remind.db';
 const DB_VERSION = 2;
@@ -14,6 +15,28 @@ export class SqliteDbService {
   private sqlite = new SQLiteConnection(CapacitorSQLite);
   private db: SQLiteDBConnection | undefined;
   private webStoreInitialized = false;
+
+  constructor(private platform: Platform) { }
+
+  async initWebStore(): Promise<void> {
+    if (this.webStoreInitialized) {
+      console.log('[DB] Web store already initialized');
+      return;
+    }
+
+    // Check if we're on web/desktop (not hybrid/mobile)
+    if (!this.platform.is('hybrid') && !this.platform.is('mobile')) {
+      try {
+        await this.sqlite.initWebStore();
+        this.webStoreInitialized = true;
+        console.log('[DB] WebStore initialized');
+      } catch (err) {
+        console.error('[DB] WebStore init failed:', err);
+        throw err;
+      }
+    }
+  }
+
   // Promise used to serialize concurrent open() calls
   private openingPromise: Promise<SQLiteDBConnection> | null = null;
 
@@ -165,7 +188,7 @@ export class SqliteDbService {
   private async reopenForRecovery(): Promise<void> {
     try {
       if (this.db) {
-        try { await this.sqlite.closeConnection(DB_NAME, false); } catch(e) { console.warn('[DB] closeConnection during recovery failed', e); }
+        try { await this.sqlite.closeConnection(DB_NAME, false); } catch (e) { console.warn('[DB] closeConnection during recovery failed', e); }
       }
     } finally {
       this.db = undefined;
@@ -173,7 +196,7 @@ export class SqliteDbService {
       // give the web adapter a short pause to settle
       await new Promise(r => setTimeout(r, 50));
       // ensure web store ready again
-      try { await this.initWebIfNeeded(); } catch(e) { /* ignore, will propagate on next open */ }
+      try { await this.initWebIfNeeded(); } catch (e) { /* ignore, will propagate on next open */ }
     }
   }
 
