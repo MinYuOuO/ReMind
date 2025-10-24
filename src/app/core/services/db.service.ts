@@ -125,6 +125,7 @@ export class SqliteDbService {
       if ((res.changes?.changes ?? 0) < 0) {
         throw new Error('SQL execution failed');
       }
+      await this.persistWeb();
       return;
     } catch (err: any) {
       if (this.isTransientError(err)) {
@@ -145,6 +146,7 @@ export class SqliteDbService {
             for (const s of this.splitSql(sql)) {
               try { await (await this.open()).execute(s); } catch (sErr) { console.warn('[DB] statement error (continuing):', sErr); }
             }
+            await this.persistWeb();
             return;
           }
           throw err2;
@@ -183,7 +185,9 @@ export class SqliteDbService {
         await this.reopenForRecovery();
         const db = await this.open();
         await db.run(sql, params);
-        return;
+    await this.persistWeb();
+          await this.persistWeb();
+          return;
       }
       throw err;
     }
@@ -214,9 +218,52 @@ export class SqliteDbService {
 
   /** Persist DB to IndexedDB on Web (required by plugin) */
   private async persistWeb(): Promise<void> {
-    // No-op for native-only mode. If web support is required, implement a
-    // web persistence strategy (jeep-sqlite or sql.js) and call save there.
-    return;
+    if (Capacitor.isNativePlatform()) return;
+
+    // Ensure connection is open and registered before attempting to save
+    try {
+      await this.open();
+    } catch (e) {
+      console.warn('[DB] persistWeb: open() failed before save, continuing to retry', e);
+    }
+
+    const maxAttempts = 4;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        // Prefer wrapper which tracks connections
+        await this.sqlite.saveToStore(DB_NAME);
+        console.log('[DB] persistWeb: saved to store', DB_NAME);
+        return;
+      } catch (err: any) {
+        const msg = (err && (err.message ?? err + '')).toLowerCase?.() ?? '';
+        // If the web layer reports no connection or webstore not open, retry after a short backoff
+        if (
+          msg.includes('no available connection') ||
+          msg.includes('webstore is not open') ||
+          msg.includes('web store is not open') ||
+          msg.includes('jeep-sqlite element is not present')
+        ) {
+          const wait = 50 * attempt;
+          console.warn(`[DB] persistWeb attempt ${attempt} failed (transient), retrying in ${wait}ms`, err);
+          if (attempt < maxAttempts) await new Promise((r) => setTimeout(r, wait));
+          continue;
+        }
+
+        // On other errors, try the lower-level Capacitor call once and then fail
+        try {
+          console.warn('[DB] persistWeb: wrapper saveToStore failed, trying CapacitorSQLite.saveToStore', err);
+          await CapacitorSQLite.saveToStore({ database: DB_NAME });
+          console.log('[DB] persistWeb: saved to store (fallback) ', DB_NAME);
+          return;
+        } catch (fallbackErr) {
+          console.error('[DB] persistWeb fallback failed', fallbackErr);
+          throw fallbackErr;
+        }
+      }
+    }
+
+    // If we exhausted attempts, throw an error so callers can decide what to do
+    throw new Error('[DB] persistWeb: failed after retries');
   }
 
   /**
