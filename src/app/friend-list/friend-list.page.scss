@@ -302,6 +302,18 @@ ion-item {
   font-weight: 700;
 }
 
+/* label icons (left) and end icons inside modal field cards — match deep-blue text */
+.edit-content .field-card ion-icon.field-icon,
+.edit-content .field-card ion-icon[slot="start"] {
+  color: #1e3a8a !important;
+}
+
+/* ensure any end-slot icons (e.g. star, calendar small icons) also use deep-blue */
+.edit-content .field-card ion-icon[slot="end"],
+.edit-content .field-card .rating-icon {
+  color: #1e3a8a !important;
+}
+
 /* Ensure datetime/select overlays appear above the edit modal.
    Some platforms render Ionic overlay elements with z-index lower than parent modals;
    raising z-index here fixes the calendar not opening / appearing behind the modal. */
@@ -357,6 +369,89 @@ ion-datetime .action-sheet {
   justify-content: center;
   align-items: center;
   box-shadow: 0 10px 26px rgba(45,65,120,0.18);
+}
+
+/* Inline calendar widget (matches modal styling) */
+.inline-calendar {
+  margin: 8px 0 14px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 10px 20px rgba(38,64,120,0.06);
+}
+
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  color: #1e3a8a;
+  font-weight: 700;
+}
+
+.cal-nav {
+  background: transparent;
+  border: none;
+  color: #1e3a8a;
+  font-size: 20px;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.cal-title { font-size: 15px; }
+
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7,1fr);
+  gap: 6px;
+  padding: 6px 0 0;
+  color: rgba(30,58,138,0.8);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7,1fr);
+  gap: 6px;
+  padding: 8px 6px 6px;
+}
+
+.cal-cell {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: #13407a;
+  font-weight: 700;
+  cursor: pointer;
+  background: rgba(30,58,138,0.03);
+}
+
+.cal-cell.empty {
+  background: transparent;
+  cursor: default;
+  color: rgba(30,58,138,0.25);
+}
+
+.cal-cell.selected {
+  background: linear-gradient(180deg,#4f78e6,#3560c8);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(79,120,230,0.18);
+}
+
+.cal-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 6px;
+}
+
+/* ensure date label looks interactive */
+.date-field .date-label {
+  color: #1e3a8a;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 /* tighten layout on small screens */

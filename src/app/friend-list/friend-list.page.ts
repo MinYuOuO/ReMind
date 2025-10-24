@@ -79,6 +79,14 @@ export class FriendListPage implements OnInit {
   editingContactId: string | null = null;
   relationships: Relationship[] = ['friend', 'best_friend', 'colleague', 'family'];
 
+  // Inline calendar state (robust fallback that always works inside modal)
+  calendarOpen = false;
+  calYear = new Date().getFullYear();
+  calMonth = new Date().getMonth(); // 0-based
+  calendarCells: (number | null)[] = []; // grid of 42 cells (some null)
+  monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  weekdayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
   async ngOnInit() {
     try {
       await this.platform.ready();
@@ -275,5 +283,68 @@ export class FriendListPage implements OnInit {
     } catch (err) {
       console.error('Failed to create/update contact:', err);
     }
+  }
+
+  // initialize calendar cells for current month
+  private buildCalendar(year = this.calYear, month = this.calMonth) {
+    const firstOfMonth = new Date(year, month, 1);
+    const startWeekday = firstOfMonth.getDay(); // 0..6
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const cells: (number | null)[] = [];
+    // fill leading nulls
+    for (let i = 0; i < startWeekday; i++) cells.push(null);
+    // fill days
+    for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+    // pad to full weeks (42 cells max)
+    while (cells.length < 42) cells.push(null);
+    this.calendarCells = cells;
+    this.calYear = year;
+    this.calMonth = month;
+  }
+
+  toggleCalendar(open?: boolean) {
+    const next = typeof open === 'boolean' ? open : !this.calendarOpen;
+    this.calendarOpen = next;
+    if (next) {
+      // if model has a birthday, jump to that month
+      if (this.newContact.birthday) {
+        const d = new Date(this.newContact.birthday);
+        if (!isNaN(d.getTime())) {
+          this.buildCalendar(d.getFullYear(), d.getMonth());
+          return;
+        }
+      }
+      // default to current month
+      const now = new Date();
+      this.buildCalendar(now.getFullYear(), now.getMonth());
+    }
+  }
+
+  prevMonth() {
+    let m = this.calMonth - 1;
+    let y = this.calYear;
+    if (m < 0) { m = 11; y -= 1; }
+    this.buildCalendar(y, m);
+  }
+  nextMonth() {
+    let m = this.calMonth + 1;
+    let y = this.calYear;
+    if (m > 11) { m = 0; y += 1; }
+    this.buildCalendar(y, m);
+  }
+
+  selectDay(day: number) {
+    // compose YYYY-MM-DD
+    const y = this.calYear;
+    const m = String(this.calMonth + 1).padStart(2,'0');
+    const d = String(day).padStart(2,'0');
+    this.newContact.birthday = `${y}-${m}-${d}`;
+    this.calendarOpen = false;
+  }
+
+  isSelectedDay(day: number) {
+    if (!this.newContact.birthday) return false;
+    const d = new Date(this.newContact.birthday);
+    return d.getFullYear() === this.calYear && (d.getMonth() === this.calMonth) && (d.getDate() === day);
   }
 }

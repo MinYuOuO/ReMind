@@ -110,18 +110,39 @@
             <ion-textarea placeholder="Notes" auto-grow="true" [(ngModel)]="newContact.notes"></ion-textarea>
           </ion-item>
 
-          <ion-item class="field-card" lines="none">
+          <!-- Birthday: label + inline calendar (robust, works inside modal) -->
+          <ion-item class="field-card date-field" lines="none">
             <ion-icon slot="start" name="calendar-outline" class="field-icon"></ion-icon>
-            <!-- open Ionic's datetime modal (works reliably inside another modal) -->
-            <ion-datetime
-              presentation="date"
-              interface="modal"
-              displayFormat="MMM d, yyyy"
-              placeholder="Birthday"
-              [(ngModel)]="newContact.birthday"
-              showDefaultButtons="true">
-            </ion-datetime>
+            <ion-label class="date-label" (click)="toggleCalendar()">
+              {{ newContact.birthday ? (newContact.birthday | date:'MMM d, y') : 'Birthday' }}
+            </ion-label>
           </ion-item>
+
+          <!-- Inline calendar widget -->
+          <div *ngIf="calendarOpen" class="inline-calendar">
+            <div class="cal-header">
+              <button class="cal-nav" (click)="prevMonth()" aria-label="Previous month">‹</button>
+              <div class="cal-title">{{ monthNames[calMonth] }} {{ calYear }}</div>
+              <button class="cal-nav" (click)="nextMonth()" aria-label="Next month">›</button>
+            </div>
+
+            <div class="cal-weekdays">
+              <div *ngFor="let d of weekdayNames" class="wd">{{ d }}</div>
+            </div>
+
+            <div class="cal-grid">
+              <div *ngFor="let cell of calendarCells" class="cal-cell"
+                   [class.empty]="!cell"
+                   [class.selected]="cell && isSelectedDay(cell)"
+                   (click)="cell && selectDay(cell)">
+                <span *ngIf="cell">{{ cell }}</span>
+              </div>
+            </div>
+
+            <div class="cal-actions">
+              <ion-button fill="clear" size="small" (click)="toggleCalendar(false)">Close</ion-button>
+            </div>
+          </div>
         </ion-list>
       </ion-content>
 
