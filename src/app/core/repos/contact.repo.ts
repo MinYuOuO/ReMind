@@ -124,4 +124,16 @@ export class ContactRepo {
     // Return the newly created contact record
     return rec;
   }
+
+  /**
+   * Delete a contact by id
+   * @param contactId contact_id to delete
+   */
+  async delete(contactId: string): Promise<void> {
+    if (!contactId) return;
+    await this.db.run(
+      `DELETE FROM contact WHERE contact_id = ?`,
+      [contactId]
+    );
+  }
 }

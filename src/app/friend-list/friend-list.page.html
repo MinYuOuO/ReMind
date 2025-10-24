@@ -71,6 +71,12 @@
             </ion-button>
           </ion-buttons>
           <ion-title class="edit-title">Friend</ion-title>
+          <ion-buttons slot="end">
+            <!-- show delete only when editing an existing contact -->
+            <ion-button color="danger" *ngIf="editingContactId" (click)="confirmDelete($event)" aria-label="Delete">
+              <ion-icon slot="icon-only" name="trash"></ion-icon>
+            </ion-button>
+          </ion-buttons>
         </ion-toolbar>
       </ion-header>
 

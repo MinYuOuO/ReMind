@@ -19,7 +19,8 @@ import {
   briefcaseOutline,
   callOutline,
   calendarOutline,
-  starOutline
+  starOutline,
+  trash as trashIcon
 } from 'ionicons/icons';
 import { UserIdentityService } from '../core/services/user-identity.service';
 import { ContactRepo, Contact, Relationship } from '../core/repos/contact.repo';
@@ -63,7 +64,8 @@ export class FriendListPage implements OnInit {
       'briefcase-outline': briefcaseOutline,
       'call-outline': callOutline,
       'calendar-outline': calendarOutline,
-      'star-outline': starOutline
+      'star-outline': starOutline,
+      'trash': trashIcon
     });
   }
 
@@ -258,11 +260,14 @@ export class FriendListPage implements OnInit {
           ]
         );
       } else {
-        // Create the contact (existing behavior)
+        // Create the contact (include contact detail, birthday and notes)
         await this.contactsRepo.createMinimal(
           this.userId,
           this.newContact.name,
-          this.newContact.relationship as Relationship
+          this.newContact.relationship as Relationship,
+          this.newContact.contact_detail ?? '',
+          this.newContact.birthday ?? '',
+          this.newContact.notes ?? ''
         );
       }
 
@@ -346,5 +351,40 @@ export class FriendListPage implements OnInit {
     if (!this.newContact.birthday) return false;
     const d = new Date(this.newContact.birthday);
     return d.getFullYear() === this.calYear && (d.getMonth() === this.calMonth) && (d.getDate() === day);
+  }
+
+  // prompt user then delete contact
+  confirmDelete(ev?: Event) {
+    ev?.stopPropagation?.();
+    if (!this.editingContactId) return;
+    const ok = confirm('Delete this contact? This action cannot be undone.');
+    if (ok) {
+      this.onDelete();
+    }
+  }
+
+  async onDelete() {
+    if (!this.editingContactId) return;
+    try {
+      // remove contact via repo
+      await this.contactsRepo.delete(this.editingContactId);
+
+      // persist and close wrapper so web store gets latest bytes (best-effort)
+      try { await this.db.saveToStoreAndClose(); } catch (e) { console.warn('[FriendList] save failed after delete', e); }
+
+      // reset modal and reload list
+      this.showModal.set(false);
+      this.editingContactId = null;
+      this.newContact = {
+        name: '',
+        relationship: 'friend',
+        contact_detail: '',
+        birthday: null,
+        notes: ''
+      };
+      await this.load();
+    } catch (err) {
+      console.error('Failed to delete contact:', err);
+    }
   }
 }
