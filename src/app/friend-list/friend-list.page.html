@@ -18,7 +18,6 @@
     <img src="assets/add-friend.svg" alt="No friends" />
     <h2>No friends yet</h2>
     <p>Start by adding someone you care about.</p>
-    <ion-fab-button (click)="onAdd()">Add a friend</ion-fab-button>
   </div>
 
   <!-- List -->
@@ -41,9 +40,6 @@
         <div class="extra">
           <span class="birthday" *ngIf="c.birthday">
             <strong>Birthday:</strong> {{ formatBirthday(c.birthday) }}
-          </span>
-          <span class="notes" *ngIf="c.notes">
-            <strong>Notes:</strong> {{ c.notes }}
           </span>
         </div>
       </ion-label>
@@ -108,12 +104,6 @@
           <ion-item class="field-card" lines="none">
             <ion-icon slot="start" name="call-outline" class="field-icon"></ion-icon>
             <ion-input placeholder="Contact Details" [(ngModel)]="newContact.contact_detail"></ion-input>
-          </ion-item>
-
-          <!-- Notes field -->
-          <ion-item class="field-card" lines="none">
-            <ion-icon slot="start" name="create-outline" class="field-icon"></ion-icon>
-            <ion-textarea placeholder="Notes" auto-grow="true" [(ngModel)]="newContact.notes"></ion-textarea>
           </ion-item>
 
           <!-- Birthday: label + inline calendar (robust, works inside modal) -->

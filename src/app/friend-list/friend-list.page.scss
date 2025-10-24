@@ -384,7 +384,7 @@ ion-datetime .action-sheet {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 8px;
+  padding: 6px 8px 2px;
   color: #1e3a8a;
   font-weight: 700;
 }
@@ -404,10 +404,13 @@ ion-datetime .action-sheet {
   display: grid;
   grid-template-columns: repeat(7,1fr);
   gap: 6px;
-  padding: 6px 0 0;
+  margin: 0;
+  padding: 0;
   color: rgba(30,58,138,0.8);
   font-weight: 700;
   font-size: 12px;
+  text-align: center;
+  line-height: 1.4;
 }
 
 .cal-grid {
@@ -418,7 +421,7 @@ ion-datetime .action-sheet {
 }
 
 .cal-cell {
-  min-height: 40px;
+  aspect-ratio: 1 / 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -427,12 +430,17 @@ ion-datetime .action-sheet {
   font-weight: 700;
   cursor: pointer;
   background: rgba(30,58,138,0.03);
+  line-height: 1;
 }
 
 .cal-cell.empty {
+  max-width: 0px;
+  max-height: 0px;
+  padding: 0;
   background: transparent;
-  cursor: default;
+  cursor: default;  
   color: rgba(30,58,138,0.25);
+  margin: 0;
 }
 
 .cal-cell.selected {
