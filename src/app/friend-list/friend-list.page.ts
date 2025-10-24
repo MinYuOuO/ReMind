@@ -1,27 +1,19 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   Platform,
   IonHeader, IonToolbar, IonTitle, IonContent,
-  IonList, IonItem, IonLabel, IonRefresher, IonRefresherContent,
-  IonFab, IonFabButton, IonIcon, IonButtons, IonInput, IonButton,
-  IonSelect, IonSelectOption, IonModal, IonDatetime, IonAvatar
+  IonList, IonItem, IonLabel,
+  IonFab, IonFabButton, IonIcon, IonButtons,
+  IonInput, IonButton,
+  IonSelect, IonSelectOption, IonModal,
+  IonSearchbar
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import {
-  add,
-  createOutline,
-  arrowBack,
-  camera,
-  save,
-  personOutline,
-  briefcaseOutline,
-  callOutline,
-  calendarOutline,
-  starOutline,
-  trash as trashIcon
-} from 'ionicons/icons';
+
+import { notificationsOutline, shieldCheckmarkOutline, personOutline, add, arrowBack, trash, camera, briefcaseOutline, starOutline, callOutline, calendarOutline, save, createOutline } from 'ionicons/icons';
+
 import { UserIdentityService } from '../core/services/user-identity.service';
 import { ContactRepo, Contact, Relationship } from '../core/repos/contact.repo';
 import { DbInitService } from '../core/services/db-inti.service';
@@ -36,10 +28,12 @@ import { SqliteDbService } from '../core/services/db.service';
     CommonModule,
     FormsModule,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonContent,
-    IonList, IonItem, IonLabel, IonRefresher, IonRefresherContent,
+    IonList, IonItem, IonLabel,
     IonFab, IonFabButton, IonIcon, IonInput, IonButton,
-    IonSelect, IonSelectOption, IonModal, IonDatetime, IonAvatar
+    IonSelect, IonSelectOption, IonModal,
+    IonSearchbar
   ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class FriendListPage implements OnInit {
   userId = '';
@@ -54,19 +48,7 @@ export class FriendListPage implements OnInit {
     private db: SqliteDbService
   ) {
     // register icons used by the list + modal UI
-    addIcons({
-      add,
-      'create-outline': createOutline,
-      'arrow-back': arrowBack,
-      camera,
-      save,
-      'person-outline': personOutline,
-      'briefcase-outline': briefcaseOutline,
-      'call-outline': callOutline,
-      'calendar-outline': calendarOutline,
-      'star-outline': starOutline,
-      'trash': trashIcon
-    });
+    addIcons({ notificationsOutline, shieldCheckmarkOutline, personOutline, add, arrowBack, trash, camera, briefcaseOutline, starOutline, callOutline, calendarOutline, save, createOutline });
   }
 
   showModal = signal(false);

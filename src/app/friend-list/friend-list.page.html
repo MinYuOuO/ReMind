@@ -1,17 +1,24 @@
 <ion-header>
-  <ion-toolbar>
-    <ion-title>Friends</ion-title>
+  <ion-toolbar class="page-toolbar">
+    <ion-title>Home</ion-title>
+
     <ion-buttons slot="end">
-      <!-- Placeholder for future search/settings -->
+      <ion-button fill="clear">
+        <ion-icon name="notifications-outline"></ion-icon>
+      </ion-button>
+      <ion-button fill="clear">
+        <ion-icon name="shield-checkmark-outline"></ion-icon>
+      </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true" class="ion-padding">
+<ion-content [fullscreen]="true" class="page">
 
-  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
-    <ion-refresher-content></ion-refresher-content>
-  </ion-refresher>
+  <!-- Search -->
+  <div class="search-container">
+    <ion-searchbar placeholder="Search" class="search"></ion-searchbar>
+  </div>
 
   <!-- Empty state -->
   <div *ngIf="!loading() && contacts().length === 0" class="empty">
@@ -20,135 +27,117 @@
     <p>Start by adding someone you care about.</p>
   </div>
 
-  <!-- List -->
+  <!-- Friend list -->
   <ion-list *ngIf="contacts().length > 0" class="contacts-list">
-    <ion-item *ngFor="let c of contacts(); let i = index; trackBy: trackById"
-              class="contact-card" lines="none" button
-              (click)="openEdit(c)">
-      <ion-avatar slot="start" [style.background]="avatarColor(c.name)" class="avatar">
-        <span class="initials">{{ initials(c.name) }}</span>
-      </ion-avatar>
-
+    <ion-item *ngFor="let c of contacts(); trackBy: trackById"
+              class="contact-card" lines="none" button (click)="openEdit(c)">
+      <div slot="start" class="avatar">
+        <ion-icon name="person-outline"></ion-icon>
+      </div>
       <ion-label class="main-label">
         <h2 class="name">{{ c.name }}</h2>
-        <p class="meta">
-          <span class="relationship">{{ c.relationship | titlecase }}</span>
-          <span class="dot">•</span>
-          <span class="contact-detail">{{ c.contact_detail || 'No contact info' }}</span>
-        </p>
-
-        <div class="extra">
-          <span class="birthday" *ngIf="c.birthday">
-            <strong>Birthday:</strong> {{ formatBirthday(c.birthday) }}
-          </span>
-        </div>
+        <p class="meta">{{ c.relationship || 'Friend' }}</p>
       </ion-label>
-
-      <!-- removed separate edit button for mobile-first behavior;
-           tapping the whole row opens the edit modal -->
     </ion-item>
   </ion-list>
 
-  <!-- Add FAB -->
+  <!-- Add button -->
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
     <ion-fab-button class="fab-add" (click)="onAdd()">
       <ion-icon name="add"></ion-icon>
     </ion-fab-button>
   </ion-fab>
 
-  <ion-modal [isOpen]="showModal()">
-  <ng-template>
-    <div class="edit-screen">
-      <ion-header>
-        <ion-toolbar class="edit-toolbar">
-          <ion-buttons slot="start">
-            <ion-button (click)="onCancel()">
-              <ion-icon name="arrow-back"></ion-icon>
-            </ion-button>
-          </ion-buttons>
-          <ion-title class="edit-title">Friend</ion-title>
-          <ion-buttons slot="end">
-            <!-- show delete only when editing an existing contact -->
-            <ion-button color="danger" *ngIf="editingContactId" (click)="confirmDelete($event)" aria-label="Delete">
-              <ion-icon slot="icon-only" name="trash"></ion-icon>
-            </ion-button>
-          </ion-buttons>
-        </ion-toolbar>
-      </ion-header>
+  <!-- Add/Edit Modal -->
+  <ion-modal [isOpen]="showModal()" cssClass="friend-modal">
+    <ng-template>
+      <div class="edit-screen">
 
-      <ion-content class="edit-content">
-        <div class="profile-area">
-          <div class="profile-camera">
-            <ion-icon name="camera"></ion-icon>
+        <ion-header>
+          <ion-toolbar class="edit-toolbar">
+            <ion-buttons slot="start">
+              <ion-button (click)="onCancel()">
+                <ion-icon name="arrow-back"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+            <ion-title class="edit-title">Friend</ion-title>
+          </ion-toolbar>
+        </ion-header>
+
+        <ion-content class="edit-content">
+          <div class="profile-area">
+            <div class="profile-camera">
+              <ion-icon name="camera"></ion-icon>
+            </div>
+            <div class="offline-label">Recorded Offline</div>
           </div>
-          <div class="offline-label">Recorded Offline</div>
-        </div>
 
-        <ion-list class="fields-list">
-          <ion-item class="field-card" lines="none">
-            <ion-icon slot="start" name="person-outline" class="field-icon"></ion-icon>
-            <ion-input placeholder="Name" [(ngModel)]="newContact.name"></ion-input>
-          </ion-item>
+          <ion-list class="fields-list">
+            <ion-item class="field-card" lines="none">
+              <ion-icon slot="start" name="person-outline" class="field-icon"></ion-icon>
+              <ion-input placeholder="Name" [(ngModel)]="newContact.name"></ion-input>
+            </ion-item>
 
-          <ion-item class="field-card" lines="none">
-            <ion-icon slot="start" name="briefcase-outline" class="field-icon"></ion-icon>
-            <!-- use action-sheet interface so it reliably opens as a dropdown on mobile -->
-            <ion-select interface="action-sheet" placeholder="Relationship" [(ngModel)]="newContact.relationship">
-              <ion-select-option *ngFor="let rel of relationships" [value]="rel">
-                {{ rel | titlecase }}
-              </ion-select-option>
-            </ion-select>
-            <ion-icon slot="end" name="star-outline" class="rating-icon"></ion-icon>
-          </ion-item>
+            <ion-item class="field-card" lines="none">
+              <ion-icon slot="start" name="briefcase-outline" class="field-icon"></ion-icon>
+              <ion-select interface="action-sheet" placeholder="Relationship"
+                          [(ngModel)]="newContact.relationship">
+                <ion-select-option *ngFor="let rel of relationships" [value]="rel">
+                  {{ rel | titlecase }}
+                </ion-select-option>
+              </ion-select>
+              <ion-icon slot="end" name="star-outline" class="rating-icon"></ion-icon>
+            </ion-item>
 
-          <ion-item class="field-card" lines="none">
-            <ion-icon slot="start" name="call-outline" class="field-icon"></ion-icon>
-            <ion-input placeholder="Contact Details" [(ngModel)]="newContact.contact_detail"></ion-input>
-          </ion-item>
+            <ion-item class="field-card" lines="none">
+              <ion-icon slot="start" name="call-outline" class="field-icon"></ion-icon>
+              <ion-input placeholder="Contact Details"
+                         [(ngModel)]="newContact.contact_detail"></ion-input>
+            </ion-item>
 
-          <!-- Birthday: label + inline calendar (robust, works inside modal) -->
-          <ion-item class="field-card date-field" lines="none">
-            <ion-icon slot="start" name="calendar-outline" class="field-icon"></ion-icon>
-            <ion-label class="date-label" (click)="toggleCalendar()">
-              {{ newContact.birthday ? (newContact.birthday | date:'MMM d, y') : 'Birthday' }}
-            </ion-label>
-          </ion-item>
+            <ion-item class="field-card date-field" lines="none" (click)="toggleCalendar()">
+              <ion-icon slot="start" name="calendar-outline" class="field-icon"></ion-icon>
+              <ion-label class="date-label">
+                {{ newContact.birthday ? (newContact.birthday | date:'MMM d, y') : 'Birthday' }}
+              </ion-label>
+            </ion-item>
 
-          <!-- Inline calendar widget -->
-          <div *ngIf="calendarOpen" class="inline-calendar">
-            <div class="cal-header">
-              <button class="cal-nav" (click)="prevMonth()" aria-label="Previous month">‹</button>
-              <div class="cal-title">{{ monthNames[calMonth] }} {{ calYear }}</div>
-              <button class="cal-nav" (click)="nextMonth()" aria-label="Next month">›</button>
-            </div>
+            <!-- Inline calendar -->
+            <div *ngIf="calendarOpen" class="inline-calendar">
+              <div class="cal-header">
+                <button class="cal-nav" (click)="prevMonth()">‹</button>
+                <div class="cal-title">{{ monthNames[calMonth] }} {{ calYear }}</div>
+                <button class="cal-nav" (click)="nextMonth()">›</button>
+              </div>
 
-            <div class="cal-weekdays">
-              <div *ngFor="let d of weekdayNames" class="wd">{{ d }}</div>
-            </div>
+              <div class="cal-weekdays">
+                <div *ngFor="let d of weekdayNames">{{ d }}</div>
+              </div>
 
-            <div class="cal-grid">
-              <div *ngFor="let cell of calendarCells" class="cal-cell"
-                   [class.empty]="!cell"
-                   [class.selected]="cell && isSelectedDay(cell)"
-                   (click)="cell && selectDay(cell)">
-                <span *ngIf="cell">{{ cell }}</span>
+              <div class="cal-grid">
+                <div *ngFor="let cell of calendarCells"
+                     class="cal-cell"
+                     [class.empty]="!cell"
+                     [class.selected]="cell && isSelectedDay(cell)"
+                     (click)="cell && selectDay(cell)">
+                  <span *ngIf="cell">{{ cell }}</span>
+                </div>
+              </div>
+
+              <div class="cal-actions">
+                <ion-button fill="clear" size="small" (click)="toggleCalendar(false)">Close</ion-button>
               </div>
             </div>
+          </ion-list>
+        </ion-content>
 
-            <div class="cal-actions">
-              <ion-button fill="clear" size="small" (click)="toggleCalendar(false)">Close</ion-button>
-            </div>
-          </div>
-        </ion-list>
-      </ion-content>
-
-      <div class="save-footer">
-        <ion-button expand="block" class="save-btn" (click)="onSubmit()">
-          <ion-icon name="save"></ion-icon>
-        </ion-button>
+        <div class="save-footer">
+          <ion-button expand="block" class="save-btn" (click)="onSubmit()">
+            <ion-icon name="save"></ion-icon>
+          </ion-button>
+        </div>
       </div>
-    </div>
-  </ng-template>
-</ion-modal>
+    </ng-template>
+  </ion-modal>
 
 </ion-content>
