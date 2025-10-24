@@ -6,10 +6,21 @@ import {
   IonHeader, IonToolbar, IonTitle, IonContent,
   IonList, IonItem, IonLabel, IonRefresher, IonRefresherContent,
   IonFab, IonFabButton, IonIcon, IonButtons, IonInput, IonButton,
-  IonSelect, IonSelectOption, IonModal, IonDatetime
+  IonSelect, IonSelectOption, IonModal, IonDatetime, IonAvatar
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { add } from 'ionicons/icons';
+import {
+  add,
+  createOutline,
+  arrowBack,
+  camera,
+  save,
+  personOutline,
+  briefcaseOutline,
+  callOutline,
+  calendarOutline,
+  starOutline
+} from 'ionicons/icons';
 import { UserIdentityService } from '../core/services/user-identity.service';
 import { ContactRepo, Contact, Relationship } from '../core/repos/contact.repo';
 import { DbInitService } from '../core/services/db-inti.service';
@@ -26,7 +37,7 @@ import { SqliteDbService } from '../core/services/db.service';
     IonHeader, IonToolbar, IonTitle, IonButtons, IonContent,
     IonList, IonItem, IonLabel, IonRefresher, IonRefresherContent,
     IonFab, IonFabButton, IonIcon, IonInput, IonButton,
-    IonSelect, IonSelectOption, IonModal, IonDatetime
+    IonSelect, IonSelectOption, IonModal, IonDatetime, IonAvatar
   ],
 })
 export class FriendListPage implements OnInit {
@@ -41,7 +52,19 @@ export class FriendListPage implements OnInit {
     private dbInit: DbInitService,
     private db: SqliteDbService
   ) {
-    addIcons({ add });
+    // register icons used by the list + modal UI
+    addIcons({
+      add,
+      'create-outline': createOutline,
+      'arrow-back': arrowBack,
+      camera,
+      save,
+      'person-outline': personOutline,
+      'briefcase-outline': briefcaseOutline,
+      'call-outline': callOutline,
+      'calendar-outline': calendarOutline,
+      'star-outline': starOutline
+    });
   }
 
   showModal = signal(false);
@@ -52,6 +75,8 @@ export class FriendListPage implements OnInit {
     birthday: null,
     notes: ''
   };
+  // currently editing contact id; null when creating new
+  editingContactId: string | null = null;
   relationships: Relationship[] = ['friend', 'best_friend', 'colleague', 'family'];
 
   async ngOnInit() {
@@ -69,6 +94,68 @@ export class FriendListPage implements OnInit {
       console.error('[FriendList] Init failed:', err);
       this.loading.set(false);
     }
+  }
+
+  // helper used for *ngFor trackBy
+  trackById(index: number, item: Contact) {
+    return item.contact_id;
+  }
+
+  // return initials for avatar
+  initials(name?: string) {
+    if (!name) return '??';
+    const parts = name.trim().split(/\s+/);
+    const first = parts[0]?.[0] ?? '';
+    const second = parts[1]?.[0] ?? '';
+    return (first + second).toUpperCase();
+  }
+
+  // simple consistent avatar color based on name hash
+  avatarColor(name?: string) {
+    const palette = ['#387ef5','#32db64','#ffce00','#ff6b6b','#8e44ad','#e67e22'];
+    if (!name) return palette[0];
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = (h << 5) - h + name.charCodeAt(i);
+    return palette[Math.abs(h) % palette.length];
+  }
+
+  // format birthday string (YYYY-MM-DD or ISO). returns human-friendly date
+  formatBirthday(b?: string|null) {
+    if (!b) return '';
+    try {
+      const d = new Date(b);
+      if (isNaN(d.getTime())) return b;
+      return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric' }).format(d);
+    } catch {
+      return b;
+    }
+  }
+
+  // placeholder edit handler
+  openEdit(c: Contact) {
+    // populate modal for editing and open it
+    this.editingContactId = c.contact_id ?? null;
+    this.newContact = {
+      name: c.name ?? '',
+      relationship: (c.relationship as Relationship) ?? 'friend',
+      contact_detail: c.contact_detail ?? '',
+      birthday: c.birthday ?? null,
+      notes: c.notes ?? ''
+    };
+    this.showModal.set(true);
+  }
+
+  onCancel() {
+    // close modal and reset form/editing state
+    this.showModal.set(false);
+    this.editingContactId = null;
+    this.newContact = {
+      name: '',
+      relationship: 'friend',
+      contact_detail: '',
+      birthday: null,
+      notes: ''
+    };
   }
 
   private async initUser() {
@@ -126,6 +213,15 @@ export class FriendListPage implements OnInit {
 
   // TODO: navigate to Add/Edit page when you build it
   onAdd() {
+    // prepare modal for creating a new contact
+    this.editingContactId = null;
+    this.newContact = {
+      name: '',
+      relationship: 'friend',
+      contact_detail: '',
+      birthday: null,
+      notes: ''
+    };
     this.showModal.set(true);
   }
 
@@ -138,18 +234,36 @@ export class FriendListPage implements OnInit {
       await this.db.open();
       await this.initUser();
 
-      // Create the contact
-      await this.contactsRepo.createMinimal(
-        this.userId,
-        this.newContact.name,
-        this.newContact.relationship as Relationship
-      );
+      if (this.editingContactId) {
+        // Update existing contact via raw SQL (schema: contact table expected)
+        await this.db.run(
+          `UPDATE contact
+           SET name = ?, relationship = ?, contact_detail = ?, birthday = ?, notes = ?
+           WHERE contact_id = ?`,
+          [
+            this.newContact.name,
+            this.newContact.relationship,
+            this.newContact.contact_detail,
+            this.newContact.birthday,
+            this.newContact.notes,
+            this.editingContactId
+          ]
+        );
+      } else {
+        // Create the contact (existing behavior)
+        await this.contactsRepo.createMinimal(
+          this.userId,
+          this.newContact.name,
+          this.newContact.relationship as Relationship
+        );
+      }
 
       // Persist and close wrapper so the web store has the latest bytes
       try { await this.db.saveToStoreAndClose(); } catch (e) { console.warn('[FriendList] save failed', e); }
 
       // Reset form and refresh list
       this.showModal.set(false);
+      this.editingContactId = null;
       this.newContact = {
         name: '',
         relationship: 'friend',
@@ -157,10 +271,9 @@ export class FriendListPage implements OnInit {
         birthday: null,
         notes: ''
       };
-      // reopen connection on demand next load (open() will recreate)
       await this.load();
     } catch (err) {
-      console.error('Failed to create contact:', err);
+      console.error('Failed to create/update contact:', err);
     }
   }
 }

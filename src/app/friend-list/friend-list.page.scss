@@ -11,3 +11,356 @@
   h2 { margin: 0.25rem 0; }
   p  { color: var(--ion-color-medium); margin-bottom: 1rem; }
 }
+
+.contacts-list {
+  --ion-item-background: transparent;
+  padding-top: 6px;
+  padding-bottom: 90px; /* leave room for FAB */
+  padding: 18px 12px 110px; /* top, sides, bottom for FAB */
+  background: var(--friend-list-bg, #f2f5fb);
+  min-height: 100%;
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: inset 0 -4px 10px rgba(0,0,0,0.06);
+}
+
+.initials {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.main-label {
+  margin-left: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ion-color-primary, #3b6bd9);
+}
+
+.meta {
+  margin: 0;
+  color: var(--ion-color-medium);
+  font-size: 0.88rem;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.extra {
+  margin-top: 6px;
+  font-size: 0.84rem;
+  color: var(--ion-color-medium);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.birthday strong,
+.notes strong {
+  font-weight: 600;
+  color: var(--ion-color-primary);
+}
+
+/* item spacing & hover */
+ion-item {
+  --padding-start: 0;
+  --inner-padding-end: 12px;
+  --min-height: 66px;
+}
+
+/* scope hover to the main contacts list only (avoid dark hover inside modal fields) */
+.contacts-list ion-item:hover {
+  background: rgba(0,0,0,0.02);
+}
+
+/* empty state */
+.empty {
+  text-align: center;
+  padding: 36px 12px;
+  color: var(--ion-color-medium);
+}
+
+.empty img {
+  width: 160px;
+  max-width: 45%;
+  opacity: 0.95;
+  margin-bottom: 12px;
+}
+
+/* Add FAB — rounded square, blue gradient, white plus icon */
+.fab-add {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;            /* rounded square corners like the image */
+  padding: 0;                     /* ensure icon is centered */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* gradient background to match the sample */
+  background: linear-gradient(180deg, #7aa7ff 0%, #4f78e6 100%) !important;
+  color: #fff !important;
+
+  /* strong soft shadow */
+  box-shadow: 0 8px 18px rgba(79,120,230,0.22), inset 0 -2px 6px rgba(255,255,255,0.08);
+
+  /* override Ionic CSS variables to prevent circular styles */
+  --border-radius: 12px;
+  --background: transparent;
+  --color: #fff;
+}
+
+/* enlarge plus icon and ensure white color */
+.fab-add ion-icon {
+  font-size: 26px;
+  color: #fff;
+  line-height: 1;
+  transform: translateY(-1px); /* visually center the glyph */
+}
+
+/* pressed/tap state */
+.fab-add:active,
+.fab-add.ion-activated {
+  transform: translateY(1px) scale(0.99);
+  box-shadow: 0 6px 12px rgba(79,120,230,0.18);
+}
+
+/* slightly lift on non-touch hover for desktop preview */
+@media (hover: hover) and (pointer: fine) {
+  .fab-add:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 26px rgba(79,120,230,0.26);
+  }
+}
+
+/* tighten ion-item defaults and hover */
+ion-item {
+  --padding-start: 0;
+}
+
+/* small screens adjustments */
+@media (max-width: 420px) {
+  .avatar { width: 48px; height: 48px; }
+  .name { font-size: 0.98rem; }
+  .meta { font-size: 0.82rem; gap: 6px; }
+}
+
+/* page-level variable: change this value to pick a different background */
+:host {
+  /* Options:
+     - soft light blue: #f2f5fb (default)
+     - light gray:      #f6f7f9
+     - warm cream:      #fff8ef
+  */
+  --friend-list-bg: #f2f5fb;
+}
+
+/* Modal / edit screen styling to match the provided mobile mock */
+.edit-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.edit-toolbar {
+  --background: transparent;
+  background: transparent;
+  padding-top: 6px;
+  box-shadow: none;
+}
+
+.edit-title {
+  text-align: center;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* content area with soft top-to-bottom gradient */
+.edit-content {
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 6px;
+  --background: linear-gradient(180deg, #9fb7d6 0%, #eaf1f8 50%, #ffffff 100%);
+  background: linear-gradient(180deg, #9fb7d6 0%, #eaf1f8 50%, #ffffff 100%);
+  padding-bottom: 16px;
+}
+
+/* profile camera badge */
+.profile-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 14px 0 8px;
+}
+
+.profile-camera {
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid rgba(255,255,255,0.18);
+  box-shadow: 0 6px 18px rgba(32,54,96,0.12);
+  color: #fff;
+  font-size: 28px;
+}
+
+.offline-label {
+  margin-top: 8px;
+  color: rgba(255,255,255,0.9);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* fields list - each field looks like a rounded card */
+.fields-list {
+  margin-top: 14px;
+  padding-bottom: 10px;
+}
+
+/* ensure modal edit content list is transparent so field-cards control their background */
+.edit-content ion-list,
+.edit-content ion-list .item,
+.edit-content ion-item {
+  background: transparent !important;
+  --background: transparent !important;
+  box-shadow: none;
+}
+
+/* field-card remains white and provides separation (no black gaps) */
+.field-card {
+  --background: #ffffff;
+  background: #ffffff;
+  margin: 10px 0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-shadow: 0 8px 18px rgba(38,64,120,0.06);
+  align-items: center;
+  height: 56px;
+  transition: box-shadow 120ms ease, transform 120ms ease;
+}
+
+/* make field text deep-blue and bold inside modal */
+.edit-content .field-card {
+  /* keep card visuals */
+  --background: #ffffff;
+  background: #ffffff;
+}
+
+/* inputs/select/datetime text */
+.edit-content .field-card ion-input,
+.edit-content .field-card ion-select,
+.edit-content .field-card ion-datetime {
+  --color: #1e3a8a; /* deep blue */
+  color: #1e3a8a;
+  font-weight: 700;
+}
+
+/* placeholder color slightly faded deep-blue */
+.edit-content .field-card ion-input::part(native),
+.edit-content .field-card ion-input::part(input) {
+  /* support different engine parts; set the placeholder color variable */
+  --placeholder-color: rgba(30,58,138,0.45);
+}
+
+/* ion-select inner text (selected value) */
+.edit-content .field-card ion-select .select-text {
+  color: #1e3a8a;
+  font-weight: 700;
+}
+
+/* ensure datetime display text matches */
+.edit-content .field-card ion-datetime .datetime-text {
+  color: #1e3a8a;
+  font-weight: 700;
+}
+
+/* Notes textarea styling (match deep-blue, bold inputs) */
+.edit-content .field-card ion-textarea,
+.edit-content .field-card ion-textarea::part(native) {
+  --color: #1e3a8a;
+  color: #1e3a8a;
+  font-weight: 700;
+}
+
+/* Ensure datetime/select overlays appear above the edit modal.
+   Some platforms render Ionic overlay elements with z-index lower than parent modals;
+   raising z-index here fixes the calendar not opening / appearing behind the modal. */
+.datetime-modal,
+.datetime-popover,
+.action-sheet-group,
+ion-datetime::part(popper),
+ion-datetime .modal-wrapper,
+ion-datetime .popover-content,
+ion-datetime .action-sheet {
+  z-index: 99999 !important;
+}
+
+/* Also ensure generic Ionic overlays (popover/modal/action-sheet) come above the modal */
+.ion-overlay,
+.ion-overlay .modal-wrapper,
+.ion-popover,
+.ion-action-sheet,
+.ion-modal {
+  z-index: 9999 !important;
+}
+
+/* keep modal lists transparent and field-cards provide separation */
+.edit-content ion-list,
+.edit-content ion-list .item,
+.edit-content ion-item {
+  background: transparent !important;
+  --background: transparent !important;
+  box-shadow: none;
+}
+
+/* avoid dark hover inside modal fields */
+.field-card:hover {
+  box-shadow: 0 10px 20px rgba(38,64,120,0.08);
+  transform: translateY(-2px);
+  background: #fff;
+}
+
+/* bottom save bar */
+.save-footer {
+  padding: 12px;
+  background: transparent;
+}
+
+.save-btn {
+  --background: #5d78b0;
+  --border-radius: 12px;
+  --padding-top: 14px;
+  --padding-bottom: 14px;
+  color: #fff;
+  font-weight: 700;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 10px 26px rgba(45,65,120,0.18);
+}
+
+/* tighten layout on small screens */
+@media (max-width: 420px) {
+  .profile-camera { width: 78px; height: 78px; }
+  .field-card { height: 54px; }
+}

@@ -22,92 +22,115 @@
   </div>
 
   <!-- List -->
-  <ion-list *ngIf="contacts().length > 0">
-    <ion-item *ngFor="let c of contacts()">
-      <ion-label>
-        <h2>{{ c.name }}</h2>
-        <p>{{ c.relationship }} · {{ c.contact_detail || 'no contact' }}</p>
+  <ion-list *ngIf="contacts().length > 0" class="contacts-list">
+    <ion-item *ngFor="let c of contacts(); let i = index; trackBy: trackById"
+              class="contact-card" lines="none" button
+              (click)="openEdit(c)">
+      <ion-avatar slot="start" [style.background]="avatarColor(c.name)" class="avatar">
+        <span class="initials">{{ initials(c.name) }}</span>
+      </ion-avatar>
+
+      <ion-label class="main-label">
+        <h2 class="name">{{ c.name }}</h2>
+        <p class="meta">
+          <span class="relationship">{{ c.relationship | titlecase }}</span>
+          <span class="dot">•</span>
+          <span class="contact-detail">{{ c.contact_detail || 'No contact info' }}</span>
+        </p>
+
+        <div class="extra">
+          <span class="birthday" *ngIf="c.birthday">
+            <strong>Birthday:</strong> {{ formatBirthday(c.birthday) }}
+          </span>
+          <span class="notes" *ngIf="c.notes">
+            <strong>Notes:</strong> {{ c.notes }}
+          </span>
+        </div>
       </ion-label>
+
+      <!-- removed separate edit button for mobile-first behavior;
+           tapping the whole row opens the edit modal -->
     </ion-item>
   </ion-list>
 
   <!-- Add FAB -->
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button (click)="onAdd()">
+    <ion-fab-button class="fab-add" (click)="onAdd()">
       <ion-icon name="add"></ion-icon>
     </ion-fab-button>
   </ion-fab>
 
   <ion-modal [isOpen]="showModal()">
   <ng-template>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>New Contact</ion-title>
-        <ion-buttons slot="start">
-          <ion-button (click)="showModal.set(false)">Cancel</ion-button>
-        </ion-buttons>
-        <ion-buttons slot="end">
-          <ion-button (click)="onSubmit()" [strong]="true">Save</ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
+    <div class="edit-screen">
+      <ion-header>
+        <ion-toolbar class="edit-toolbar">
+          <ion-buttons slot="start">
+            <ion-button (click)="onCancel()">
+              <ion-icon name="arrow-back"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+          <ion-title class="edit-title">Friend</ion-title>
+        </ion-toolbar>
+      </ion-header>
 
-    <ion-content class="ion-padding">
-      <ion-list>
-        <!-- Name -->
-        <ion-item>
-          <ion-input 
-            label="Name" 
-            labelPlacement="stacked"
-            placeholder="Enter name"
-            [(ngModel)]="newContact.name"
-            required>
-          </ion-input>
-        </ion-item>
+      <ion-content class="edit-content">
+        <div class="profile-area">
+          <div class="profile-camera">
+            <ion-icon name="camera"></ion-icon>
+          </div>
+          <div class="offline-label">Recorded Offline</div>
+        </div>
 
-        <!-- Relationship -->
-        <ion-item>
-          <ion-select 
-            label="Relationship" 
-            labelPlacement="stacked"
-            [(ngModel)]="newContact.relationship">
-            <ion-select-option *ngFor="let rel of relationships" [value]="rel">
-              {{rel | titlecase}}
-            </ion-select-option>
-          </ion-select>
-        </ion-item>
+        <ion-list class="fields-list">
+          <ion-item class="field-card" lines="none">
+            <ion-icon slot="start" name="person-outline" class="field-icon"></ion-icon>
+            <ion-input placeholder="Name" [(ngModel)]="newContact.name"></ion-input>
+          </ion-item>
 
-        <!-- Contact Detail -->
-        <ion-item>
-          <ion-input 
-            label="Contact Detail" 
-            labelPlacement="stacked"
-            placeholder="Phone, email, etc."
-            [(ngModel)]="newContact.contact_detail">
-          </ion-input>
-        </ion-item>
+          <ion-item class="field-card" lines="none">
+            <ion-icon slot="start" name="briefcase-outline" class="field-icon"></ion-icon>
+            <!-- use action-sheet interface so it reliably opens as a dropdown on mobile -->
+            <ion-select interface="action-sheet" placeholder="Relationship" [(ngModel)]="newContact.relationship">
+              <ion-select-option *ngFor="let rel of relationships" [value]="rel">
+                {{ rel | titlecase }}
+              </ion-select-option>
+            </ion-select>
+            <ion-icon slot="end" name="star-outline" class="rating-icon"></ion-icon>
+          </ion-item>
 
-        <!-- Birthday -->
-        <ion-item>
-          <ion-datetime
-            label="Birthday"
-            labelPlacement="stacked"
-            presentation="date"
-            [(ngModel)]="newContact.birthday">
-          </ion-datetime>
-        </ion-item>
+          <ion-item class="field-card" lines="none">
+            <ion-icon slot="start" name="call-outline" class="field-icon"></ion-icon>
+            <ion-input placeholder="Contact Details" [(ngModel)]="newContact.contact_detail"></ion-input>
+          </ion-item>
 
-        <!-- Notes -->
-        <ion-item>
-          <ion-input 
-            label="Notes" 
-            labelPlacement="stacked"
-            placeholder="Add notes"
-            [(ngModel)]="newContact.notes">
-          </ion-input>
-        </ion-item>
-      </ion-list>
-    </ion-content>
+          <!-- Notes field -->
+          <ion-item class="field-card" lines="none">
+            <ion-icon slot="start" name="create-outline" class="field-icon"></ion-icon>
+            <ion-textarea placeholder="Notes" auto-grow="true" [(ngModel)]="newContact.notes"></ion-textarea>
+          </ion-item>
+
+          <ion-item class="field-card" lines="none">
+            <ion-icon slot="start" name="calendar-outline" class="field-icon"></ion-icon>
+            <!-- open Ionic's datetime modal (works reliably inside another modal) -->
+            <ion-datetime
+              presentation="date"
+              interface="modal"
+              displayFormat="MMM d, yyyy"
+              placeholder="Birthday"
+              [(ngModel)]="newContact.birthday"
+              showDefaultButtons="true">
+            </ion-datetime>
+          </ion-item>
+        </ion-list>
+      </ion-content>
+
+      <div class="save-footer">
+        <ion-button expand="block" class="save-btn" (click)="onSubmit()">
+          <ion-icon name="save"></ion-icon>
+        </ion-button>
+      </div>
+    </div>
   </ng-template>
 </ion-modal>
 
