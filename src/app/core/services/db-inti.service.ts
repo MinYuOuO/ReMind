@@ -210,6 +210,14 @@ export class DbInitService
         ['u_local', 'Local User']
       );
 
+      // Persist schema + seed to web store and close wrapper so data is flushed
+      try {
+        await this.db.saveToStoreAndClose();
+        console.log('[DB] persisted schema and seed to web store');
+      } catch (e) {
+        console.warn('[DB] failed to persist schema/seed:', e);
+      }
+
       this.initialized = true;
       console.timeEnd?.(timerName);
       console.log('[DB] schema ready');

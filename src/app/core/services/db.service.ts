@@ -96,21 +96,34 @@ export class SqliteDbService {
         false             // readonly
       );
 
-      // Keep a reference to the connection, then open it (open returns void)
-      this.db = conn;
-      await conn.open();
-
-      // Enforce FKs
       try {
-        await this.db.execute('PRAGMA foreign_keys = ON;');
-      } catch (fkErr) {
-        console.warn('[DB] could not set PRAGMA foreign_keys ON', fkErr);
-      }
+        // try to open the connection first
+        await conn.open();
 
-      // clear openingPromise now that open succeeded
-      const result = this.db;
-      this.openingPromise = null;
-      return result as SQLiteDBConnection;
+        // only set this.db after open succeeds
+        this.db = conn;
+
+        // Enforce FKs, guard if execute is not available
+        try {
+          if (this.db && typeof this.db.execute === 'function') {
+            await this.db.execute('PRAGMA foreign_keys = ON;');
+          } else {
+            console.warn('[DB] open: db.execute not available after open');
+          }
+        } catch (fkErr) {
+          console.warn('[DB] could not set PRAGMA foreign_keys ON', fkErr);
+        }
+
+        return this.db as SQLiteDBConnection;
+      } catch (openErr) {
+        // ensure wrapper cleanup on failure
+        try { await this.sqlite.closeConnection(DB_NAME, false); } catch { }
+        this.db = undefined;
+        throw openErr;
+      } finally {
+        // clear openingPromise in all cases so future open() attempts can retry
+        this.openingPromise = null;
+      }
     })();
 
     return this.openingPromise;
@@ -118,7 +131,6 @@ export class SqliteDbService {
 
   /** Execute a batch SQL string (DDL or multiple DML statements) */
   async execute(sql: string): Promise<void> {
-    // Try once, retry on transient errors (web adapter races)
     try {
       const db = await this.open();
       const res = await db.execute(sql);
@@ -128,30 +140,59 @@ export class SqliteDbService {
       await this.persistWeb();
       return;
     } catch (err: any) {
-      if (this.isTransientError(err)) {
-        console.warn('[DB] transient execute error, retrying after reopen', err?.message ?? err);
-        // reset state and retry once
-        await this.reopenForRecovery();
+      const errMsg = String(err?.message ?? err).toLowerCase();
+
+      // If error indicates nested-transaction, do NOT try to start another transaction.
+      // Execute statements individually using run() (no outer transaction).
+      if (errMsg.includes('cannot start a transaction') || errMsg.includes('transaction within')) {
+        console.warn('[DB] nested transaction detected — executing statements individually (no reopen)', errMsg);
         const db = await this.open();
-        try {
-          const res = await db.execute(sql);
-          if ((res.changes?.changes ?? 0) < 0) {
-            throw new Error('SQL execution failed');
-          }
-          return;
-        } catch (err2) {
-          // if batch fails due to nested transaction, fallback to per-statement execution
-          if ((err2 + '').toLowerCase().includes('cannot start a transaction') || (err2 + '').toLowerCase().includes('transaction within')) {
-            console.warn('[DB] execute batch failed due to nested transaction — falling back to per-statement execution');
-            for (const s of this.splitSql(sql)) {
-              try { await (await this.open()).execute(s); } catch (sErr) { console.warn('[DB] statement error (continuing):', sErr); }
+        const stmts = this.splitSql(sql);
+        for (const raw of stmts) {
+          let stmt = raw.trim();
+          if (stmt.endsWith(';')) stmt = stmt.slice(0, -1).trim();
+          if (!stmt) continue;
+          try {
+            await db.run(stmt, []);
+          } catch (sErr) {
+            // last-resort: try execute per statement (catch its errors and continue)
+            try {
+              await db.execute(stmt);
+            } catch (innerErr) {
+              console.warn('[DB] statement execution failed (continuing):', innerErr);
             }
-            await this.persistWeb();
-            return;
           }
-          throw err2;
         }
+        try { await this.persistWeb(); } catch (pErr) { console.warn('[DB] persistWeb after execute retry failed:', pErr); }
+        return;
       }
+
+      // For other transient errors, try the previous recovery path (reopen + per-statement)
+      if (this.isTransientError(err)) {
+        console.warn('[DB] transient execute error, handling recovery', err?.message ?? String(err));
+        await this.reopenForRecovery();
+
+        const db = await this.open();
+        const stmts = this.splitSql(sql);
+        for (const raw of stmts) {
+          let stmt = raw.trim();
+          if (stmt.endsWith(';')) stmt = stmt.slice(0, -1).trim();
+          if (!stmt) continue;
+          try {
+            await db.run(stmt, []);
+          } catch (sErr) {
+            try {
+              await db.execute(stmt);
+            } catch (innerErr) {
+              console.warn('[DB] statement execution failed (continuing):', innerErr);
+            }
+          }
+        }
+
+        try { await this.persistWeb(); } catch (pErr) { console.warn('[DB] persistWeb after execute retry failed:', pErr); }
+        return;
+      }
+
       throw err;
     }
   }
@@ -179,15 +220,26 @@ export class SqliteDbService {
     try {
       const db = await this.open();
       await db.run(sql, params);
+
+      // Persist for web platform after successful write
+      try {
+        await this.persistWeb();
+      } catch (pErr) {
+        console.warn('[DB] persistWeb after run failed (will not block):', pErr);
+      }
+      return;
     } catch (err: any) {
       if (this.isTransientError(err)) {
-        console.warn('[DB] transient run error, retrying after reopen', err?.message ?? err);
+        console.warn('[DB] transient run error, retrying after reopen', (err && err.message) ? err.message : String(err));
         await this.reopenForRecovery();
         const db = await this.open();
         await db.run(sql, params);
-    await this.persistWeb();
+        try {
           await this.persistWeb();
-          return;
+        } catch (pErr) {
+          console.warn('[DB] persistWeb after retry failed (will not block):', pErr);
+        }
+        return;
       }
       throw err;
     }
@@ -220,50 +272,98 @@ export class SqliteDbService {
   private async persistWeb(): Promise<void> {
     if (Capacitor.isNativePlatform()) return;
 
-    // Ensure connection is open and registered before attempting to save
+    // ensure wrapper connection exists
+    try { await this.open(); } catch (openErr) { console.warn('[DB] persistWeb: open() failed', openErr); }
+
+    // ensure plugin has an opened connection too (may be missing due to races)
     try {
-      await this.open();
-    } catch (e) {
-      console.warn('[DB] persistWeb: open() failed before save, continuing to retry', e);
-    }
-
-    const maxAttempts = 4;
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      let pluginHasOpenConn = false;
       try {
-        // Prefer wrapper which tracks connections
-        await this.sqlite.saveToStore(DB_NAME);
-        console.log('[DB] persistWeb: saved to store', DB_NAME);
-        return;
-      } catch (err: any) {
-        const msg = (err && (err.message ?? err + '')).toLowerCase?.() ?? '';
-        // If the web layer reports no connection or webstore not open, retry after a short backoff
-        if (
-          msg.includes('no available connection') ||
-          msg.includes('webstore is not open') ||
-          msg.includes('web store is not open') ||
-          msg.includes('jeep-sqlite element is not present')
-        ) {
-          const wait = 50 * attempt;
-          console.warn(`[DB] persistWeb attempt ${attempt} failed (transient), retrying in ${wait}ms`, err);
-          if (attempt < maxAttempts) await new Promise((r) => setTimeout(r, wait));
-          continue;
-        }
+        // isConnection returns { result: boolean } on many plugin versions
+        const isConnRes = await (CapacitorSQLite as any).isConnection?.({ database: DB_NAME, readonly: false }) ?? { result: false };
+        pluginHasOpenConn = !!isConnRes.result;
+      } catch (e) {
+        pluginHasOpenConn = false;
+      }
 
-        // On other errors, try the lower-level Capacitor call once and then fail
+      if (!pluginHasOpenConn) {
         try {
-          console.warn('[DB] persistWeb: wrapper saveToStore failed, trying CapacitorSQLite.saveToStore', err);
-          await CapacitorSQLite.saveToStore({ database: DB_NAME });
-          console.log('[DB] persistWeb: saved to store (fallback) ', DB_NAME);
-          return;
-        } catch (fallbackErr) {
-          console.error('[DB] persistWeb fallback failed', fallbackErr);
-          throw fallbackErr;
+          await CapacitorSQLite.createConnection({
+            database: DB_NAME,
+            readonly: false,
+            encrypted: false,
+            mode: 'no-encryption',
+            version: DB_VERSION
+          });
+
+          // open plugin connection (some plugin versions expose open as 'open' taking an object)
+          await (CapacitorSQLite as any).open({ database: DB_NAME, readonly: false });
+
+          // short delay so adapter finishes setup
+          await new Promise(r => setTimeout(r, 80));
+          console.log('[DB] persistWeb: plugin connection created and opened');
+        } catch (createErr) {
+          console.warn('[DB] persistWeb: plugin create/open failed', createErr);
         }
       }
-    }
 
-    // If we exhausted attempts, throw an error so callers can decide what to do
-    throw new Error('[DB] persistWeb: failed after retries');
+      // try plugin-level saveToStore first
+      try {
+        await (CapacitorSQLite as any).saveToStore?.({ database: DB_NAME });
+        console.log('[DB] persistWeb: saved to store (plugin) ', DB_NAME);
+        return;
+      } catch (pluginSaveErr) {
+        console.warn('[DB] persistWeb: plugin saveToStore failed', pluginSaveErr);
+        // fall through to wrapper attempt
+      }
+
+      // fallback: attempt wrapper saveToStore if available
+      try {
+        // wrapper exposes saveToStore in some versions — call via any to avoid TS errors
+        await (this.sqlite as any).saveToStore?.(DB_NAME);
+        console.log('[DB] persistWeb: saved to store (wrapper) ', DB_NAME);
+        return;
+      } catch (wrapperSaveErr) {
+        console.error('[DB] persistWeb: wrapper saveToStore failed', wrapperSaveErr);
+        throw wrapperSaveErr;
+      }
+    } catch (err) {
+      console.error('[DB] persistWeb: final failure', err);
+      throw err;
+    }
+  }
+
+  async saveToStoreAndClose(): Promise<void> {
+    if (Capacitor.isNativePlatform()) return;
+
+    // ensure wrapper connection exists/open
+    try { await this.open(); } catch (e) { console.warn('[DB] saveToStoreAndClose: open failed', e); }
+
+    // try plugin-level save first, then wrapper fallback
+    try {
+      if (typeof (CapacitorSQLite as any).saveToStore === 'function') {
+        await (CapacitorSQLite as any).saveToStore({ database: DB_NAME });
+      } else if (typeof (this.sqlite as any).saveToStore === 'function') {
+        await (this.sqlite as any).saveToStore(DB_NAME);
+      } else {
+        throw new Error('saveToStore unavailable on plugin and wrapper');
+      }
+      console.log('[DB] saveToStoreAndClose: saved to store', DB_NAME);
+    } catch (saveErr) {
+      console.warn('[DB] saveToStoreAndClose: saveToStore failed', saveErr);
+      throw saveErr;
+    } finally {
+      // close wrapper connection to ensure adapter finalizes data
+      try {
+        await this.sqlite.closeConnection(DB_NAME, false);
+        this.db = undefined;
+        // small delay so IndexedDB write finishes
+        await new Promise(r => setTimeout(r, 120));
+        console.log('[DB] saveToStoreAndClose: closed wrapper connection');
+      } catch (closeErr) {
+        console.warn('[DB] saveToStoreAndClose: closeConnection failed', closeErr);
+      }
+    }
   }
 
   /**

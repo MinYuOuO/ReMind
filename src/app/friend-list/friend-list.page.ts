@@ -58,6 +58,11 @@ export class FriendListPage implements OnInit {
     try {
       await this.platform.ready();
       await this.identity.ready();
+
+      // Ensure DB/webstore/schema initialized before any DB ops
+      await this.dbInit.init();       // ensures schema & seed
+      await this.db.open();           // ensure connection available
+
       await this.initUser();
       await this.load();
     } catch (err) {
@@ -103,9 +108,16 @@ export class FriendListPage implements OnInit {
 
   async addSample() {
     try {
-      // Verify user exists before adding contact
-      await this.initUser();
+      // Make sure DB ready
+      await this.dbInit.init();
+      await this.db.open();
+
+      // Create contact
       await this.contactsRepo.createMinimal(this.userId, 'New Friend');
+
+      // Persist to web store and close wrapper so data survives reload
+      try { await this.db.saveToStoreAndClose(); } catch (e) { console.warn('[FriendList] save failed', e); }
+
       await this.load();
     } catch (err) {
       console.error('[FriendList] Add sample failed:', err);
@@ -121,17 +133,22 @@ export class FriendListPage implements OnInit {
     if (!this.newContact.name) return;
 
     try {
-      // First ensure user exists
+      // Ensure DB ready and user exists
+      await this.dbInit.init();
+      await this.db.open();
       await this.initUser();
 
-      // Then create the contact
+      // Create the contact
       await this.contactsRepo.createMinimal(
         this.userId,
         this.newContact.name,
         this.newContact.relationship as Relationship
       );
 
-      // Reset form and update list
+      // Persist and close wrapper so the web store has the latest bytes
+      try { await this.db.saveToStoreAndClose(); } catch (e) { console.warn('[FriendList] save failed', e); }
+
+      // Reset form and refresh list
       this.showModal.set(false);
       this.newContact = {
         name: '',
@@ -140,6 +157,7 @@ export class FriendListPage implements OnInit {
         birthday: null,
         notes: ''
       };
+      // reopen connection on demand next load (open() will recreate)
       await this.load();
     } catch (err) {
       console.error('Failed to create contact:', err);
