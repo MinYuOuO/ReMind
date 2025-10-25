@@ -8,11 +8,12 @@ import {
   IonFab, IonFabButton, IonIcon, IonButtons,
   IonInput, IonButton,
   IonSelect, IonSelectOption, IonModal,
+  IonDatetime, IonDatetimeButton, IonTextarea,
   IonSearchbar
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 
-import { notificationsOutline, shieldCheckmarkOutline, personOutline, add, arrowBack, trash, camera, briefcaseOutline, starOutline, callOutline, calendarOutline, save, createOutline } from 'ionicons/icons';
+import { notificationsOutline, shieldCheckmarkOutline, personOutline, add, arrowBack, trash, camera, briefcaseOutline, starOutline, callOutline, calendarOutline, save, createOutline, chatbubblesOutline, chevronDownOutline, paperPlaneOutline } from 'ionicons/icons';
 
 import { UserIdentityService } from '../core/services/user-identity.service';
 import { ContactRepo, Contact, Relationship } from '../core/repos/contact.repo';
@@ -30,29 +31,12 @@ import { SqliteDbService } from '../core/services/db.service';
     IonHeader, IonToolbar, IonTitle, IonButtons, IonContent,
     IonList, IonItem, IonLabel,
     IonFab, IonFabButton, IonIcon, IonInput, IonButton,
-    IonSelect, IonSelectOption, IonModal,
+    IonSelect, IonSelectOption, IonModal, IonDatetime, IonDatetimeButton, IonTextarea,
     IonSearchbar
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class FriendListPage implements OnInit {
-  // temporary fields for Interaction section
-topic = '';
-date = new Date().toISOString();
-selectedContact = '';
-contactOptions = ['Moo Ben Yi', 'Alex'];
-rawNotes = '';
-
-onGenerate() {
-  console.log('Generated:', {
-    topic: this.topic,
-    date: this.date,
-    contact: this.selectedContact,
-    notes: this.rawNotes
-  });
-}
-datePicker: any;
-
   userId = '';
   loading = signal(true);
   contacts = signal<Contact[]>([]);
@@ -65,10 +49,12 @@ datePicker: any;
     private db: SqliteDbService
   ) {
     // register icons used by the list + modal UI
-    addIcons({ notificationsOutline, shieldCheckmarkOutline, personOutline, add, arrowBack, trash, camera, briefcaseOutline, starOutline, callOutline, calendarOutline, save, createOutline });
+    addIcons({notificationsOutline,shieldCheckmarkOutline,personOutline,add,arrowBack,camera,briefcaseOutline,starOutline,callOutline,calendarOutline,save,chatbubblesOutline,createOutline,paperPlaneOutline,chevronDownOutline,trash});
   }
 
   showModal = signal(false);
+  showInteractionModal = signal(false);
+
   newContact: Partial<Contact> = {
     name: '',
     relationship: 'friend',
@@ -76,8 +62,20 @@ datePicker: any;
     birthday: null,
     notes: ''
   };
+
   // currently editing contact id; null when creating new
   editingContactId: string | null = null;
+
+  // interaction form model
+  interaction: any = {
+    topic: '',
+    date: null,
+    contact: null,
+    rawNotes: ''
+  };
+
+  // contact options for interaction select
+  contactOptions: Contact[] = [];
   relationships: Relationship[] = ['friend', 'best_friend', 'colleague', 'family'];
 
   // Inline calendar state (robust fallback that always works inside modal)
@@ -87,6 +85,11 @@ datePicker: any;
   calendarCells: (number | null)[] = []; // grid of 42 cells (some null)
   monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   weekdayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  // Interaction-specific inline calendar (separate state so both calendars can be used independently)
+  interactionCalendarOpen = false;
+  interactionCalYear = new Date().getFullYear();
+  interactionCalMonth = new Date().getMonth();
+  interactionCalendarCells: (number | null)[] = [];
 
   async ngOnInit() {
     try {
@@ -99,6 +102,8 @@ datePicker: any;
 
       await this.initUser();
       await this.load();
+      // initialize contact options for interaction form
+      this.contactOptions = this.contacts();
     } catch (err) {
       console.error('[FriendList] Init failed:', err);
       this.loading.set(false);
@@ -196,9 +201,77 @@ datePicker: any;
       this.loading.set(true);
       const list = await this.contactsRepo.listByUser(this.userId);
       this.contacts.set(list);
+      // keep contactOptions in sync
+      this.contactOptions = list;
     } finally {
       this.loading.set(false);
       (event?.target as any)?.complete?.(); // complete refresher if present
+    }
+  }
+
+  /** Open the Add Interaction modal pre-filled for the current contact being edited */
+  openAddInteraction(contact?: Contact) {
+    // ensure contactOptions up to date
+    this.contactOptions = this.contacts();
+    if (contact) {
+      this.interaction.contact = contact;
+    } else if (this.editingContactId) {
+      const c = this.contacts().find(x => x.contact_id === this.editingContactId) as Contact | undefined;
+      this.interaction.contact = c ?? null;
+    } else {
+      this.interaction.contact = null;
+    }
+  // reset other fields
+  this.interaction.topic = '';
+  // default interaction date to today
+  this.interaction.date = this.formatDateToYMD(new Date());
+  this.interaction.rawNotes = '';
+    this.showInteractionModal.set(true);
+  }
+
+  private formatDateToYMD(d: Date) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dd}`;
+  }
+
+  openAddInteractionForCurrent() {
+    const c = this.contacts().find(x => x.contact_id === this.editingContactId);
+    this.openAddInteraction(c);
+  }
+
+  closeInteraction() {
+    this.showInteractionModal.set(false);
+  }
+
+  async onGenerateInteraction() {
+    try {
+      // minimal validation
+      if (!this.interaction.contact) {
+        alert('Please choose a contact for this interaction');
+        return;
+      }
+      const interaction_id = (crypto as any).randomUUID ? (crypto as any).randomUUID() : 'i-' + Date.now();
+      const contact_id = (this.interaction.contact as Contact).contact_id;
+      const now = new Date().toISOString();
+      const date = this.interaction.date ?? now;
+
+      await this.db.open();
+      await this.db.run(
+        `INSERT INTO interaction (interaction_id, contact_id, user_id, interaction_date, raw_notes, created_at)
+         VALUES (?,?,?,?,?,?)`,
+        [interaction_id, contact_id, this.userId, date, this.interaction.rawNotes ?? '', now]
+      );
+
+      try { await this.db.saveToStoreAndClose(); } catch (e) { console.warn('[FriendList] interaction save failed', e); }
+
+      this.showInteractionModal.set(false);
+      // optionally reload interactions or UI
+      alert('Interaction saved');
+    } catch (err) {
+      console.error('[FriendList] onGenerateInteraction failed', err);
+      alert('Failed to save interaction');
     }
   }
 
@@ -306,6 +379,20 @@ datePicker: any;
     this.calMonth = month;
   }
 
+  // Interaction calendar builder (same logic but separate state)
+  private buildInteractionCalendar(year = this.interactionCalYear, month = this.interactionCalMonth) {
+    const firstOfMonth = new Date(year, month, 1);
+    const startWeekday = firstOfMonth.getDay(); // 0..6
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const cells: (number | null)[] = [];
+    for (let i = 0; i < startWeekday; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+    while (cells.length < 42) cells.push(null);
+    this.interactionCalendarCells = cells;
+    this.interactionCalYear = year;
+    this.interactionCalMonth = month;
+  }
+
   toggleCalendar(open?: boolean) {
     const next = typeof open === 'boolean' ? open : !this.calendarOpen;
     this.calendarOpen = next;
@@ -324,6 +411,52 @@ datePicker: any;
     }
   }
 
+  // Interaction calendar controls
+  toggleInteractionCalendar(open?: boolean) {
+    const next = typeof open === 'boolean' ? open : !this.interactionCalendarOpen;
+    this.interactionCalendarOpen = next;
+    if (next) {
+      if (this.interaction?.date) {
+        const d = new Date(this.interaction.date);
+        if (!isNaN(d.getTime())) {
+          this.buildInteractionCalendar(d.getFullYear(), d.getMonth());
+          return;
+        }
+      }
+      const now = new Date();
+      this.buildInteractionCalendar(now.getFullYear(), now.getMonth());
+    }
+  }
+
+  prevInteractionMonth() {
+    let m = this.interactionCalMonth - 1;
+    let y = this.interactionCalYear;
+    if (m < 0) { m = 11; y -= 1; }
+    this.buildInteractionCalendar(y, m);
+  }
+
+  nextInteractionMonth() {
+    let m = this.interactionCalMonth + 1;
+    let y = this.interactionCalYear;
+    if (m > 11) { m = 0; y += 1; }
+    this.buildInteractionCalendar(y, m);
+  }
+
+  selectInteractionDay(day: number) {
+    const y = this.interactionCalYear;
+    const m = String(this.interactionCalMonth + 1).padStart(2,'0');
+    const d = String(day).padStart(2,'0');
+    // store ISO date string (date-only)
+    this.interaction.date = `${y}-${m}-${d}`;
+    this.interactionCalendarOpen = false;
+  }
+
+  isSelectedInteractionDay(day: number) {
+    if (!this.interaction?.date) return false;
+    const dt = new Date(this.interaction.date);
+    return dt.getFullYear() === this.interactionCalYear && (dt.getMonth() === this.interactionCalMonth) && (dt.getDate() === day);
+  }
+
   prevMonth() {
     let m = this.calMonth - 1;
     let y = this.calYear;
@@ -337,6 +470,13 @@ datePicker: any;
     this.buildCalendar(y, m);
   }
 
+  prevYear() {
+    this.buildCalendar(this.calYear - 1, this.calMonth);
+  }
+
+  nextYear() {
+    this.buildCalendar(this.calYear + 1, this.calMonth);
+  }
   selectDay(day: number) {
     // compose YYYY-MM-DD
     const y = this.calYear;
@@ -346,6 +486,13 @@ datePicker: any;
     this.calendarOpen = false;
   }
 
+  prevInteractionYear() {
+    this.buildInteractionCalendar(this.interactionCalYear - 1, this.interactionCalMonth);
+  }
+
+  nextInteractionYear() {
+    this.buildInteractionCalendar(this.interactionCalYear + 1, this.interactionCalMonth);
+  }
   isSelectedDay(day: number) {
     if (!this.newContact.birthday) return false;
     const d = new Date(this.newContact.birthday);

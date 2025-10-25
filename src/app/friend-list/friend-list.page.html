@@ -14,7 +14,6 @@
 </ion-header>
 
 <ion-content [fullscreen]="true" class="page">
-
   <!-- Search -->
   <div class="search-container">
     <ion-searchbar placeholder="Search" class="search"></ion-searchbar>
@@ -29,8 +28,13 @@
 
   <!-- Friend list -->
   <ion-list *ngIf="contacts().length > 0" class="contacts-list">
-    <ion-item *ngFor="let c of contacts(); trackBy: trackById"
-              class="contact-card" lines="none" button (click)="openEdit(c)">
+    <ion-item
+      *ngFor="let c of contacts(); trackBy: trackById"
+      class="contact-card"
+      lines="none"
+      button
+      (click)="openEdit(c)"
+    >
       <div slot="start" class="avatar">
         <ion-icon name="person-outline"></ion-icon>
       </div>
@@ -52,7 +56,6 @@
   <ion-modal [isOpen]="showModal()" cssClass="friend-modal">
     <ng-template>
       <div class="edit-screen">
-
         <ion-header>
           <ion-toolbar class="edit-toolbar">
             <ion-buttons slot="start">
@@ -74,40 +77,80 @@
 
           <ion-list class="fields-list">
             <ion-item class="field-card" lines="none">
-              <ion-icon slot="start" name="person-outline" class="field-icon"></ion-icon>
-              <ion-input placeholder="Name" [(ngModel)]="newContact.name"></ion-input>
+              <ion-icon
+                slot="start"
+                name="person-outline"
+                class="field-icon"
+              ></ion-icon>
+              <ion-input
+                placeholder="Name"
+                [(ngModel)]="newContact.name"
+              ></ion-input>
             </ion-item>
 
             <ion-item class="field-card" lines="none">
-              <ion-icon slot="start" name="briefcase-outline" class="field-icon"></ion-icon>
-              <ion-select interface="action-sheet" placeholder="Relationship"
-                          [(ngModel)]="newContact.relationship">
-                <ion-select-option *ngFor="let rel of relationships" [value]="rel">
+              <ion-icon
+                slot="start"
+                name="briefcase-outline"
+                class="field-icon"
+              ></ion-icon>
+              <ion-select
+                interface="action-sheet"
+                placeholder="Relationship"
+                [(ngModel)]="newContact.relationship"
+              >
+                <ion-select-option
+                  *ngFor="let rel of relationships"
+                  [value]="rel"
+                >
                   {{ rel | titlecase }}
                 </ion-select-option>
               </ion-select>
-              <ion-icon slot="end" name="star-outline" class="rating-icon"></ion-icon>
+              <ion-icon
+                slot="end"
+                name="star-outline"
+                class="rating-icon"
+              ></ion-icon>
             </ion-item>
 
             <ion-item class="field-card" lines="none">
-              <ion-icon slot="start" name="call-outline" class="field-icon"></ion-icon>
-              <ion-input placeholder="Contact Details"
-                         [(ngModel)]="newContact.contact_detail"></ion-input>
+              <ion-icon
+                slot="start"
+                name="call-outline"
+                class="field-icon"
+              ></ion-icon>
+              <ion-input
+                placeholder="Contact Details"
+                [(ngModel)]="newContact.contact_detail"
+              ></ion-input>
             </ion-item>
 
-            <ion-item class="field-card date-field" lines="none" (click)="toggleCalendar()">
-              <ion-icon slot="start" name="calendar-outline" class="field-icon"></ion-icon>
+            <ion-item
+              class="field-card date-field"
+              lines="none"
+              (click)="toggleCalendar()"
+            >
+              <ion-icon
+                slot="start"
+                name="calendar-outline"
+                class="field-icon"
+              ></ion-icon>
               <ion-label class="date-label">
-                {{ newContact.birthday ? (newContact.birthday | date:'MMM d, y') : 'Birthday' }}
+                {{ newContact.birthday ? (newContact.birthday | date:'MMM d, y')
+                : 'Birthday' }}
               </ion-label>
             </ion-item>
 
             <!-- Inline calendar -->
             <div *ngIf="calendarOpen" class="inline-calendar">
               <div class="cal-header">
+                <button class="cal-nav" (click)="prevYear()">«</button>
                 <button class="cal-nav" (click)="prevMonth()">‹</button>
-                <div class="cal-title">{{ monthNames[calMonth] }} {{ calYear }}</div>
+                <div class="cal-title">
+                  {{ monthNames[calMonth] }} {{ calYear }}
+                </div>
                 <button class="cal-nav" (click)="nextMonth()">›</button>
+                <button class="cal-nav" (click)="nextYear()">»</button>
               </div>
 
               <div class="cal-weekdays">
@@ -115,23 +158,38 @@
               </div>
 
               <div class="cal-grid">
-                <div *ngFor="let cell of calendarCells"
-                     class="cal-cell"
-                     [class.empty]="!cell"
-                     [class.selected]="cell && isSelectedDay(cell)"
-                     (click)="cell && selectDay(cell)">
+                <div
+                  *ngFor="let cell of calendarCells"
+                  class="cal-cell"
+                  [class.empty]="!cell"
+                  [class.selected]="cell && isSelectedDay(cell)"
+                  (click)="cell && selectDay(cell)"
+                >
                   <span *ngIf="cell">{{ cell }}</span>
                 </div>
               </div>
 
               <div class="cal-actions">
-                <ion-button fill="clear" size="small" (click)="toggleCalendar(false)">Close</ion-button>
+                <ion-button
+                  fill="clear"
+                  size="small"
+                  (click)="toggleCalendar(false)"
+                  >Close</ion-button
+                >
               </div>
             </div>
           </ion-list>
         </ion-content>
 
         <div class="save-footer">
+          <ion-button
+            expand="block"
+            class="add-interaction-btn"
+            (click)="openAddInteractionForCurrent()"
+          >
+            <p style="margin: 0px;">Add Interaction</p>
+          </ion-button>
+
           <ion-button expand="block" class="save-btn" (click)="onSubmit()">
             <ion-icon name="save"></ion-icon>
           </ion-button>
@@ -140,76 +198,140 @@
     </ng-template>
   </ion-modal>
 
-</ion-content>
+  <!-- Add interaction -->
+  <ion-modal [isOpen]="showInteractionModal()" cssClass="interaction-modal">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar class="page-toolbar">
+          <ion-buttons slot="start">
+            <ion-button (click)="closeInteraction()">
+              <ion-icon name="arrow-back"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+          <ion-title>Interaction Add</ion-title>
+        </ion-toolbar>
+      </ion-header>
 
-<ion-header>
-  <ion-toolbar class="page-toolbar">
-    <ion-buttons slot="start">
-      <ion-button routerLink="/home">
-        <ion-icon name="arrow-back"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-    <ion-title>Interaction Add</ion-title>
-  </ion-toolbar>
-</ion-header>
+      <ion-content class="page">
+        <section class="form-wrap">
+          <!-- Topic -->
+          <ion-item lines="none" class="field-card">
+            <ion-icon
+              name="chatbubbles-outline"
+              slot="start"
+              class="field-icon"
+            ></ion-icon>
+            <ion-input
+              placeholder="What’s the topic?"
+              [(ngModel)]="interaction.topic"
+              inputmode="text"
+            >
+            </ion-input>
+          </ion-item>
 
-<ion-content [fullscreen]="true" class="page">
+          <!-- Date -->
+          <ion-item
+            class="field-card date-field"
+            lines="none"
+            (click)="toggleInteractionCalendar()"
+          >
+            <ion-icon
+              slot="start"
+              name="calendar-outline"
+              class="field-icon"
+            ></ion-icon>
+            <ion-label class="date-label">
+              {{ interaction.date ? (interaction.date | date:'MMM d, y') :
+              'Date' }}
+            </ion-label>
+          </ion-item>
 
-  <section class="form-wrap">
+          <!-- Inline calendar -->
+          <div *ngIf="interactionCalendarOpen" class="inline-calendar">
+            <div class="cal-header">
+              <button class="cal-nav" (click)="prevInteractionYear()">«</button>
+              <button class="cal-nav" (click)="prevInteractionMonth()">
+                ‹
+              </button>
+              <div class="cal-title">
+                {{ monthNames[interactionCalMonth] }} {{ interactionCalYear }}
+              </div>
+              <button class="cal-nav" (click)="nextInteractionMonth()">
+                ›
+              </button>
+              <button class="cal-nav" (click)="nextInteractionYear()">»</button>
+            </div>
 
-    <!-- 主题 -->
-    <ion-item lines="none" class="field-card">
-      <ion-icon name="chatbubbles-outline" slot="start" class="field-icon"></ion-icon>
-      <ion-input
-        placeholder="What’s the topic?"
-        [(ngModel)]="topic"
-        inputmode="text">
-      </ion-input>
-      <ion-icon name="chevron-down-outline" slot="end" class="ghost"></ion-icon>
-    </ion-item>
+            <div class="cal-weekdays">
+              <div *ngFor="let d of weekdayNames">{{ d }}</div>
+            </div>
 
-    <!-- 日期 -->
-    <ion-item lines="none" class="field-card" (click)="datePicker?.open()">
-      <ion-icon name="calendar-outline" slot="start" class="field-icon"></ion-icon>
-      <ion-datetime-button datetime="dt1"></ion-datetime-button>
-      <ion-modal keepContentsMounted="true">
-        <ng-template>
-          <ion-datetime id="dt1" #datePicker [(ngModel)]="date" presentation="date"></ion-datetime>
-        </ng-template>
-      </ion-modal>
-    </ion-item>
+            <div class="cal-grid">
+              <div
+                *ngFor="let cell of interactionCalendarCells"
+                class="cal-cell"
+                [class.empty]="!cell"
+                [class.selected]="cell && isSelectedInteractionDay(cell)"
+                (click)="cell && selectInteractionDay(cell)"
+              >
+                <span *ngIf="cell">{{ cell }}</span>
+              </div>
+            </div>
 
-    <!-- 联系人 -->
-    <ion-item lines="none" class="field-card">
-      <ion-icon name="person-outline" slot="start" class="field-icon"></ion-icon>
-      <ion-select [(ngModel)]="selectedContact" interface="action-sheet" placeholder="Contact">
-        <ion-select-option *ngFor="let c of contactOptions" [value]="c">{{ c }}</ion-select-option>
-      </ion-select>
-    </ion-item>
+            <div class="cal-actions">
+              <ion-button
+                fill="clear"
+                size="small"
+                (click)="toggleInteractionCalendar(false)"
+                >Close</ion-button
+              >
+            </div>
+          </div>
 
-    <!-- 原始笔记 -->
-    <ion-item lines="none" class="field-card textarea">
-      <ion-icon name="create-outline" slot="start" class="field-icon"></ion-icon>
-      <ion-textarea
-        auto-grow="true"
-        placeholder="Raw Notes"
-        [(ngModel)]="rawNotes">
-      </ion-textarea>
-    </ion-item>
+          <!-- Contact -->
+          <ion-item lines="none" class="field-card">
+            <ion-icon
+              name="person-outline"
+              slot="start"
+              class="field-icon"
+            ></ion-icon>
+            <ion-select
+              [(ngModel)]="interaction.contact"
+              interface="action-sheet"
+              placeholder="Contact"
+            >
+              <ion-select-option *ngFor="let c of contactOptions" [value]="c"
+                >{{ c.name }}</ion-select-option
+              >
+            </ion-select>
+          </ion-item>
 
-    <!-- 发送按钮 -->
-    <ion-button class="primary-btn send-btn" expand="block" (click)="onGenerate()">
-      <ion-icon name="paper-plane-outline" slot="start"></ion-icon>
-      Generate
-    </ion-button>
+          <!-- Raw Notes -->
+          <ion-item lines="none" class="field-card textarea">
+            <ion-icon
+              name="create-outline"
+              slot="start"
+              class="field-icon"
+            ></ion-icon>
+            <ion-textarea
+              auto-grow="true"
+              placeholder="Raw Notes"
+              [(ngModel)]="interaction.rawNotes"
+            >
+            </ion-textarea>
+          </ion-item>
 
-  </section>
-
-  <!-- 底部导航（装饰/可替换为 ion-tabs） -->
-  <ion-footer class="tabs">
-    <div class="tab"><ion-icon name="home-outline"></ion-icon><span>Home</span></div>
-    <div class="tab"><ion-icon name="git-network-outline"></ion-icon><span>RSearch</span></div>
-    <div class="tab active"><ion-icon name="aperture-outline"></ion-icon><span>Roulette</span></div>
-    <div class="tab"><ion-icon name="settings-outline"></ion-icon><span>Setting</span></div>
-  </ion-footer>
+          <!-- Generate button -->
+          <ion-button
+            class="primary-btn send-btn"
+            expand="block"
+            (click)="onGenerateInteraction()"
+          >
+            <ion-icon name="paper-plane-outline" slot="start"></ion-icon>
+            Generate
+          </ion-button>
+        </section>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
 </ion-content>

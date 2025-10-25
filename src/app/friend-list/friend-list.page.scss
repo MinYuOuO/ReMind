@@ -11,6 +11,13 @@
   ion-title {
     font-weight: 800;
     text-align: center;
+    margin-left: 25%;
+  }
+
+  @media (min-width: 768px) {
+    ion-title {
+      margin-left: auto;
+    }
   }
 
   ion-icon {
@@ -29,7 +36,6 @@
   --border-radius: 16px;
   --placeholder-color: #6b7aa6;
   --color: #1e3a8a;
-  box-shadow: 0 4px 12px rgba(38, 64, 120, 0.1);
 }
 
 /* Empty state */
@@ -63,7 +69,6 @@
   --background: #fff;
   border-radius: 14px;
   margin: 10px 0;
-  border: 1px solid #dce3f1;
   box-shadow: 0 6px 16px rgba(38, 64, 120, 0.08);
   display: flex;
   align-items: center;
@@ -109,25 +114,23 @@
 
 /* Modal */
 ion-modal.friend-modal {
-  --width: 80vw;
-  --max-width: 480px;
-  --border-radius: 16px;
-  --background: transparent;
-  --height: auto;
+  --width: 100%;
+  --height: 100%;
 
   &::part(content) {
     display: flex;
     flex-direction: column;
-    height: 100%;
-    background: transparent !important;
+    /* ensure the modal content has a visible background on desktop */
+    background: linear-gradient(180deg, #9fb7d6 0%, #eaf1f8 60%, #ffffff 100%) !important;
   }
 }
-
-@media (max-width: 600px) {
-  ion-modal.friend-modal {
-    --width: 100vw;
-    --height: 100vh;
-    --border-radius: 0;
+/* On larger screens the Ionic modal may render as a fixed dialog
+   with different defaults; force a visible content area so details
+   don't appear to disappear at >=768px. */
+@media (min-width: 768px) {
+  ion-modal.friend-modal::part(content) {
+    padding: 8px 12px;
+    box-shadow: 0 8px 24px rgba(32,54,96,0.12);
   }
 }
 
@@ -136,16 +139,14 @@ ion-modal.friend-modal {
   display: flex;
   flex-direction: column;
   height: 100%;
+  width: 100%;
   background: linear-gradient(180deg, #9fb7d6 0%, #eaf1f8 60%, #ffffff 100%);
-  border-radius: 16px;
+  border-radius: 0px;
   overflow: hidden;
 }
 
 /* Toolbar */
 .edit-toolbar {
-  background: linear-gradient(180deg, #9fb7d6 0%, #b8c9de 100%);
-  color: #fff;
-  box-shadow: none;
   ion-icon {
     color: #fff;
     font-size: 22px;
@@ -201,6 +202,7 @@ ion-modal.friend-modal {
 /* Field cards */
 .field-card {
   --background: #ffffff;
+  --color: #1e3a8a;
   border-radius: 12px;
   border: 1px solid #dce3f1;
   margin: 10px 0;
@@ -243,6 +245,14 @@ ion-modal.friend-modal {
   --border-radius: 12px;
   color: #fff;
   font-weight: 700;
+}
+
+.add-interaction-btn {
+  --background: #5d78b0;
+  --border-radius: 12px;
+  color: #fff;
+  font-weight: 700;
+  margin: 20px;
 }
 
 /* Calendar */
@@ -307,55 +317,29 @@ ion-modal.friend-modal {
   box-shadow: 0 6px 16px rgba(79, 120, 230, 0.18);
 }
 
-.page {
-  --background: linear-gradient(180deg, #9fb7d6 0%, #eaf1f8 60%, #ffffff 100%);
-}
-.page-toolbar {
-  background: linear-gradient(180deg, #9fb7d6 0%, #b8c9de 100%);
-  color: #fff;
-  ion-title { text-align: center; font-weight: 800; }
-  ion-icon { color: #fff; font-size: 20px; }
+/* Interaction modal - reuse edit-screen visual language */
+ion-modal.interaction-modal {
+  --width: 100%;
+  --height: 100%;
+  --background: transparent;
+
+  &::part(content) {
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #9fb7d6 0%, #eaf1f8 60%, #ffffff 100%);
+    border-radius: 0px;
+    padding: 0;
+  }
 }
 
 .form-wrap {
   padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
 }
 
-.field-card {
-  --background: #ffffff;
-  border: 1px solid #dce3f1;
-  border-radius: 12px;
-  box-shadow: 0 6px 16px rgba(38,64,120,0.08);
-  align-items: flex-start;
-
-  .field-icon { color: #6b7aa6 !important; }
-  ion-input, ion-select, ion-textarea {
-    color: #1e3a8a; font-weight: 700;
-  }
-  &.textarea ion-textarea { width: 100%; min-height: 120px; }
-}
-
-.ghost { opacity: 0.35; }
-
+/* primary button style reuse */
 .primary-btn {
-  --background: #5d78b0;
+  --background: linear-gradient(180deg,#4f78e6,#3560c8);
   --border-radius: 12px;
+  color: #fff;
   font-weight: 700;
-  box-shadow: 0 10px 22px rgba(38,64,120,0.18);
-}
-.send-btn { margin-top: 8px; }
-
-/* 底部 tabs（装饰） */
-ion-footer.tabs {
-  background: transparent;
-  display: flex; justify-content: space-around; padding-bottom: env(safe-area-inset-bottom);
-  .tab {
-    width: 25%; padding: 10px 0; color:#1e3a8a; opacity:.75;
-    display: inline-flex; flex-direction: column; align-items:center;
-    ion-icon{ font-size: 20px; margin-bottom: 2px; }
-    &.active{ opacity:1; font-weight:700; }
-  }
 }
