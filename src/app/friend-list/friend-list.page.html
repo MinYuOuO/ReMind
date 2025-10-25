@@ -141,3 +141,75 @@
   </ion-modal>
 
 </ion-content>
+
+<ion-header>
+  <ion-toolbar class="page-toolbar">
+    <ion-buttons slot="start">
+      <ion-button routerLink="/home">
+        <ion-icon name="arrow-back"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Interaction Add</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="page">
+
+  <section class="form-wrap">
+
+    <!-- 主题 -->
+    <ion-item lines="none" class="field-card">
+      <ion-icon name="chatbubbles-outline" slot="start" class="field-icon"></ion-icon>
+      <ion-input
+        placeholder="What’s the topic?"
+        [(ngModel)]="topic"
+        inputmode="text">
+      </ion-input>
+      <ion-icon name="chevron-down-outline" slot="end" class="ghost"></ion-icon>
+    </ion-item>
+
+    <!-- 日期 -->
+    <ion-item lines="none" class="field-card" (click)="datePicker?.open()">
+      <ion-icon name="calendar-outline" slot="start" class="field-icon"></ion-icon>
+      <ion-datetime-button datetime="dt1"></ion-datetime-button>
+      <ion-modal keepContentsMounted="true">
+        <ng-template>
+          <ion-datetime id="dt1" #datePicker [(ngModel)]="date" presentation="date"></ion-datetime>
+        </ng-template>
+      </ion-modal>
+    </ion-item>
+
+    <!-- 联系人 -->
+    <ion-item lines="none" class="field-card">
+      <ion-icon name="person-outline" slot="start" class="field-icon"></ion-icon>
+      <ion-select [(ngModel)]="selectedContact" interface="action-sheet" placeholder="Contact">
+        <ion-select-option *ngFor="let c of contactOptions" [value]="c">{{ c }}</ion-select-option>
+      </ion-select>
+    </ion-item>
+
+    <!-- 原始笔记 -->
+    <ion-item lines="none" class="field-card textarea">
+      <ion-icon name="create-outline" slot="start" class="field-icon"></ion-icon>
+      <ion-textarea
+        auto-grow="true"
+        placeholder="Raw Notes"
+        [(ngModel)]="rawNotes">
+      </ion-textarea>
+    </ion-item>
+
+    <!-- 发送按钮 -->
+    <ion-button class="primary-btn send-btn" expand="block" (click)="onGenerate()">
+      <ion-icon name="paper-plane-outline" slot="start"></ion-icon>
+      Generate
+    </ion-button>
+
+  </section>
+
+  <!-- 底部导航（装饰/可替换为 ion-tabs） -->
+  <ion-footer class="tabs">
+    <div class="tab"><ion-icon name="home-outline"></ion-icon><span>Home</span></div>
+    <div class="tab"><ion-icon name="git-network-outline"></ion-icon><span>RSearch</span></div>
+    <div class="tab active"><ion-icon name="aperture-outline"></ion-icon><span>Roulette</span></div>
+    <div class="tab"><ion-icon name="settings-outline"></ion-icon><span>Setting</span></div>
+  </ion-footer>
+</ion-content>

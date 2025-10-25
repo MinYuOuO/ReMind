@@ -36,6 +36,23 @@ import { SqliteDbService } from '../core/services/db.service';
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class FriendListPage implements OnInit {
+  // temporary fields for Interaction section
+topic = '';
+date = new Date().toISOString();
+selectedContact = '';
+contactOptions = ['Moo Ben Yi', 'Alex'];
+rawNotes = '';
+
+onGenerate() {
+  console.log('Generated:', {
+    topic: this.topic,
+    date: this.date,
+    contact: this.selectedContact,
+    notes: this.rawNotes
+  });
+}
+datePicker: any;
+
   userId = '';
   loading = signal(true);
   contacts = signal<Contact[]>([]);
@@ -370,3 +387,6 @@ export class FriendListPage implements OnInit {
     }
   }
 }
+
+
+
