@@ -16,111 +16,124 @@
   <app-explore-container name="Roulette Page"></app-explore-container>
 </ion-content>
 
-<!--roulette.page.html-->
-<ion-header translucent="true">
-  <ion-toolbar class="topbar">
-    <ion-title>Roulette</ion-title>
-    <ion-buttons slot="end">
-      <ion-button fill="clear" routerLink="/settings">
-        <ion-icon name="settings-outline"></ion-icon>
+<ion-header>
+  <ion-toolbar class="page-toolbar">
+    <ion-buttons slot="start" *ngIf="view !== 'ask'">
+      <ion-button (click)="goBack()">
+        <ion-icon name="arrow-back"></ion-icon>
       </ion-button>
     </ion-buttons>
-  </ion-toolbar>
-</ion-header>
-
-<ion-content fullscreen>
-  <!-- 顶部提示条 -->
-  <div class="hint-row">
-    <div class="hint-pill">
-      <ion-icon name="information-circle-outline"></ion-icon>
-      <span>Suggestion Given</span>
-    </div>
-    <ion-button fill="clear" size="small" class="close-btn" aria-label="close">
-      <ion-icon name="close-outline"></ion-icon>
-    </ion-button>
-  </div>
-
-  <!-- 输入卡片 -->
-  <div class="card note-card">
-    <div class="note-title">Suggestion: Where can go ?</div>
-    <div class="note-box"></div>
-  </div>
-
-  <!-- 底部导航条在 Tabs 容器中统一放，这页无需重复 -->
-</ion-content>
-
-<!--roulette-roll.page.html-->
-<ion-header translucent="true">
-  <ion-toolbar class="topbar">
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/roulette"></ion-back-button>
-    </ion-buttons>
     <ion-title>Roulette</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content fullscreen>
-  <!-- 轮盘容器（可用 Canvas 或 SVG；此处仅样式与占位） -->
-  <div class="wheel-wrap">
-    <div class="wheel">
-      <div class="ring"></div>
-      <div class="spokes"></div>
-      <div class="labels">
-        <span style="--i:0">Coffee<br/>Shop</span>
-        <span style="--i:1">Cinema</span>
-        <span style="--i:2">Restaurant</span>
-        <span style="--i:3">Shopping<br/>Mall</span>
-        <span style="--i:4">Beach</span>
-        <span style="--i:5">Karaoke</span>
-        <span style="--i:6">Picnic<br/>park</span>
-        <span style="--i:7">Night<br/>market</span>
+<ion-content [fullscreen]="true" class="page">
+
+  <!-- 视图切换：ask | roll | result -->
+  <ng-container [ngSwitch]="view">
+
+    <!-- ============ ① 提问 / 输入视图（左图） ============ -->
+    <section *ngSwitchCase="'ask'" class="screen ask-screen">
+      <!-- 提示条 -->
+      <div class="chip-row">
+        <div class="chip">
+          <ion-icon name="chatbubbles-outline"></ion-icon>
+          <span>Suggestion Given</span>
+        </div>
+        <ion-button fill="clear" size="small" class="chip-close">
+          <ion-icon name="close-outline"></ion-icon>
+        </ion-button>
       </div>
-    </div>
-  </div>
 
-  <!-- 当前结果条 -->
-  <div class="result-pill">Night Market</div>
-
-  <!-- 下一步按钮（演示用：跳到结果页） -->
-  <div class="action">
-    <ion-button routerLink="/roulette-result" expand="block" shape="round">Show Result</ion-button>
-  </div>
-</ion-content>
-
-<!--roulette-result.page.html-->
-<ion-header translucent="true">
-  <ion-toolbar class="topbar">
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/roulette-roll"></ion-back-button>
-    </ion-buttons>
-    <ion-title>Roulette</ion-title>
-  </ion-toolbar>
-</ion-header>
-
-<ion-content fullscreen>
-  <!-- 顶部问题胶囊 -->
-  <div class="question-pill">Where can go ?</div>
-
-  <!-- 轮盘（与上一页一致，用同样样式） -->
-  <div class="wheel-wrap">
-    <div class="wheel">
-      <div class="ring"></div>
-      <div class="spokes"></div>
-      <div class="labels">
-        <span style="--i:0">Coffee<br/>Shop</span>
-        <span style="--i:1">Cinema</span>
-        <span style="--i:2">Restaurant</span>
-        <span style="--i:3">Shopping<br/>Mall</span>
-        <span style="--i:4">Beach</span>
-        <span style="--i:5">Karaoke</span>
-        <span style="--i:6">Picnic<br/>park</span>
-        <span style="--i:7">Night<br/>market</span>
+      <!-- 问题卡片 -->
+      <div class="question-card">
+        <div class="q-title">Suggestion:</div>
+        <div class="q-input">
+          {{ question || 'Where can go ?' }}
+        </div>
       </div>
-    </div>
-  </div>
 
-  <!-- 大结果卡片 -->
-  <div class="big-result">
-    <span>Night Market</span>
-  </div>
+      <ion-button class="primary-btn" expand="block" (click)="view='roll'">
+        Open Roulette
+      </ion-button>
+    </section>
+
+    <!-- ============ ② 旋转视图（中图） ============ -->
+    <section *ngSwitchCase="'roll'" class="screen roll-screen">
+      <!-- 转盘 -->
+      <div class="wheel-wrap">
+        <div class="wheel" [class.spinning]="isSpinning">
+          <!-- 8 个扇区标签 -->
+          <ul class="labels">
+            <li style="--i:0">Coffee<br/>Shop</li>
+            <li style="--i:1">Cinema</li>
+            <li style="--i:2">Restaurant</li>
+            <li style="--i:3">Shopping<br/>Mall</li>
+            <li style="--i:4">Beach</li>
+            <li style="--i:5">Karaoke</li>
+            <li style="--i:6">Picnic<br/>park</li>
+            <li style="--i:7">Night<br/>market</li>
+          </ul>
+          <div class="wheel-shadow"></div>
+        </div>
+        <div class="pointer"></div>
+      </div>
+
+      <!-- 当前抽中的底部条（滚动时高亮） -->
+      <div class="banner">
+        {{ isSpinning ? 'Rolling...' : (resultText || 'Tap SPIN to start') }}
+      </div>
+
+      <ion-button class="primary-btn" expand="block" (click)="startRoll()">
+        SPIN
+      </ion-button>
+
+      <ion-button fill="clear" expand="block" (click)="view='result'" [disabled]="!resultText">
+        View Result
+      </ion-button>
+    </section>
+
+    <!-- ============ ③ 结果视图（右图） ============ -->
+    <section *ngSwitchCase="'result'" class="screen result-screen">
+      <!-- 顶部问句胶囊 -->
+      <div class="pill">{{ question || 'Where can go ?' }}</div>
+
+      <!-- 保持同样的转盘（静态） -->
+      <div class="wheel-wrap">
+        <div class="wheel">
+          <ul class="labels">
+            <li style="--i:0">Coffee<br/>Shop</li>
+            <li style="--i:1">Cinema</li>
+            <li style="--i:2">Restaurant</li>
+            <li style="--i:3">Shopping<br/>Mall</li>
+            <li style="--i:4">Beach</li>
+            <li style="--i:5">Karaoke</li>
+            <li style="--i:6">Picnic<br/>park</li>
+            <li style="--i:7">Night<br/>market</li>
+          </ul>
+          <div class="wheel-shadow"></div>
+        </div>
+        <div class="pointer"></div>
+      </div>
+
+      <!-- 大结果卡片 -->
+      <div class="result-card">
+        {{ resultText || 'Night Market' }}
+      </div>
+
+      <ion-button class="primary-btn" expand="block" (click)="view='roll'">
+        Spin Again
+      </ion-button>
+    </section>
+
+  </ng-container>
+
+  <!-- （可选）底部导航示意 -->
+  <ion-footer class="tabs">
+    <div class="tab"><ion-icon name="home-outline"></ion-icon><span>Home</span></div>
+    <div class="tab"><ion-icon name="git-network-outline"></ion-icon><span>RSearch</span></div>
+    <div class="tab active"><ion-icon name="aperture-outline"></ion-icon><span>Roulette</span></div>
+    <div class="tab"><ion-icon name="settings-outline"></ion-icon><span>Setting</span></div>
+  </ion-footer>
+
 </ion-content>
