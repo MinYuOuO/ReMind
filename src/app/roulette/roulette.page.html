@@ -15,3 +15,112 @@
 
   <app-explore-container name="Roulette Page"></app-explore-container>
 </ion-content>
+
+<!--roulette.page.html-->
+<ion-header translucent="true">
+  <ion-toolbar class="topbar">
+    <ion-title>Roulette</ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" routerLink="/settings">
+        <ion-icon name="settings-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content fullscreen>
+  <!-- 顶部提示条 -->
+  <div class="hint-row">
+    <div class="hint-pill">
+      <ion-icon name="information-circle-outline"></ion-icon>
+      <span>Suggestion Given</span>
+    </div>
+    <ion-button fill="clear" size="small" class="close-btn" aria-label="close">
+      <ion-icon name="close-outline"></ion-icon>
+    </ion-button>
+  </div>
+
+  <!-- 输入卡片 -->
+  <div class="card note-card">
+    <div class="note-title">Suggestion: Where can go ?</div>
+    <div class="note-box"></div>
+  </div>
+
+  <!-- 底部导航条在 Tabs 容器中统一放，这页无需重复 -->
+</ion-content>
+
+<!--roulette-roll.page.html-->
+<ion-header translucent="true">
+  <ion-toolbar class="topbar">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/roulette"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Roulette</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content fullscreen>
+  <!-- 轮盘容器（可用 Canvas 或 SVG；此处仅样式与占位） -->
+  <div class="wheel-wrap">
+    <div class="wheel">
+      <div class="ring"></div>
+      <div class="spokes"></div>
+      <div class="labels">
+        <span style="--i:0">Coffee<br/>Shop</span>
+        <span style="--i:1">Cinema</span>
+        <span style="--i:2">Restaurant</span>
+        <span style="--i:3">Shopping<br/>Mall</span>
+        <span style="--i:4">Beach</span>
+        <span style="--i:5">Karaoke</span>
+        <span style="--i:6">Picnic<br/>park</span>
+        <span style="--i:7">Night<br/>market</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 当前结果条 -->
+  <div class="result-pill">Night Market</div>
+
+  <!-- 下一步按钮（演示用：跳到结果页） -->
+  <div class="action">
+    <ion-button routerLink="/roulette-result" expand="block" shape="round">Show Result</ion-button>
+  </div>
+</ion-content>
+
+<!--roulette-result.page.html-->
+<ion-header translucent="true">
+  <ion-toolbar class="topbar">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/roulette-roll"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Roulette</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content fullscreen>
+  <!-- 顶部问题胶囊 -->
+  <div class="question-pill">Where can go ?</div>
+
+  <!-- 轮盘（与上一页一致，用同样样式） -->
+  <div class="wheel-wrap">
+    <div class="wheel">
+      <div class="ring"></div>
+      <div class="spokes"></div>
+      <div class="labels">
+        <span style="--i:0">Coffee<br/>Shop</span>
+        <span style="--i:1">Cinema</span>
+        <span style="--i:2">Restaurant</span>
+        <span style="--i:3">Shopping<br/>Mall</span>
+        <span style="--i:4">Beach</span>
+        <span style="--i:5">Karaoke</span>
+        <span style="--i:6">Picnic<br/>park</span>
+        <span style="--i:7">Night<br/>market</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 大结果卡片 -->
+  <div class="big-result">
+    <span>Night Market</span>
+  </div>
+</ion-content>
