@@ -8,8 +8,7 @@ import {
   IonFab, IonFabButton, IonIcon, IonButtons,
   IonInput, IonButton,
   IonSelect, IonSelectOption, IonModal,
-  IonDatetime, IonDatetimeButton, IonTextarea,
-  IonSearchbar
+  IonTextarea, IonSearchbar
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 
@@ -31,8 +30,7 @@ import { SqliteDbService } from '../core/services/db.service';
     IonHeader, IonToolbar, IonTitle, IonButtons, IonContent,
     IonList, IonItem, IonLabel,
     IonFab, IonFabButton, IonIcon, IonInput, IonButton,
-    IonSelect, IonSelectOption, IonModal, IonDatetime, IonDatetimeButton, IonTextarea,
-    IonSearchbar
+    IonSelect, IonSelectOption, IonModal, IonTextarea, IonSearchbar
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
