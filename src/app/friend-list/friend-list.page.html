@@ -16,7 +16,13 @@
 <ion-content [fullscreen]="true" class="page">
   <!-- Search -->
   <div class="search-container">
-    <ion-searchbar placeholder="Search" class="search"></ion-searchbar>
+    <ion-searchbar
+      placeholder="Search"
+      class="search"
+      [value]="query()"
+      (ionInput)="onSearch($event)"
+      debounce="300"
+    ></ion-searchbar>
   </div>
 
   <!-- Empty state -->
@@ -27,9 +33,9 @@
   </div>
 
   <!-- Friend list -->
-  <ion-list *ngIf="contacts().length > 0" class="contacts-list">
+  <ion-list *ngIf="filteredContacts().length > 0" class="contacts-list">
     <ion-item
-      *ngFor="let c of contacts(); trackBy: trackById"
+      *ngFor="let c of filteredContacts(); trackBy: trackById"
       class="contact-card"
       lines="none"
       button

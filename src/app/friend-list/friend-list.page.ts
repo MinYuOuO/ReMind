@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -38,6 +38,19 @@ export class FriendListPage implements OnInit {
   userId = '';
   loading = signal(true);
   contacts = signal<Contact[]>([]);
+  // search query signal
+  query = signal<string>('');
+
+  // computed filtered contacts by query (searches name and contact_detail, case-insensitive)
+  filteredContacts = computed(() => {
+    const q = this.query().trim().toLowerCase();
+    if (!q) return this.contacts();
+    return this.contacts().filter((c) => {
+      const name = (c.name || '').toLowerCase();
+      const detail = (c.contact_detail || '').toLowerCase();
+      return name.includes(q) || detail.includes(q);
+    });
+  });
 
   constructor(
     private platform: Platform,
@@ -201,10 +214,18 @@ export class FriendListPage implements OnInit {
       this.contacts.set(list);
       // keep contactOptions in sync
       this.contactOptions = list;
+  // reset query when reloading full list
+  this.query.set('');
     } finally {
       this.loading.set(false);
       (event?.target as any)?.complete?.(); // complete refresher if present
     }
+  }
+
+  // handle search input from ion-searchbar
+  onSearch(ev: any) {
+    const v = ev?.detail?.value ?? '';
+    this.query.set(v);
   }
 
   /** Open the Add Interaction modal pre-filled for the current contact being edited */
