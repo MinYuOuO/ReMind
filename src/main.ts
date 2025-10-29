@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { CapacitorSQLite } from '@capacitor-community/sqlite';
 import { bootstrapApplication } from '@angular/platform-browser';
-import { ApplicationConfig, importProvidersFrom } from '@angular/core';
+import { ApplicationConfig } from '@angular/core';
 import { RouteReuseStrategy, provideRouter, withPreloading, PreloadAllModules } from '@angular/router';
 import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
 
@@ -12,6 +12,7 @@ import { routes } from './app/app.routes';
 import { AppComponent } from './app/app.component';
 import { DbInitService } from './app/core/services/db-inti.service';
 import { JeepSqlite } from 'jeep-sqlite/dist/components/jeep-sqlite';
+import { defineCustomElements } from 'jeep-sqlite/loader';
 
 const appConfig: ApplicationConfig = {
   providers: [
@@ -33,6 +34,9 @@ async function initializeApp() {
 
   // Only for web target — ensure jeep-sqlite element exists and web store is initialized
   if (Capacitor.getPlatform() === 'web') {
+
+    await defineCustomElements(window);
+
     // define element if needed and append one instance to DOM
     if (!customElements.get('jeep-sqlite')) {
       customElements.define('jeep-sqlite', JeepSqlite);

@@ -1,9 +1,7 @@
-<!-- roulette.page.html ✅ 仅此一套结构 -->
-
 <ion-header>
   <ion-toolbar class="page-toolbar">
     <ion-buttons slot="start" *ngIf="view !== 'ask'">
-      <ion-button (click)="goBack()">
+      <ion-button fill="clear" (click)="goBack()" aria-label="Back">
         <ion-icon name="arrow-back"></ion-icon>
       </ion-button>
     </ion-buttons>
@@ -12,83 +10,100 @@
 </ion-header>
 
 <ion-content [fullscreen]="true" class="page">
-  <!-- 视图切换：ask | roll | result -->
   <ng-container [ngSwitch]="view">
-
-    <!-- ① 提问视图 -->
+    <!-- ASK -->
     <section *ngSwitchCase="'ask'" class="screen ask-screen">
-      <div class="chip-row">
-        <div class="chip">
-          <ion-icon name="chatbubbles-outline"></ion-icon>
-          <span>Suggestion Given</span>
-        </div>
-        <ion-button fill="clear" size="small" class="chip-close">
-          <ion-icon name="close-outline"></ion-icon>
+      <div class="question-card glass">
+        <div class="q-title">Ask a question</div>
+
+        <!-- INPUT BOX -->
+        <ion-item lines="none" class="field-card">
+          <ion-icon
+            name="chatbubbles-outline"
+            slot="start"
+            class="field-icon"
+          ></ion-icon>
+          <ion-textarea
+            [(ngModel)]="question"
+            autoGrow="true"
+            placeholder="e.g. What should we do this afternoon?"
+            inputmode="text"
+          ></ion-textarea>
+        </ion-item>
+
+        <ion-button
+          class="primary-btn"
+          expand="block"
+          (click)="generateWithAI()"
+          [disabled]="isGenerating"
+        >
+          <ion-spinner
+            *ngIf="isGenerating"
+            name="crescent"
+            style="margin-right: 8px"
+          ></ion-spinner>
+          {{ isGenerating ? 'Thinking…' : 'Generate with AI' }}
         </ion-button>
-      </div>
 
-      <div class="question-card">
-        <div class="q-title">Suggestion:</div>
-        <div class="q-input">{{ question || 'Where can go ?' }}</div>
+        <!-- Preview the 8 labels if we already have them -->
+        <div class="preview" *ngIf="options?.length">
+          <div class="preview-title">Preview (8)</div>
+          <div class="chips">
+            <ion-chip *ngFor="let opt of options">{{ opt }}</ion-chip>
+          </div>
+          <ion-button class="primary-btn" expand="block" (click)="view='roll'"
+            >Open Roulette</ion-button
+          >
+        </div>
       </div>
-
-      <ion-button class="primary-btn" expand="block" (click)="view='roll'">
-        Open Roulette
-      </ion-button>
     </section>
 
-    <!-- ② 旋转视图 -->
+    <!-- ROLL -->
     <section *ngSwitchCase="'roll'" class="screen roll-screen">
       <div class="wheel-wrap">
-        <div class="wheel" [class.spinning]="isSpinning">
+        <div
+          class="wheel"
+          [style.transform]="'rotate(' + spinDegrees + 'deg)'"
+          [style.transition]="transitionStyle"
+          (transitionend)="onSpinEnd($event)"
+        >
           <ul class="labels">
-            <li style="--i:0">Coffee<br/>Shop</li>
-            <li style="--i:1">Cinema</li>
-            <li style="--i:2">Restaurant</li>
-            <li style="--i:3">Shopping<br/>Mall</li>
-            <li style="--i:4">Beach</li>
-            <li style="--i:5">Karaoke</li>
-            <li style="--i:6">Picnic<br/>park</li>
-            <li style="--i:7">Night<br/>market</li>
+            <li *ngFor="let opt of options; let i = index">
+              <div class="anchor" [style.--i]="i">
+                <span class="text" [innerHTML]="toTwoLine(opt)"></span>
+              </div>
+            </li>
           </ul>
-          <div class="wheel-shadow"></div>
+
+          <!-- Hub button -->
+          <button
+            class="spin-btn"
+            (click)="startRoll()"
+            [disabled]="isSpinning"
+          >
+            <span *ngIf="!isSpinning">SPIN</span>
+            <span *ngIf="isSpinning">…</span>
+          </button>
+
+          <div class="rim"></div>
+          <div class="shine"></div>
         </div>
-        <div class="pointer"></div>
+
+        <div class="pointer" aria-hidden="true"></div>
       </div>
 
       <div class="banner">
-        {{ isSpinning ? 'Rolling...' : (resultText || 'Tap SPIN to start') }}
+        {{ isSpinning ? 'Rolling…' : (resultText || 'Tap SPIN to start') }}
       </div>
 
-      <ion-button class="primary-btn" expand="block" (click)="startRoll()">SPIN</ion-button>
-      <ion-button fill="clear" expand="block" (click)="view='result'" [disabled]="!resultText">
-        View Result
+      <ion-button
+        class="secondary-btn"
+        expand="block"
+        fill="clear"
+        (click)="startRoll()"
+      >
+        Spin Again
       </ion-button>
-    </section>
-
-    <!-- ③ 结果视图 -->
-    <section *ngSwitchCase="'result'" class="screen result-screen">
-      <div class="pill">{{ question || 'Where can go ?' }}</div>
-
-      <div class="wheel-wrap">
-        <div class="wheel">
-          <ul class="labels">
-            <li style="--i:0">Coffee<br/>Shop</li>
-            <li style="--i:1">Cinema</li>
-            <li style="--i:2">Restaurant</li>
-            <li style="--i:3">Shopping<br/>Mall</li>
-            <li style="--i:4">Beach</li>
-            <li style="--i:5">Karaoke</li>
-            <li style="--i:6">Picnic<br/>park</li>
-            <li style="--i:7">Night<br/>market</li>
-          </ul>
-          <div class="wheel-shadow"></div>
-        </div>
-        <div class="pointer"></div>
-      </div>
-
-      <div class="result-card">{{ resultText || 'Night Market' }}</div>
-      <ion-button class="primary-btn" expand="block" (click)="view='roll'">Spin Again</ion-button>
     </section>
   </ng-container>
 </ion-content>

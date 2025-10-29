@@ -1,23 +1,60 @@
-import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  signal,
+  computed,
+  CUSTOM_ELEMENTS_SCHEMA,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   Platform,
-  IonHeader, IonToolbar, IonTitle, IonContent,
-  IonList, IonItem, IonLabel,
-  IonFab, IonFabButton, IonIcon, IonButtons,
-  IonInput, IonButton,
-  IonSelect, IonSelectOption, IonModal,
-  IonTextarea, IonSearchbar
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+  IonList,
+  IonItem,
+  IonLabel,
+  IonFab,
+  IonFabButton,
+  IonIcon,
+  IonButtons,
+  IonInput,
+  IonButton,
+  IonSelect,
+  IonSelectOption,
+  IonModal,
+  IonTextarea,
+  IonSearchbar,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 
-import { notificationsOutline, shieldCheckmarkOutline, personOutline, add, arrowBack, trash, camera, briefcaseOutline, starOutline, callOutline, calendarOutline, save, createOutline, chatbubblesOutline, chevronDownOutline, paperPlaneOutline } from 'ionicons/icons';
+import {
+  notificationsOutline,
+  shieldCheckmarkOutline,
+  personOutline,
+  add,
+  arrowBack,
+  trash,
+  camera,
+  briefcaseOutline,
+  starOutline,
+  callOutline,
+  calendarOutline,
+  save,
+  createOutline,
+  chatbubblesOutline,
+  chevronDownOutline,
+  paperPlaneOutline,
+} from 'ionicons/icons';
 
 import { UserIdentityService } from '../core/services/user-identity.service';
 import { ContactRepo, Contact, Relationship } from '../core/repos/contact.repo';
 import { DbInitService } from '../core/services/db-inti.service';
 import { SqliteDbService } from '../core/services/db.service';
+
+import { UserRepo } from '../core/repos/user.repo';
 
 @Component({
   selector: 'app-friend-list',
@@ -27,12 +64,26 @@ import { SqliteDbService } from '../core/services/db.service';
   imports: [
     CommonModule,
     FormsModule,
-    IonHeader, IonToolbar, IonTitle, IonButtons, IonContent,
-    IonList, IonItem, IonLabel,
-    IonFab, IonFabButton, IonIcon, IonInput, IonButton,
-    IonSelect, IonSelectOption, IonModal, IonTextarea, IonSearchbar
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonButtons,
+    IonContent,
+    IonList,
+    IonItem,
+    IonLabel,
+    IonFab,
+    IonFabButton,
+    IonIcon,
+    IonInput,
+    IonButton,
+    IonSelect,
+    IonSelectOption,
+    IonModal,
+    IonTextarea,
+    IonSearchbar,
   ],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA]
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class FriendListPage implements OnInit {
   userId = '';
@@ -56,11 +107,29 @@ export class FriendListPage implements OnInit {
     private platform: Platform,
     private identity: UserIdentityService,
     private contactsRepo: ContactRepo,
+    private userRepo: UserRepo,
     private dbInit: DbInitService,
     private db: SqliteDbService
   ) {
     // register icons used by the list + modal UI
-    addIcons({notificationsOutline,shieldCheckmarkOutline,personOutline,add,arrowBack,camera,briefcaseOutline,starOutline,callOutline,calendarOutline,save,chatbubblesOutline,createOutline,paperPlaneOutline,chevronDownOutline,trash});
+    addIcons({
+      notificationsOutline,
+      shieldCheckmarkOutline,
+      personOutline,
+      add,
+      arrowBack,
+      camera,
+      briefcaseOutline,
+      starOutline,
+      callOutline,
+      calendarOutline,
+      save,
+      chatbubblesOutline,
+      createOutline,
+      paperPlaneOutline,
+      chevronDownOutline,
+      trash,
+    });
   }
 
   showModal = signal(false);
@@ -71,7 +140,7 @@ export class FriendListPage implements OnInit {
     relationship: 'friend',
     contact_detail: '',
     birthday: null,
-    notes: ''
+    notes: '',
   };
 
   // currently editing contact id; null when creating new
@@ -82,20 +151,38 @@ export class FriendListPage implements OnInit {
     topic: '',
     date: null,
     contact: null,
-    rawNotes: ''
+    rawNotes: '',
   };
 
   // contact options for interaction select
   contactOptions: Contact[] = [];
-  relationships: Relationship[] = ['friend', 'best_friend', 'colleague', 'family'];
+  relationships: Relationship[] = [
+    'friend',
+    'best_friend',
+    'colleague',
+    'family',
+  ];
 
   // Inline calendar state (robust fallback that always works inside modal)
   calendarOpen = false;
   calYear = new Date().getFullYear();
   calMonth = new Date().getMonth(); // 0-based
   calendarCells: (number | null)[] = []; // grid of 42 cells (some null)
-  monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  weekdayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  weekdayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   // Interaction-specific inline calendar (separate state so both calendars can be used independently)
   interactionCalendarOpen = false;
   interactionCalYear = new Date().getFullYear();
@@ -105,14 +192,16 @@ export class FriendListPage implements OnInit {
   async ngOnInit() {
     try {
       await this.platform.ready();
-      await this.identity.ready();
 
       // Ensure DB/webstore/schema initialized before any DB ops
-      await this.dbInit.init();       // ensures schema & seed
-      await this.db.open();           // ensure connection available
+      await this.dbInit.init(); // ensures schema & seed
+      await this.db.open(); // ensure connection available
 
-      await this.initUser();
+      const local = await this.userRepo.ensureLocal('u_local', 'Local User');
+      this.userId = local.user_id;
+
       await this.load();
+
       // initialize contact options for interaction form
       this.contactOptions = this.contacts();
     } catch (err) {
@@ -137,7 +226,14 @@ export class FriendListPage implements OnInit {
 
   // simple consistent avatar color based on name hash
   avatarColor(name?: string) {
-    const palette = ['#387ef5','#32db64','#ffce00','#ff6b6b','#8e44ad','#e67e22'];
+    const palette = [
+      '#387ef5',
+      '#32db64',
+      '#ffce00',
+      '#ff6b6b',
+      '#8e44ad',
+      '#e67e22',
+    ];
     if (!name) return palette[0];
     let h = 0;
     for (let i = 0; i < name.length; i++) h = (h << 5) - h + name.charCodeAt(i);
@@ -145,12 +241,16 @@ export class FriendListPage implements OnInit {
   }
 
   // format birthday string (YYYY-MM-DD or ISO). returns human-friendly date
-  formatBirthday(b?: string|null) {
+  formatBirthday(b?: string | null) {
     if (!b) return '';
     try {
       const d = new Date(b);
       if (isNaN(d.getTime())) return b;
-      return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric' }).format(d);
+      return new Intl.DateTimeFormat(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      }).format(d);
     } catch {
       return b;
     }
@@ -165,7 +265,7 @@ export class FriendListPage implements OnInit {
       relationship: (c.relationship as Relationship) ?? 'friend',
       contact_detail: c.contact_detail ?? '',
       birthday: c.birthday ?? null,
-      notes: c.notes ?? ''
+      notes: c.notes ?? '',
     };
     this.showModal.set(true);
   }
@@ -179,32 +279,8 @@ export class FriendListPage implements OnInit {
       relationship: 'friend',
       contact_detail: '',
       birthday: null,
-      notes: ''
+      notes: '',
     };
-  }
-
-  private async initUser() {
-    try {
-      // Get/create user
-      this.userId = await this.identity.ensureUserId();
-
-      // Verify user exists in DB
-      const users = await this.db.query(
-        'SELECT user_id FROM user WHERE user_id = ?',
-        [this.userId]
-      );
-
-      if (!users.length) {
-        // Create user if missing
-        await this.db.run(
-          'INSERT INTO user (user_id, username) VALUES (?, ?)',
-          [this.userId, 'Local User']
-        );
-      }
-    } catch (err) {
-      console.error('[FriendList] User init failed:', err);
-      throw err;
-    }
   }
 
   async load(event?: CustomEvent) {
@@ -214,8 +290,8 @@ export class FriendListPage implements OnInit {
       this.contacts.set(list);
       // keep contactOptions in sync
       this.contactOptions = list;
-  // reset query when reloading full list
-  this.query.set('');
+      // reset query when reloading full list
+      this.query.set('');
     } finally {
       this.loading.set(false);
       (event?.target as any)?.complete?.(); // complete refresher if present
@@ -235,16 +311,18 @@ export class FriendListPage implements OnInit {
     if (contact) {
       this.interaction.contact = contact;
     } else if (this.editingContactId) {
-      const c = this.contacts().find(x => x.contact_id === this.editingContactId) as Contact | undefined;
+      const c = this.contacts().find(
+        (x) => x.contact_id === this.editingContactId
+      ) as Contact | undefined;
       this.interaction.contact = c ?? null;
     } else {
       this.interaction.contact = null;
     }
-  // reset other fields
-  this.interaction.topic = '';
-  // default interaction date to today
-  this.interaction.date = this.formatDateToYMD(new Date());
-  this.interaction.rawNotes = '';
+    // reset other fields
+    this.interaction.topic = '';
+    // default interaction date to today
+    this.interaction.date = this.formatDateToYMD(new Date());
+    this.interaction.rawNotes = '';
     this.showInteractionModal.set(true);
   }
 
@@ -256,7 +334,9 @@ export class FriendListPage implements OnInit {
   }
 
   openAddInteractionForCurrent() {
-    const c = this.contacts().find(x => x.contact_id === this.editingContactId);
+    const c = this.contacts().find(
+      (x) => x.contact_id === this.editingContactId
+    );
     this.openAddInteraction(c);
   }
 
@@ -271,7 +351,9 @@ export class FriendListPage implements OnInit {
         alert('Please choose a contact for this interaction');
         return;
       }
-      const interaction_id = (crypto as any).randomUUID ? (crypto as any).randomUUID() : 'i-' + Date.now();
+      const interaction_id = (crypto as any).randomUUID
+        ? (crypto as any).randomUUID()
+        : 'i-' + Date.now();
       const contact_id = (this.interaction.contact as Contact).contact_id;
       const now = new Date().toISOString();
       const date = this.interaction.date ?? now;
@@ -280,10 +362,21 @@ export class FriendListPage implements OnInit {
       await this.db.run(
         `INSERT INTO interaction (interaction_id, contact_id, user_id, interaction_date, raw_notes, created_at)
          VALUES (?,?,?,?,?,?)`,
-        [interaction_id, contact_id, this.userId, date, this.interaction.rawNotes ?? '', now]
+        [
+          interaction_id,
+          contact_id,
+          this.userId,
+          date,
+          this.interaction.rawNotes ?? '',
+          now,
+        ]
       );
 
-      try { await this.db.saveToStoreAndClose(); } catch (e) { console.warn('[FriendList] interaction save failed', e); }
+      try {
+        await this.db.saveToStoreAndClose();
+      } catch (e) {
+        console.warn('[FriendList] interaction save failed', e);
+      }
 
       this.showInteractionModal.set(false);
       // optionally reload interactions or UI
@@ -304,26 +397,16 @@ export class FriendListPage implements OnInit {
       await this.contactsRepo.createMinimal(this.userId, 'New Friend');
 
       // Persist to web store and close wrapper so data survives reload
-      try { await this.db.saveToStoreAndClose(); } catch (e) { console.warn('[FriendList] save failed', e); }
+      try {
+        await this.db.saveToStoreAndClose();
+      } catch (e) {
+        console.warn('[FriendList] save failed', e);
+      }
 
       await this.load();
     } catch (err) {
       console.error('[FriendList] Add sample failed:', err);
     }
-  }
-
-  // TODO: navigate to Add/Edit page when you build it
-  onAdd() {
-    // prepare modal for creating a new contact
-    this.editingContactId = null;
-    this.newContact = {
-      name: '',
-      relationship: 'friend',
-      contact_detail: '',
-      birthday: null,
-      notes: ''
-    };
-    this.showModal.set(true);
   }
 
   async onSubmit() {
@@ -333,23 +416,16 @@ export class FriendListPage implements OnInit {
       // Ensure DB ready and user exists
       await this.dbInit.init();
       await this.db.open();
-      await this.initUser();
 
       if (this.editingContactId) {
         // Update existing contact via raw SQL (schema: contact table expected)
-        await this.db.run(
-          `UPDATE contact
-           SET name = ?, relationship = ?, contact_detail = ?, birthday = ?, notes = ?
-           WHERE contact_id = ?`,
-          [
-            this.newContact.name,
-            this.newContact.relationship,
-            this.newContact.contact_detail,
-            this.newContact.birthday,
-            this.newContact.notes,
-            this.editingContactId
-          ]
-        );
+        await this.contactsRepo.update(this.editingContactId, {
+          name: this.newContact.name,
+          relationship: this.newContact.relationship as Relationship,
+          contact_detail: this.newContact.contact_detail ?? null,
+          birthday: this.newContact.birthday ?? null,
+          notes: this.newContact.notes ?? null,
+        });
       } else {
         // Create the contact (include contact detail, birthday and notes)
         await this.contactsRepo.createMinimal(
@@ -363,7 +439,11 @@ export class FriendListPage implements OnInit {
       }
 
       // Persist and close wrapper so the web store has the latest bytes
-      try { await this.db.saveToStoreAndClose(); } catch (e) { console.warn('[FriendList] save failed', e); }
+      try {
+        await this.db.saveToStoreAndClose();
+      } catch (e) {
+        console.warn('[FriendList] save failed', e);
+      }
 
       // Reset form and refresh list
       this.showModal.set(false);
@@ -373,7 +453,7 @@ export class FriendListPage implements OnInit {
         relationship: 'friend',
         contact_detail: '',
         birthday: null,
-        notes: ''
+        notes: '',
       };
       await this.load();
     } catch (err) {
@@ -399,7 +479,10 @@ export class FriendListPage implements OnInit {
   }
 
   // Interaction calendar builder (same logic but separate state)
-  private buildInteractionCalendar(year = this.interactionCalYear, month = this.interactionCalMonth) {
+  private buildInteractionCalendar(
+    year = this.interactionCalYear,
+    month = this.interactionCalMonth
+  ) {
     const firstOfMonth = new Date(year, month, 1);
     const startWeekday = firstOfMonth.getDay(); // 0..6
     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -432,7 +515,8 @@ export class FriendListPage implements OnInit {
 
   // Interaction calendar controls
   toggleInteractionCalendar(open?: boolean) {
-    const next = typeof open === 'boolean' ? open : !this.interactionCalendarOpen;
+    const next =
+      typeof open === 'boolean' ? open : !this.interactionCalendarOpen;
     this.interactionCalendarOpen = next;
     if (next) {
       if (this.interaction?.date) {
@@ -450,21 +534,27 @@ export class FriendListPage implements OnInit {
   prevInteractionMonth() {
     let m = this.interactionCalMonth - 1;
     let y = this.interactionCalYear;
-    if (m < 0) { m = 11; y -= 1; }
+    if (m < 0) {
+      m = 11;
+      y -= 1;
+    }
     this.buildInteractionCalendar(y, m);
   }
 
   nextInteractionMonth() {
     let m = this.interactionCalMonth + 1;
     let y = this.interactionCalYear;
-    if (m > 11) { m = 0; y += 1; }
+    if (m > 11) {
+      m = 0;
+      y += 1;
+    }
     this.buildInteractionCalendar(y, m);
   }
 
   selectInteractionDay(day: number) {
     const y = this.interactionCalYear;
-    const m = String(this.interactionCalMonth + 1).padStart(2,'0');
-    const d = String(day).padStart(2,'0');
+    const m = String(this.interactionCalMonth + 1).padStart(2, '0');
+    const d = String(day).padStart(2, '0');
     // store ISO date string (date-only)
     this.interaction.date = `${y}-${m}-${d}`;
     this.interactionCalendarOpen = false;
@@ -473,19 +563,29 @@ export class FriendListPage implements OnInit {
   isSelectedInteractionDay(day: number) {
     if (!this.interaction?.date) return false;
     const dt = new Date(this.interaction.date);
-    return dt.getFullYear() === this.interactionCalYear && (dt.getMonth() === this.interactionCalMonth) && (dt.getDate() === day);
+    return (
+      dt.getFullYear() === this.interactionCalYear &&
+      dt.getMonth() === this.interactionCalMonth &&
+      dt.getDate() === day
+    );
   }
 
   prevMonth() {
     let m = this.calMonth - 1;
     let y = this.calYear;
-    if (m < 0) { m = 11; y -= 1; }
+    if (m < 0) {
+      m = 11;
+      y -= 1;
+    }
     this.buildCalendar(y, m);
   }
   nextMonth() {
     let m = this.calMonth + 1;
     let y = this.calYear;
-    if (m > 11) { m = 0; y += 1; }
+    if (m > 11) {
+      m = 0;
+      y += 1;
+    }
     this.buildCalendar(y, m);
   }
 
@@ -499,23 +599,33 @@ export class FriendListPage implements OnInit {
   selectDay(day: number) {
     // compose YYYY-MM-DD
     const y = this.calYear;
-    const m = String(this.calMonth + 1).padStart(2,'0');
-    const d = String(day).padStart(2,'0');
+    const m = String(this.calMonth + 1).padStart(2, '0');
+    const d = String(day).padStart(2, '0');
     this.newContact.birthday = `${y}-${m}-${d}`;
     this.calendarOpen = false;
   }
 
   prevInteractionYear() {
-    this.buildInteractionCalendar(this.interactionCalYear - 1, this.interactionCalMonth);
+    this.buildInteractionCalendar(
+      this.interactionCalYear - 1,
+      this.interactionCalMonth
+    );
   }
 
   nextInteractionYear() {
-    this.buildInteractionCalendar(this.interactionCalYear + 1, this.interactionCalMonth);
+    this.buildInteractionCalendar(
+      this.interactionCalYear + 1,
+      this.interactionCalMonth
+    );
   }
   isSelectedDay(day: number) {
     if (!this.newContact.birthday) return false;
     const d = new Date(this.newContact.birthday);
-    return d.getFullYear() === this.calYear && (d.getMonth() === this.calMonth) && (d.getDate() === day);
+    return (
+      d.getFullYear() === this.calYear &&
+      d.getMonth() === this.calMonth &&
+      d.getDate() === day
+    );
   }
 
   // prompt user then delete contact
@@ -528,6 +638,29 @@ export class FriendListPage implements OnInit {
     }
   }
 
+  onAdd() {
+    // Reset current editing state (ensures it's a fresh creation)
+    this.editingContactId = null;
+
+    // Initialize an empty new contact object
+    this.newContact = {
+      name: '',
+      relationship: 'friend',
+      contact_detail: '',
+      birthday: null,
+      notes: '',
+    };
+
+    // Optionally, reset inline calendar and hide other modals
+    this.calendarOpen = false;
+    this.showInteractionModal.set(false);
+
+    // Open the contact creation modal
+    this.showModal.set(true);
+
+    console.log('[FriendList] Add modal opened — ready for new contact');
+  }
+
   async onDelete() {
     if (!this.editingContactId) return;
     try {
@@ -535,7 +668,11 @@ export class FriendListPage implements OnInit {
       await this.contactsRepo.delete(this.editingContactId);
 
       // persist and close wrapper so web store gets latest bytes (best-effort)
-      try { await this.db.saveToStoreAndClose(); } catch (e) { console.warn('[FriendList] save failed after delete', e); }
+      try {
+        await this.db.saveToStoreAndClose();
+      } catch (e) {
+        console.warn('[FriendList] save failed after delete', e);
+      }
 
       // reset modal and reload list
       this.showModal.set(false);
@@ -545,7 +682,7 @@ export class FriendListPage implements OnInit {
         relationship: 'friend',
         contact_detail: '',
         birthday: null,
-        notes: ''
+        notes: '',
       };
       await this.load();
     } catch (err) {
@@ -553,6 +690,3 @@ export class FriendListPage implements OnInit {
     }
   }
 }
-
-
-

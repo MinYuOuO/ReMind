@@ -16,7 +16,7 @@
 
   @media (min-width: 768px) {
     ion-title {
-      margin-left: auto;
+      margin-left: 100px;
     }
   }
 
@@ -124,15 +124,6 @@ ion-modal.friend-modal {
     background: linear-gradient(180deg, #9fb7d6 0%, #eaf1f8 60%, #ffffff 100%) !important;
   }
 }
-/* On larger screens the Ionic modal may render as a fixed dialog
-   with different defaults; force a visible content area so details
-   don't appear to disappear at >=768px. */
-@media (min-width: 768px) {
-  ion-modal.friend-modal::part(content) {
-    padding: 8px 12px;
-    box-shadow: 0 8px 24px rgba(32,54,96,0.12);
-  }
-}
 
 /* Edit Screen Wrapper*/
 .edit-screen {
@@ -154,9 +145,11 @@ ion-modal.friend-modal {
 }
 
 .edit-title {
+  padding-right: 55px;
   text-align: center;
   font-weight: 800;
   color: #fff;
+  margin-left: auto;
 }
 
 .edit-content {
@@ -236,6 +229,8 @@ ion-modal.friend-modal {
 
 /* Save button */
 .save-footer {
+  display: grid;
+  justify-content: center;
   padding: 16px;
   background: transparent;
 }

@@ -2,16 +2,24 @@ import { Injectable } from '@angular/core';
 import { SqliteDbService } from '../services/db.service';
 
 // 定义联系人关系类型 (Enum-like type for relationship)
-export type Relationship = 'friend' | 'best_friend' | 'colleague' | 'family' | 'myself';
+export type Relationship =
+  | 'friend'
+  | 'best_friend'
+  | 'colleague'
+  | 'family'
+  | 'myself';
 
-// Defines the structure of a Contact record (matches SQLite table schema)
+/**
+ * Interface defining the structure of a contact record.
+ * Matches the `contact` table schema.
+ */
 export interface Contact {
   contact_id: string;
   user_id: string;
   name: string;
   relationship: Relationship;
   contact_detail?: string | null;
-  birthday?: string | null; // 'DD-MM-YYYY'
+  birthday?: string | null; // 'YYYY-MM-DD'
   created_at: string; // ISO
   updated_at: string; // ISO
   notes?: string | null;
@@ -69,27 +77,28 @@ export class ContactRepo {
    * @returns Promise<Contact> 返回创建的联系人对象
    */
   async createMinimal(
-    userId: string = "",               // 用户 ID，可为空字符串
-    name: string,                      // 联系人姓名
-    relationship: Relationship = 'myself', // 联系关系类型（默认 friend）
-    contact_detail: string = "",       // 联系方式，可为空
-    birthday: string = "",             // 生日，可为空
-    notes: string = ""                 // 新增备注参数，可为空
+    userId: string, // 用户 ID，可为空字符串
+    name: string, // 联系人姓名
+    relationship: Relationship = 'friend', // 联系关系类型（默认 friend）
+    contact_detail: string = '', // 联系方式，可为空
+    birthday: string = '', // 生日，可为空
+    notes: string = '' // 新增备注参数，可为空
   ): Promise<Contact> {
     // Create a new unique contact ID
     const contact_id = uid();
+    const nowIso = now();
 
     // Build the Contact object for insertion
     const rec: Contact = {
-      contact_id: contact_id,          // 唯一 ID
-      user_id: userId,                 // 所属用户 ID
-      name: name,                      // 联系人姓名
-      relationship: relationship,      // 关系类型
+      contact_id: contact_id, // 唯一 ID
+      user_id: userId, // 所属用户 ID
+      name: name, // 联系人姓名
+      relationship: relationship, // 关系类型
       contact_detail: contact_detail || null, // 联系方式，可为空
-      birthday: birthday || null,      // 生日，可为空
-      created_at: now(),               // 创建时间
-      updated_at: now(),               // 更新时间
-      notes: notes || null,            // 备注，可为空
+      birthday: birthday || null, // 生日，可为空
+      created_at: nowIso, // 创建时间
+      updated_at: nowIso, // 更新时间
+      notes: notes || null, // 备注，可为空
     };
 
     // Execute SQL INSERT to save the new contact
@@ -126,14 +135,75 @@ export class ContactRepo {
   }
 
   /**
-   * Delete a contact by id
-   * @param contactId contact_id to delete
+   * Patch-style update of a contact record.
+   * Only updates the fields provided in `fields`.
+   *
+   * @param contactId - The contact_id of the record to update.
+   * @param fields - Partial contact object containing fields to modify.
+   * @returns Promise<void>
+   *
+   * Example:
+   * ```ts
+   * await contactRepo.update('c123', { name: 'New Name', notes: 'Updated' });
+   * ```
+   */
+  async update(
+    contactId: string,
+    fields: Partial<Omit<Contact, 'contact_id' | 'user_id' | 'created_at'>>
+  ): Promise<void> {
+    if (!contactId) return;
+
+    const setParts: string[] = [];
+    const params: any[] = [];
+
+    // Build SET clause dynamically
+    if (fields.name !== undefined) {
+      setParts.push('name = ?');
+      params.push(fields.name);
+    }
+    if (fields.relationship !== undefined) {
+      setParts.push('relationship = ?');
+      params.push(fields.relationship);
+    }
+    if (fields.contact_detail !== undefined) {
+      setParts.push('contact_detail = ?');
+      params.push(fields.contact_detail);
+    }
+    if (fields.birthday !== undefined) {
+      setParts.push('birthday = ?');
+      params.push(fields.birthday);
+    }
+    if (fields.notes !== undefined) {
+      setParts.push('notes = ?');
+      params.push(fields.notes);
+    }
+
+    // Always update the 'updated_at' timestamp
+    setParts.push('updated_at = ?');
+    params.push(now());
+
+    if (!setParts.length) return;
+
+    const sql = `UPDATE contact SET ${setParts.join(
+      ', '
+    )} WHERE contact_id = ?`;
+    params.push(contactId);
+    await this.db.run(sql, params);
+  }
+
+  /**
+   * Delete a contact and all dependent rows (via ON DELETE CASCADE).
+   *
+   * @param contactId - The contact_id to delete.
+   * @returns Promise<void>
+   *
+   * Notes:
+   *  - The schema’s foreign key constraints ensure that related records in
+   *    tables such as `interaction`, `cognitive_unit`, and `reminder`
+   *    are automatically removed.
    */
   async delete(contactId: string): Promise<void> {
     if (!contactId) return;
-    await this.db.run(
-      `DELETE FROM contact WHERE contact_id = ?`,
-      [contactId]
-    );
+    await this.db.run(`DELETE FROM contact WHERE contact_id = ?`, [contactId]);
   }
 }
