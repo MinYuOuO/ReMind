@@ -1,17 +1,54 @@
+
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>
-      Settings
-    </ion-title>
+    <ion-title> Settings </ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Tab 3</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content [fullscreen]="true" class="settings-content">
+  <!-- profile block -->
+  <div class="profile">
+    <div class="avatar">
+      <ion-icon name="person" role="img" aria-label="profile"></ion-icon>
+    </div>
+    <div class="profile-name">Name</div>
+  </div>
 
-  <app-explore-container name="Setting Page!"></app-explore-container>
+  <!-- menu list -->
+  <div class="menu-list">
+    <button class="menu-item" type="button">
+      <div class="icon-wrap"><ion-icon name="person-outline"></ion-icon></div>
+      <div class="label">Personal Card</div>
+    </button>
+
+    <button class="menu-item" type="button">
+      <div class="icon-wrap"><ion-icon name="shield-checkmark-outline"></ion-icon></div>
+      <div class="label">Privacy Setting</div>
+    </button>
+
+    <button class="menu-item" type="button">
+      <div class="icon-wrap"><ion-icon name="hardware-chip-outline"></ion-icon></div>
+      <div class="label">AI Feature Settings</div>
+    </button>
+
+    <button class="menu-item" type="button">
+      <div class="icon-wrap"><ion-icon name="notifications-outline"></ion-icon></div>
+      <div class="label">Notification</div>
+    </button>
+
+    <button class="menu-item" type="button">
+      <div class="icon-wrap"><ion-icon name="server-outline"></ion-icon></div>
+      <div class="label">Data Management</div>
+    </button>
+
+    <button class="menu-item" type="button">
+      <div class="icon-wrap"><ion-icon name="cafe-outline"></ion-icon></div>
+      <div class="label">About</div>
+    </button>
+
+    <button class="menu-item" type="button">
+      <div class="icon-wrap"><ion-icon name="help-circle-outline"></ion-icon></div>
+      <div class="label">FAQs</div>
+    </button>
+  </div>
 </ion-content>

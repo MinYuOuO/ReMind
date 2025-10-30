@@ -14,3 +14,115 @@ ion-tab-button {
 ion-icon {
   font-size: 22px;
 }
+
+/* new page styles */
+.settings-content {
+  --background: linear-gradient(180deg, #f0f4fa 0%, #d9e2ef 100%);
+  padding: 18px 16px 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+.profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 8px 6px 20px;
+}
+
+.avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(26,115,232,0.06);
+  border: 1px solid rgba(60,92,93,0.06);
+}
+
+.avatar ion-icon {
+  font-size: 44px;
+  color: #1a73e8;
+}
+
+.profile-name {
+  margin-top: 8px;
+  font-size: 16px;
+  color: #3c5c5d;
+  font-weight: 600;
+}
+
+/* menu list */
+.menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+/* each item looks like the rounded cards in the screenshot */
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.95);
+  border: 1px solid rgba(60,92,93,0.06);
+  box-shadow: 0 8px 18px rgba(26,115,232,0.03);
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.menu-item:active,
+.menu-item:focus {
+  transform: translateY(1px);
+  box-shadow: 0 6px 14px rgba(26,115,232,0.04);
+}
+
+.icon-wrap {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(250,250,255,0.9);
+  flex: 0 0 36px;
+}
+
+.icon-wrap ion-icon {
+  font-size: 20px;
+  color: #1a73e8;
+}
+
+.label {
+  color: #3c5c5d;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* keep the page header at the top */
+ion-header[translucent] {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  /* preserve translucent background behavior */
+  background: transparent;
+}
+
+/* center the title text in both normal and condensed toolbars */
+ion-header ion-toolbar .title-center {
+  display: block;
+  width: 100%;
+  text-align: center;
+  margin: 0 auto;
+}
