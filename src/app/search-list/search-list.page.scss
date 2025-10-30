@@ -1,0 +1,123 @@
+.page {
+  --background: linear-gradient(180deg, #9fb7d6 0%, #eaf1f8 60%, #ffffff 100%);
+}
+
+.page-toolbar {
+  background: linear-gradient(180deg, #9fb7d6 0%, #b8c9de 100%);
+  color: #fff;
+
+  ion-title {
+    margin-left: 50px;
+    font-weight: 800;
+    text-align: center;
+  }
+
+  ion-icon {
+    color: #fff;
+    font-size: 20px;
+  }
+}
+
+/* list 视图 */
+.list-view {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.bg-spacer {
+  flex: 1;
+}
+
+.ask-bar {
+  position: sticky;
+  bottom: 16px;
+  padding: 0 16px 8px;
+}
+
+.ask-card {
+  --background: #fff;
+  --min-height: 44px;
+  color: #3560c8;
+  border-radius: 14px;
+  border: 1px solid #dce3f1;
+  box-shadow: 0 6px 16px rgba(38, 64, 120, .10);
+
+  ion-input::part(native) {
+    --placeholder-color: #6b7aa6;
+    color: #1e3a8a;
+    font-weight: 600;
+    padding-left: 10px;
+  }
+}
+
+/* search 视图 */
+.search-view {
+  padding: 12px 12px 20px;
+}
+
+.form-list {
+  background: transparent;
+}
+
+.pill-card {
+  --background: rgba(255, 255, 255, .95);
+  border-radius: 12px;
+  border: 1px solid #dce3f1;
+  margin: 8px 0 12px;
+  box-shadow: 0 8px 18px rgba(38, 64, 120, .10);
+
+  ion-icon[slot="start"] {
+    color: #6b7aa6;
+  }
+
+  ion-select {
+    color: #1e3a8a;
+    font-weight: 700;
+  }
+
+  ion-select::part(text) {
+    --placeholder-color: rgba(30, 58, 138, .45);
+  }
+
+  ion-icon[slot="end"] {
+    color: #6b7aa6;
+  }
+}
+
+.question-card {
+  --background: rgba(255, 255, 255, .95);
+  border-radius: 12px;
+  border: 1px solid #dce3f1;
+  margin: 4px 0 18px;
+  align-items: flex-start;
+  box-shadow: 0 10px 22px rgba(38, 64, 120, .12);
+
+  ion-icon[slot="start"] {
+    color: #6b7aa6;
+    margin-top: 10px;
+  }
+
+  ion-textarea {
+    width: 100%;
+    min-height: 110px;
+    color: #1e3a8a;
+    font-weight: 600;
+  }
+
+  ion-textarea::part(native) {
+    --placeholder-color: rgba(30, 58, 138, .45);
+  }
+}
+
+.send-wrap {
+  padding: 0 6px;
+}
+
+.send-btn {
+  --background: linear-gradient(180deg, #4f78e6, #3560c8);
+  --border-radius: 12px;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 12px 22px rgba(38, 64, 120, .18);
+}
