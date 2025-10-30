@@ -44,6 +44,7 @@ addIcons({
   templateUrl: 'settings.page.html',
   styleUrls: ['settings.page.scss'],
   imports: [
+    CommonModule,
     IonHeader, 
     IonToolbar, 
     IonTitle, 
