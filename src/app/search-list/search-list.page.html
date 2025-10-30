@@ -12,6 +12,7 @@
       <ion-button fill="clear">
         <ion-icon name="notifications-outline"></ion-icon>
       </ion-button>
+
       <ion-button fill="clear">
         <ion-icon name="shield-checkmark-outline"></ion-icon>
       </ion-button>
@@ -21,36 +22,41 @@
 
 <ion-content [fullscreen]="true" class="page">
   <ng-container [ngSwitch]="view">
-    <!-- list 视图 -->
+    <!-- ========== LIST VIEW ========== -->
     <section *ngSwitchCase="'list'" class="list-view">
       <div class="bg-spacer"></div>
+
       <div class="ask-bar">
         <ion-item lines="none" class="ask-card">
           <ion-input
             placeholder="Ask for anything about friend"
             [(ngModel)]="keyword"
             (keyup.enter)="openSearch()"
-          >
-          </ion-input>
+          ></ion-input>
         </ion-item>
       </div>
     </section>
 
-    <!-- search 视图 -->
+    <!-- ========== SEARCH VIEW ========== -->
     <section *ngSwitchCase="'search'" class="search-view">
       <ion-list lines="none" class="form-list">
         <ion-item class="pill-card">
           <ion-icon name="person-outline" slot="start"></ion-icon>
+
           <ion-select
             interface="action-sheet"
             placeholder="Select Contact"
             [(ngModel)]="selectedContact"
           >
-            <ion-select-option *ngFor="let c of contacts()" [value]="c">
+            <ion-select-option
+              *ngFor="let c of contacts()"
+              [value]="c"
+            >
               {{ c.name }}
               <span *ngIf="c.relationship">({{ c.relationship }})</span>
             </ion-select-option>
           </ion-select>
+
           <ion-icon name="chevron-down-outline" slot="end"></ion-icon>
         </ion-item>
 
@@ -68,6 +74,10 @@
             <ion-icon slot="start" name="paper-plane-outline"></ion-icon>
             Send
           </ion-button>
+        </div>
+
+        <div class="ai-answer" *ngIf="aiAnswer()">
+          {{ aiAnswer() }}
         </div>
       </ion-list>
     </section>

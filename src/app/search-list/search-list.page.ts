@@ -27,6 +27,11 @@ import {
   chevronDownOutline,
   reorderThreeOutline,
   paperPlaneOutline,
+  settingsOutline,
+  mailOutline,
+  sparklesOutline,
+  lockClosedOutline,
+  informationCircleOutline,
 } from 'ionicons/icons';
 
 import { ContactRepo, Contact } from '../core/repos/contact.repo';
@@ -42,6 +47,11 @@ addIcons({
   chevronDownOutline,
   reorderThreeOutline,
   paperPlaneOutline,
+  settingsOutline,
+  mailOutline,
+  sparklesOutline,
+  lockClosedOutline,
+  informationCircleOutline,
 });
 
 @Component({
