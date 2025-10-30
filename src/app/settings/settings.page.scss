@@ -1,16 +1,58 @@
-ion-tab-bar {
-  --background: linear-gradient(180deg, #f0f4fa 0%, #d9e2ef 100%);
-  --color: #3c5c5d;
-  --color-selected: #1a73e8;
-  border-top: 1px solid rgba(60, 92, 93, 0.1);
-  height: 68px;
+.page {
+  --background: linear-gradient(180deg, #9fb7d6 0%, #eaf1f8 60%, #ffffff 100%);
 }
 
-ion-tab-button {
-  font-size: 12px;
-  --ripple-color: #1a73e8;
+/* Header */
+.page-toolbar {
+  background: linear-gradient(180deg, #9fb7d6 0%, #b8c9de 100%);
+  color: #fff;
+
+  ion-title {
+    font-weight: 800;
+    text-align: center;
+  }
+
+  ion-icon {
+    color: #fff;
+    font-size: 20px;
+  }
 }
 
-ion-icon {
-  font-size: 22px;
+/* Main & Subpages */
+.menu-list {
+  padding: 16px;
+  background: transparent;
+}
+
+.menu-card {
+  --background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #dce3f1;
+  margin: 10px 0;
+  box-shadow: 0 6px 16px rgba(38, 64, 120, 0.08);
+  align-items: center;
+
+  ion-icon {
+    color: #6b7aa6;
+    font-size: 22px;
+    margin-right: 8px;
+  }
+
+  ion-label {
+    color: #1e3a8a;
+    font-weight: 700;
+  }
+}
+
+/* Empty tip */
+.empty-tip {
+  text-align: center;
+  color: #6b7aa6;
+  margin-top: 30vh;
+  font-weight: 600;
+}
+
+/* Transition */
+.subpage {
+  padding: 16px;
 }
