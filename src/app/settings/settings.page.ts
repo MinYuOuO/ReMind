@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';   // ← ngIf / ngSwitch 必须有
+import { CommonModule } from '@angular/common';
 import {
   IonHeader,
   IonToolbar,
@@ -14,7 +14,6 @@ import {
 } from '@ionic/angular/standalone';
 import { ExploreContainerComponent } from '../explore-container/explore-container.component';
 
-// register only the icons used on this page to silence the "Could not load icon" warnings
 import { addIcons } from 'ionicons';
 import {
   person,
@@ -25,10 +24,14 @@ import {
   serverOutline,
   cafeOutline,
   helpCircleOutline,
+  arrowBack,
+  callOutline,
+  calendarOutline,
+  mailOutline,
 } from 'ionicons/icons';
 
 addIcons({
-  'person': person,
+  person,
   'person-outline': personOutline,
   'shield-checkmark-outline': shieldCheckmarkOutline,
   'hardware-chip-outline': hardwareChipOutline,
@@ -36,6 +39,10 @@ addIcons({
   'server-outline': serverOutline,
   'cafe-outline': cafeOutline,
   'help-circle-outline': helpCircleOutline,
+  'arrow-back': arrowBack,
+  'call-outline': callOutline,
+  'calendar-outline': calendarOutline,
+  'mail-outline': mailOutline,
 });
 
 @Component({
@@ -45,29 +52,45 @@ addIcons({
   styleUrls: ['settings.page.scss'],
   imports: [
     CommonModule,
-    IonHeader, 
-    IonToolbar, 
-    IonTitle, 
-    IonContent, 
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonContent,
     ExploreContainerComponent,
     IonButtons,
     IonButton,
     IonIcon,
     IonList,
     IonItem,
-    IonLabel,],
+    IonLabel,
+  ],
 })
 export class SettingsPage {
-  // 当前是哪一页：main / privacy / ai / data / about / faq
-  view: 'main' | 'privacy' | 'ai' | 'data' | 'about' | 'faq' = 'main';
+  // 加了两个新的 view: card, notification
+  view:
+    | 'main'
+    | 'privacy'
+    | 'ai'
+    | 'data'
+    | 'about'
+    | 'faq'
+    | 'card'
+    | 'notification' = 'main';
 
-  // 点击左上角 ←
   goBack() {
     this.view = 'main';
   }
 
-  // 点击每一行 menu
-  open(page: 'privacy' | 'ai' | 'data' | 'about' | 'faq') {
+  open(
+    page:
+      | 'privacy'
+      | 'ai'
+      | 'data'
+      | 'about'
+      | 'faq'
+      | 'card'
+      | 'notification',
+  ) {
     this.view = page;
   }
 }
