@@ -21,13 +21,16 @@
 
 <ion-content [fullscreen]="true" class="page">
   <ng-container [ngSwitch]="view">
-
     <!-- list 视图 -->
     <section *ngSwitchCase="'list'" class="list-view">
       <div class="bg-spacer"></div>
       <div class="ask-bar">
         <ion-item lines="none" class="ask-card">
-          <ion-input placeholder="Ask for anything about friend" [(ngModel)]="keyword" (keyup.enter)="openSearch()">
+          <ion-input
+            placeholder="Ask for anything about friend"
+            [(ngModel)]="keyword"
+            (keyup.enter)="openSearch()"
+          >
           </ion-input>
         </ion-item>
       </div>
@@ -38,15 +41,26 @@
       <ion-list lines="none" class="form-list">
         <ion-item class="pill-card">
           <ion-icon name="person-outline" slot="start"></ion-icon>
-          <ion-select interface="action-sheet" placeholder="Select Contact" [(ngModel)]="selectedContact">
-            <ion-select-option *ngFor="let c of contacts" [value]="c">{{ c }}</ion-select-option>
+          <ion-select
+            interface="action-sheet"
+            placeholder="Select Contact"
+            [(ngModel)]="selectedContact"
+          >
+            <ion-select-option *ngFor="let c of contacts()" [value]="c">
+              {{ c.name }}
+              <span *ngIf="c.relationship">({{ c.relationship }})</span>
+            </ion-select-option>
           </ion-select>
           <ion-icon name="chevron-down-outline" slot="end"></ion-icon>
         </ion-item>
 
         <ion-item class="question-card" lines="none">
           <ion-icon name="reorder-three-outline" slot="start"></ion-icon>
-          <ion-textarea auto-grow="true" placeholder="Question" [(ngModel)]="question"></ion-textarea>
+          <ion-textarea
+            auto-grow="true"
+            placeholder="Question"
+            [(ngModel)]="question"
+          ></ion-textarea>
         </ion-item>
 
         <div class="send-wrap">
@@ -57,6 +71,5 @@
         </div>
       </ion-list>
     </section>
-
   </ng-container>
 </ion-content>

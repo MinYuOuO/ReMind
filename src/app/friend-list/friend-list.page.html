@@ -69,7 +69,16 @@
                 <ion-icon name="arrow-back"></ion-icon>
               </ion-button>
             </ion-buttons>
-            <ion-title class="edit-title">Friend</ion-title>
+
+            <ion-title class="edit-title">
+              {{ editingContactId ? 'Edit Friend' : 'New Friend' }}
+            </ion-title>
+
+            <ion-buttons slot="end" *ngIf="editingContactId">
+              <ion-button color="danger" (click)="confirmDelete($event)">
+                <ion-icon name="trash"></ion-icon>
+              </ion-button>
+            </ion-buttons>
           </ion-toolbar>
         </ion-header>
 
@@ -193,7 +202,7 @@
             class="add-interaction-btn"
             (click)="openAddInteractionForCurrent()"
           >
-            <p style="margin: 0px;">Add Interaction</p>
+            <p style="margin: 0px">Add Interaction</p>
           </ion-button>
 
           <ion-button expand="block" class="save-btn" (click)="onSubmit()">
