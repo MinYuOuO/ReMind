@@ -87,7 +87,7 @@
             <div class="profile-camera">
               <ion-icon name="camera"></ion-icon>
             </div>
-            <div class="offline-label">Recorded Offline</div>
+            <div class="offline-label">Person</div>
           </div>
 
           <ion-list class="fields-list">
@@ -346,6 +346,78 @@
             Generate
           </ion-button>
         </section>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- AI Review Screen (like your mockup) -->
+  <ion-modal [isOpen]="showAiReview()" cssClass="ai-review-modal">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar class="generated-toolbar">
+          <ion-buttons slot="start">
+            <ion-button (click)="closeAiReview()">
+              <ion-icon name="arrow-back"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+          <ion-title>Generated</ion-title>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ai-review-body">
+        <ion-item lines="none">
+          <ion-icon name="reorder-three-outline" slot="start"></ion-icon>
+          <ion-label>AI Output</ion-label>
+        </ion-item>
+
+        <div class="ai-block" *ngIf="lastAiFacts() as ai">
+          <!-- summary -->
+          <h3>{{ ai['summary'] || 'No summary' }}</h3>
+
+          <!-- facts -->
+          <div *ngIf="ai['facts']?.length">
+            <h4>Facts</h4>
+            <ul>
+              <li *ngFor="let f of ai['facts']">{{ f }}</li>
+            </ul>
+          </div>
+
+          <!-- contact notes -->
+          <div *ngIf="ai['contact_notes']?.length">
+            <h4>Contact Notes</h4>
+            <ul>
+              <li *ngFor="let n of ai['contact_notes']">{{ n }}</li>
+            </ul>
+          </div>
+
+          <!-- categories -->
+          <div *ngIf="ai['categories']?.length">
+            <h4>Categories</h4>
+            <ul>
+              <li *ngFor="let c of ai['categories']">
+                <strong>{{ c['category'] }}</strong> — {{ c['essence'] }}
+                <span *ngIf="c['confidence']"> ({{ c['confidence'] }}/5)</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Bottom actions -->
+        <div class="ai-review-actions">
+          <ion-button
+            color="danger"
+            expand="block"
+            (click)="rejectAiAndResend()"
+          >
+            <ion-icon name="close-outline" slot="start"></ion-icon>
+            Resend
+          </ion-button>
+
+          <ion-button color="success" expand="block" (click)="acceptAi()">
+            <ion-icon name="save-outline" slot="start"></ion-icon>
+            Accept
+          </ion-button>
+        </div>
       </ion-content>
     </ng-template>
   </ion-modal>

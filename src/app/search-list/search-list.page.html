@@ -22,6 +22,7 @@
 
 <ion-content [fullscreen]="true" class="page">
   <ng-container [ngSwitch]="view">
+
     <!-- ========== LIST VIEW ========== -->
     <section *ngSwitchCase="'list'" class="list-view">
       <div class="bg-spacer"></div>
@@ -35,6 +36,36 @@
           ></ion-input>
         </ion-item>
       </div>
+
+      <!-- history list -->
+      <ion-list lines="none" class="history-list" *ngIf="insights().length; else emptyHistory">
+        <ion-item
+          button
+          detail="false"
+          class="history-card"
+          *ngFor="let ins of insights(); trackBy: trackByInsight"
+          (click)="openFromHistory(ins)"
+        >
+          <ion-icon name="sparkles-outline" slot="start"></ion-icon>
+          <ion-label>
+            <h2>{{ ins.content }}</h2>
+            <p>
+              {{ ins.insight_type | titlecase }}
+              •
+              {{ ins.generated_at | date:'short' }}
+            </p>
+            <p *ngIf="ins.contact_name" class="contact-pill">
+              For: {{ ins.contact_name }}
+            </p>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+
+      <ng-template #emptyHistory>
+        <div class="empty-history">
+          No AI insights yet. Try asking a question 👆
+        </div>
+      </ng-template>
     </section>
 
     <!-- ========== SEARCH VIEW ========== -->
@@ -70,9 +101,9 @@
         </ion-item>
 
         <div class="send-wrap">
-          <ion-button class="send-btn" expand="block" (click)="send()">
+          <ion-button class="send-btn" expand="block" (click)="send()" [disabled]="loading()">
             <ion-icon slot="start" name="paper-plane-outline"></ion-icon>
-            Send
+            {{ loading() ? 'Generating...' : 'Send' }}
           </ion-button>
         </div>
 
@@ -81,5 +112,6 @@
         </div>
       </ion-list>
     </section>
+
   </ng-container>
 </ion-content>

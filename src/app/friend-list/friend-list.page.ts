@@ -47,13 +47,22 @@ import {
   chatbubblesOutline,
   chevronDownOutline,
   paperPlaneOutline,
-} from 'ionicons/icons';
+  sparklesOutline, reorderThreeOutline, closeOutline, saveOutline } from 'ionicons/icons';
 
 import { ContactRepo, Contact, Relationship } from '../core/repos/contact.repo';
 import { DbInitService } from '../core/services/db-inti.service';
 import { SqliteDbService } from '../core/services/db.service';
 import { UserRepo } from '../core/repos/user.repo';
 import { UserIdentityService } from '../core/services/user-identity.service';
+
+import { AiService } from '../core/services/ai.service';
+import { InteractionRepo } from '../core/repos/interaction.repo';
+import {
+  CognitiveUnitRepo,
+  CognitiveUnit,
+} from '../core/repos/cognitive-unit.repo';
+
+import type { InteractionFacts } from '../core/services/ai.service';
 
 @Component({
   selector: 'app-friend-list',
@@ -85,7 +94,7 @@ import { UserIdentityService } from '../core/services/user-identity.service';
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class FriendListPage implements OnInit {
-  // current user (comes from identity service)
+  // current user
   userId = '';
 
   // UI state
@@ -93,7 +102,9 @@ export class FriendListPage implements OnInit {
   contacts = signal<Contact[]>([]);
   query = signal<string>('');
 
-  // computed filtered contacts by query
+  aiUnits: CognitiveUnit[] = [];
+
+  // computed filtered contacts
   filteredContacts = computed(() => {
     const q = this.query().trim().toLowerCase();
     if (!q) return this.contacts();
@@ -108,7 +119,7 @@ export class FriendListPage implements OnInit {
   showModal = signal(false);
   showInteractionModal = signal(false);
 
-  // form model for contact
+  // contact form
   newContact: Partial<Contact> = {
     name: '',
     relationship: 'friend',
@@ -117,10 +128,10 @@ export class FriendListPage implements OnInit {
     notes: '',
   };
 
-  // editing id
+  // editing
   editingContactId: string | null = null;
 
-  // interaction form model
+  // interaction form
   interaction: any = {
     topic: '',
     date: null,
@@ -128,7 +139,7 @@ export class FriendListPage implements OnInit {
     rawNotes: '',
   };
 
-  // select options for interaction
+  // select options
   contactOptions: Contact[] = [];
   relationships: Relationship[] = [
     'friend',
@@ -143,7 +154,7 @@ export class FriendListPage implements OnInit {
   calMonth = new Date().getMonth();
   calendarCells: (number | null)[] = [];
 
-  // interaction calendar state
+  // interaction calendar
   interactionCalendarOpen = false;
   interactionCalYear = new Date().getFullYear();
   interactionCalMonth = new Date().getMonth();
@@ -165,54 +176,42 @@ export class FriendListPage implements OnInit {
   ];
   weekdayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+  // show AI review screen
+  showAiReview = signal(false);
+
+  // last AI output
+  lastAiFacts = signal<InteractionFacts | null>(null);
+
+  // last interaction id (for resend)
+  lastInteractionId = '';
+  lastInteractionContactId = '';
+
   constructor(
     private platform: Platform,
     private contactsRepo: ContactRepo,
     private userRepo: UserRepo,
-    private identity: UserIdentityService, // ✅ use identity
+    private identity: UserIdentityService,
     private dbInit: DbInitService,
-    private db: SqliteDbService
+    private db: SqliteDbService,
+    private interactionRepo: InteractionRepo,
+    private aiService: AiService,
+    private cuRepo: CognitiveUnitRepo
   ) {
-    // register icons
-    addIcons({
-      notificationsOutline,
-      shieldCheckmarkOutline,
-      personOutline,
-      add,
-      arrowBack,
-      camera,
-      briefcaseOutline,
-      starOutline,
-      callOutline,
-      calendarOutline,
-      save,
-      chatbubblesOutline,
-      createOutline,
-      paperPlaneOutline,
-      chevronDownOutline,
-      trash,
-    });
+    addIcons({notificationsOutline,shieldCheckmarkOutline,personOutline,add,arrowBack,trash,camera,briefcaseOutline,starOutline,callOutline,calendarOutline,save,chatbubblesOutline,createOutline,paperPlaneOutline,reorderThreeOutline,closeOutline,saveOutline,sparklesOutline,chevronDownOutline,});
   }
 
   async ngOnInit() {
     try {
       await this.platform.ready();
-
-      // ensure DB/schema
       await this.dbInit.init();
       await this.db.open();
 
-      // get current user from identity service
       await this.identity.ready();
-      this.userId = await this.identity.ensureUserId(); // "u_local"
+      this.userId = await this.identity.ensureUserId();
 
-      // (optional) keep userRepo in sync — safe no-op if exists
       await this.userRepo.ensureLocal(this.userId, 'Local User');
 
-      // load contacts
       await this.load();
-
-      // set options for interaction select
       this.contactOptions = this.contacts();
     } catch (err) {
       console.error('[FriendList] Init failed:', err);
@@ -220,7 +219,6 @@ export class FriendListPage implements OnInit {
     }
   }
 
-  // trackBy for ngFor
   trackById(index: number, item: Contact) {
     return item.contact_id;
   }
@@ -263,7 +261,7 @@ export class FriendListPage implements OnInit {
     }
   }
 
-  openEdit(c: Contact) {
+  async openEdit(c: Contact) {
     this.editingContactId = c.contact_id ?? null;
     this.newContact = {
       name: c.name ?? '',
@@ -272,6 +270,10 @@ export class FriendListPage implements OnInit {
       birthday: c.birthday ?? null,
       notes: c.notes ?? '',
     };
+
+    // load AI notes for this contact
+    await this.loadCognitiveUnitsForContact(c.contact_id);
+
     this.showModal.set(true);
   }
 
@@ -285,6 +287,7 @@ export class FriendListPage implements OnInit {
       birthday: null,
       notes: '',
     };
+    this.aiUnits = []; // clear when closing
   }
 
   async load(event?: CustomEvent) {
@@ -334,7 +337,7 @@ export class FriendListPage implements OnInit {
     const c = this.contacts().find(
       (x) => x.contact_id === this.editingContactId
     );
-    this.openAddInteraction(c);
+    this.openAddInteraction(c!);
   }
 
   closeInteraction() {
@@ -347,35 +350,64 @@ export class FriendListPage implements OnInit {
         alert('Please choose a contact for this interaction');
         return;
       }
-      const interaction_id = (crypto as any).randomUUID
+
+      const contact = this.interaction.contact as Contact;
+      const interaction_id = (crypto as any)?.randomUUID
         ? (crypto as any).randomUUID()
         : 'i-' + Date.now();
-      const contact_id = (this.interaction.contact as Contact).contact_id;
+
       const now = new Date().toISOString();
       const date = this.interaction.date ?? now;
 
-      await this.db.open();
+      // 1) save interaction
       await this.db.run(
-        `INSERT INTO interaction (interaction_id, contact_id, user_id, interaction_date, raw_notes, created_at)
-         VALUES (?,?,?,?,?,?)`,
+        `INSERT INTO interaction (
+        interaction_id,
+        contact_id,
+        user_id,
+        interaction_date,
+        context,
+        user_summary,
+        raw_notes,
+        created_at
+      ) VALUES (?,?,?,?,?,?,?,?)`,
         [
           interaction_id,
-          contact_id,
+          contact.contact_id,
           this.userId,
           date,
+          this.interaction.topic ? 'meeting' : null,
+          this.interaction.topic ?? null,
           this.interaction.rawNotes ?? '',
           now,
         ]
       );
 
-      try {
-        await this.db.saveToStoreAndClose();
-      } catch (e) {
-        console.warn('[FriendList] interaction save failed', e);
-      }
+      // 2) call AI — now returns facts
+      const facts = await this.aiService.summarizeInteractionToFacts({
+        interaction_id,
+        contact_id: contact.contact_id,
+        user_id: this.userId,
+        context: 'social',
+        user_summary: this.interaction.topic ?? '',
+        raw_notes: this.interaction.rawNotes ?? '',
+      });
 
+      // 3) close input modal
       this.showInteractionModal.set(false);
-      alert('Interaction saved');
+
+      // 4) cache for review screen
+      this.lastInteractionId = interaction_id;
+      this.lastInteractionContactId = contact.contact_id;
+      this.lastAiFacts.set(facts);
+
+      // 5) open review screen
+      this.showAiReview.set(true);
+
+      // also refresh AI notes if this contact is currently being edited
+      if (this.editingContactId === contact.contact_id) {
+        await this.loadCognitiveUnitsForContact(contact.contact_id);
+      }
     } catch (err) {
       console.error('[FriendList] onGenerateInteraction failed', err);
       alert('Failed to save interaction');
@@ -442,13 +474,15 @@ export class FriendListPage implements OnInit {
         birthday: null,
         notes: '',
       };
+      this.aiUnits = [];
       await this.load();
     } catch (err) {
       console.error('Failed to create/update contact:', err);
     }
   }
 
-  // calendar helpers
+  // ===== calendar helpers =====
+
   private buildCalendar(year = this.calYear, month = this.calMonth) {
     const firstOfMonth = new Date(year, month, 1);
     const startWeekday = firstOfMonth.getDay();
@@ -629,6 +663,7 @@ export class FriendListPage implements OnInit {
     };
     this.calendarOpen = false;
     this.showInteractionModal.set(false);
+    this.aiUnits = [];
     this.showModal.set(true);
     console.log('[FriendList] Add modal opened — ready for new contact');
   }
@@ -653,9 +688,67 @@ export class FriendListPage implements OnInit {
         birthday: null,
         notes: '',
       };
+      this.aiUnits = [];
       await this.load();
     } catch (err) {
       console.error('Failed to delete contact:', err);
+    }
+  }
+
+  private async loadCognitiveUnitsForContact(contact_id: string) {
+    try {
+      this.aiUnits = await this.cuRepo.listByContact(contact_id);
+    } catch (e) {
+      console.warn('[FriendList] loadCognitiveUnitsForContact failed', e);
+      this.aiUnits = [];
+    }
+  }
+
+  closeAiReview() {
+    this.showAiReview.set(false);
+    this.lastAiFacts.set(null);
+  }
+
+  async acceptAi() {
+    // simplest version: just close; data is already in cognitive_unit
+    this.closeAiReview();
+
+    // optional: reload right-side notes if editing that contact
+    if (this.editingContactId) {
+      await this.loadCognitiveUnitsForContact(this.editingContactId);
+    }
+  }
+
+  async rejectAiAndResend() {
+    if (!this.lastInteractionId || !this.lastInteractionContactId) {
+      alert('No previous interaction to re-process.');
+      return;
+    }
+
+    try {
+      // get original interaction from repo
+      const last = await this.interactionRepo.getById(this.lastInteractionId);
+      if (!last) {
+        alert('Cannot find original interaction.');
+        return;
+      }
+
+      const facts = await this.aiService.summarizeInteractionToFacts({
+        interaction_id: last.interaction_id,
+        contact_id: last.contact_id,
+        user_id: last.user_id,
+        context: last.context ?? 'social',
+        user_summary: last.user_summary ?? '',
+        raw_notes: last.raw_notes ?? '',
+      });
+
+      this.lastAiFacts.set(facts);
+
+      // reload cognitive units for that contact
+      await this.loadCognitiveUnitsForContact(last.contact_id);
+    } catch (err) {
+      console.error('[FriendList] rejectAiAndResend failed', err);
+      alert('Failed to re-generate AI notes.');
     }
   }
 }
