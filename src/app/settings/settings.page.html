@@ -69,19 +69,14 @@
     </section>
 
     <!-- ========== AI FEATURES ========== -->
-    <section *ngSwitchCase="'ai'" class="subpage ai-settings">
+    <section *ngSwitchCase="'ai'" class="subpage">
       <ion-list lines="none" class="menu-list">
         <ion-item class="menu-card">
-          <ion-label>
-            <h2>AI Provider</h2>
-            <p>Select which API to use</p>
-          </ion-label>
-          <ion-select [(ngModel)]="ai.provider" interface="popover" style="color: black;">
-            <ion-select-option value="openai"
-              >OpenAI / ChatGPT</ion-select-option
-            >
+          <ion-label>AI Provider</ion-label>
+          <ion-select [(ngModel)]="aiProvider" interface="action-sheet">
+            <ion-select-option value="none">Disabled</ion-select-option>
+            <ion-select-option value="openai">OpenAI</ion-select-option>
             <ion-select-option value="deepseek">DeepSeek</ion-select-option>
-            <ion-select-option value="custom">Custom</ion-select-option>
           </ion-select>
         </ion-item>
 
@@ -89,49 +84,25 @@
           <ion-label position="stacked">API Key</ion-label>
           <ion-input
             type="password"
+            [(ngModel)]="aiApiKey"
             placeholder="sk-..."
-            [(ngModel)]="ai.apiKey"
-            autocomplete="off"
-          ></ion-input>
-        </ion-item>
-
-        <ion-item class="menu-card">
-          <ion-label position="stacked">Base URL</ion-label>
-          <ion-input
-            placeholder="https://api.openai.com/v1"
-            [(ngModel)]="ai.baseUrl"
           ></ion-input>
         </ion-item>
 
         <ion-item class="menu-card">
           <ion-label position="stacked">Model</ion-label>
           <ion-input
-            placeholder="gpt-4o-mini / deepseek-chat"
-            [(ngModel)]="ai.model"
+            [(ngModel)]="aiModel"
+            placeholder="gpt-4o-mini"
           ></ion-input>
         </ion-item>
 
-        <ion-item class="menu-card">
-          <ion-label>Enable AI features</ion-label>
-          <ion-toggle slot="end" [(ngModel)]="ai.enabled"></ion-toggle>
-        </ion-item>
-
-        <ion-item class="menu-card">
-          <ion-label>Log to AI_PROCESSING_LOG</ion-label>
-          <ion-toggle slot="end" [(ngModel)]="ai.logToDb"></ion-toggle>
+        <ion-item lines="none">
+          <ion-button expand="block" (click)="saveAi()" [disabled]="saving">
+            {{ saving ? 'Saving...' : 'Save AI Settings' }}
+          </ion-button>
         </ion-item>
       </ion-list>
-
-      <div class="ai-save-wrap">
-        <ion-button
-          expand="block"
-          (click)="saveAiSettings()"
-          [disabled]="saving"
-        >
-          <ion-icon name="sparkles-outline" slot="start"></ion-icon>
-          {{ saving ? 'Saving...' : 'Save AI Settings' }}
-        </ion-button>
-      </div>
     </section>
 
     <!-- ========== DATA MANAGEMENT ========== -->

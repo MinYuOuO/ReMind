@@ -1,54 +1,77 @@
 import { Injectable } from '@angular/core';
 import { Preferences } from '@capacitor/preferences';
 
+const KEY_AI_SETTINGS = 'remind.ai.settings';
+
+export type AiProviderName = 'openai' | 'deepseek' | 'none';
+
 export interface AiSettings {
-  provider: 'openai' | 'deepseek' | 'custom';
+  provider: AiProviderName;
   apiKey: string;
-  baseUrl: string;
   model: string;
-  enabled: boolean;
-  logToDb: boolean;
+  // future: temperature, maxTokens, etc.
 }
 
-const PREF_KEY = 'remind.ai.settings';
+const DEFAULT_SETTINGS: AiSettings = {
+  provider: 'none',
+  apiKey: '',
+  model: 'gpt-4o-mini', // default for openai
+};
 
 @Injectable({ providedIn: 'root' })
 export class AiSettingService {
-  async getSettings(): Promise<AiSettings> {
-    const pref = await Preferences.get({ key: PREF_KEY });
-    if (!pref.value) {
-      return {
-        provider: 'openai',
-        apiKey: '',
-        baseUrl: 'https://api.openai.com/v1',
-        model: 'gpt-4o-mini',
-        enabled: true,
-        logToDb: true,
-      };
+  private _cache: AiSettings | null = null;
+
+  /** load settings from storage (or return cached) */
+  async load(): Promise<AiSettings> {
+    if (this._cache) return this._cache;
+    const stored = await Preferences.get({ key: KEY_AI_SETTINGS });
+    if (stored.value) {
+      try {
+        const parsed = JSON.parse(stored.value) as AiSettings;
+        this._cache = { ...DEFAULT_SETTINGS, ...parsed };
+        return this._cache;
+      } catch {
+        this._cache = { ...DEFAULT_SETTINGS };
+        return this._cache;
+      }
     }
-    try {
-      return JSON.parse(pref.value) as AiSettings;
-    } catch {
-      return {
-        provider: 'openai',
-        apiKey: '',
-        baseUrl: 'https://api.openai.com/v1',
-        model: 'gpt-4o-mini',
-        enabled: true,
-        logToDb: true,
-      };
-    }
+    // nothing stored
+    this._cache = { ...DEFAULT_SETTINGS };
+    return this._cache;
   }
 
-  async saveSettings(s: AiSettings): Promise<void> {
+  /** save and update cache */
+  async save(next: Partial<AiSettings>): Promise<AiSettings> {
+    const current = this._cache ? { ...this._cache } : { ...DEFAULT_SETTINGS };
+    const merged: AiSettings = {
+      ...current,
+      ...next,
+    };
     await Preferences.set({
-      key: PREF_KEY,
-      value: JSON.stringify(s),
+      key: KEY_AI_SETTINGS,
+      value: JSON.stringify(merged),
     });
+    this._cache = merged;
+    return merged;
   }
 
+  /** helper for other services: get current provider ready to use */
+  async getActive(): Promise<AiSettings> {
+    return this.load();
+  }
+
+  /** quick check used by pages: is AI ready? */
   async isConfigured(): Promise<boolean> {
-    const s = await this.getSettings();
-    return !!(s.enabled && s.apiKey && s.baseUrl && s.model);
+    const s = await this.load();
+    if (s.provider === 'none') return false;
+    if (!s.apiKey?.trim()) return false;
+    return true;
+  }
+
+  /** reset to default */
+  async reset(): Promise<void> {
+    await Preferences.remove({ key: KEY_AI_SETTINGS });
+    this._cache = { ...DEFAULT_SETTINGS };
   }
 }

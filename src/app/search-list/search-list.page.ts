@@ -135,7 +135,8 @@ export class RSearchPage implements OnInit {
     private dbInit: DbInitService,
     private db: SqliteDbService,
     private router: Router
-  ) {}
+  ) {
+      addIcons({arrowBack,notificationsOutline,shieldCheckmarkOutline,sparklesOutline,personOutline,chevronDownOutline,reorderThreeOutline,paperPlaneOutline});}
 
   async ngOnInit() {
     // make sure DB and user are ready
