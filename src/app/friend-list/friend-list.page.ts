@@ -29,6 +29,8 @@ import {
   IonSearchbar,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
+import { LocalNotifications } from '@capacitor/local-notifications';
+import { NgModule } from '@angular/core';
 
 import {
   notificationsOutline,
@@ -61,6 +63,7 @@ import {
   CognitiveUnitRepo,
   CognitiveUnit,
 } from '../core/repos/cognitive-unit.repo';
+import { NotificationService } from '../core/services/notification.service';
 
 import type { InteractionFacts } from '../core/services/ai.service';
 
@@ -89,7 +92,7 @@ import type { InteractionFacts } from '../core/services/ai.service';
     IonSelectOption,
     IonModal,
     IonTextarea,
-    IonSearchbar,
+    IonSearchbar
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
@@ -186,6 +189,10 @@ export class FriendListPage implements OnInit {
   lastInteractionId = '';
   lastInteractionContactId = '';
 
+  // Add these properties
+  notifications = signal<any[]>([]);
+  hasUnreadNotifications = signal(false);
+
   constructor(
     private platform: Platform,
     private contactsRepo: ContactRepo,
@@ -195,7 +202,8 @@ export class FriendListPage implements OnInit {
     private db: SqliteDbService,
     private interactionRepo: InteractionRepo,
     private aiService: AiService,
-    private cuRepo: CognitiveUnitRepo
+    private cuRepo: CognitiveUnitRepo,
+    private notificationService: NotificationService
   ) {
     addIcons({notificationsOutline,shieldCheckmarkOutline,personOutline,add,arrowBack,trash,camera,briefcaseOutline,starOutline,callOutline,calendarOutline,save,chatbubblesOutline,createOutline,paperPlaneOutline,reorderThreeOutline,closeOutline,saveOutline,sparklesOutline,chevronDownOutline,});
   }
@@ -213,6 +221,24 @@ export class FriendListPage implements OnInit {
 
       await this.load();
       this.contactOptions = this.contacts();
+
+      // Schedule all birthday notifications
+      await this.notificationService.scheduleBirthdayNotifications();
+
+      // // Add notification tap handler
+      // LocalNotifications.addListener('localNotificationActionPerformed', 
+      //   (notification) => {
+      //     const contactId = notification.notification.extra?.contactId;
+      //     if (contactId) {
+      //       const contact = this.contacts().find(c => c.contact_id === contactId);
+      //       if (contact) {
+      //         this.openEdit(contact);
+      //       }
+      //     }
+      // );
+
+      // // Add this after other init code
+      // await this.loadNotifications();
     } catch (err) {
       console.error('[FriendList] Init failed:', err);
       this.loading.set(false);
@@ -440,6 +466,8 @@ export class FriendListPage implements OnInit {
       await this.dbInit.init();
       await this.db.open();
 
+      let contactId: string;
+
       if (this.editingContactId) {
         await this.contactsRepo.update(this.editingContactId, {
           name: this.newContact.name,
@@ -448,7 +476,10 @@ export class FriendListPage implements OnInit {
           birthday: this.newContact.birthday ?? null,
           notes: this.newContact.notes ?? null,
         });
+        contactId = this.editingContactId;
       } else {
+        // New contact
+        contactId = 'c-' + Date.now(); // Or however you generate IDs
         await this.contactsRepo.createMinimal(
           this.userId,
           this.newContact.name,
@@ -457,7 +488,16 @@ export class FriendListPage implements OnInit {
           this.newContact.birthday ?? '',
           this.newContact.notes ?? ''
         );
+
+        // Notify for new contact
+        await this.notificationService.notifyNewContact({
+          contact_id: contactId,
+          name: this.newContact.name
+        });
       }
+
+      // Reschedule all birthday notifications after adding/updating contact
+      await this.notificationService.scheduleBirthdayNotifications();
 
       try {
         await this.db.saveToStoreAndClose();
@@ -751,4 +791,67 @@ export class FriendListPage implements OnInit {
       alert('Failed to re-generate AI notes.');
     }
   }
+
+  // Add this new test method
+  async testNotification() {
+    try {
+      // First check if we have permission
+      const permResult = await LocalNotifications.requestPermissions();
+      console.log('Permission result:', permResult);
+      
+      if (!permResult.display) {
+        alert('Please enable notifications in your device settings');
+        return;
+      }
+
+      const notificationId = Math.floor(Math.random() * 100000);
+      
+      // Send notification immediately
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            id: notificationId,
+            title: "Test Notification",
+            body: "This is a test notification! 📱",
+            // Fix: sound should be string or null
+            sound: 'notification.wav',
+            attachments: undefined,
+            actionTypeId: '',
+            extra: null
+          }
+        ]
+      });
+      
+      console.log('Test notification sent!');
+    } catch (err) {
+      console.error('Failed to send test notification:', err);
+      alert('Error: ' + (err as any).message);
+    }
+  }
+
+  // // Add these new methods
+  // async loadNotifications() {
+  //   const notifications = await this.notificationService.getNotifications();
+  //   this.notifications.set(notifications);
+  //   this.hasUnreadNotifications.set(notifications.some(n => !n.read));
+  // }
+
+  // async openNotifications(ev: any) {
+  //   // Mark notifications as read
+  //   await this.notificationService.markAllAsRead();
+  //   this.hasUnreadNotifications.set(false);
+    
+  // }
+
+  async onNotificationClick(notification: any) {
+    // Handle notification click - e.g. open relevant contact
+    if (notification.contactId) {
+      const contact = this.contacts().find(c => c.contact_id === notification.contactId);
+      if (contact) {
+        this.openEdit(contact);
+      }
+    }
+  }
+
+  // ...rest of existing code...
 }

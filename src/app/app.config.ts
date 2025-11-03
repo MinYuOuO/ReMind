@@ -6,6 +6,8 @@ import { provideIonicAngular } from '@ionic/angular/standalone';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
-    provideIonicAngular(),
-  ],
+    provideIonicAngular({
+      mode: 'ios'
+    })
+  ]
 };

@@ -28,6 +28,7 @@ import {
   sparklesOutline,
   settingsOutline, callOutline, calendarOutline, mailOutline } from 'ionicons/icons';
 import { AiSettingService } from '../core/services/ai-setting.service';
+import { ActivatedRoute } from '@angular/router';
 
 addIcons({
   'person-outline': personOutline,
@@ -82,7 +83,7 @@ export class SettingsPage implements OnInit {
 
   saving = false;
 
-  constructor(private aiSettings: AiSettingService) {
+  constructor(private aiSettings: AiSettingService, private route: ActivatedRoute) {
       addIcons({arrowBack,personOutline,notificationsOutline,lockClosedOutline,sparklesOutline,settingsOutline,informationCircleOutline,helpCircleOutline,callOutline,calendarOutline,mailOutline});}
 
   async ngOnInit() {
@@ -91,6 +92,13 @@ export class SettingsPage implements OnInit {
     this.aiProvider = s.provider;
     this.aiApiKey = s.apiKey;
     this.aiModel = s.model;
+
+    // Check if we should open a specific view
+    this.route.queryParams.subscribe(params => {
+      if (params['view']) {
+        this.view = params['view'];
+      }
+    });
   }
 
   goBack() {

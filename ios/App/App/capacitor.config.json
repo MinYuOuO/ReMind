@@ -23,7 +23,12 @@
 			"electronIsEncryption": true,
 			"electronWindowsLocation": "C:\\ProgramData\\CapacitorDatabases",
 			"electronMacLocation": "/Volumes/Development_Lacie/Development/Databases",
-			"electronLinuxLocation": "Databases"
+			"electronLinuxLocation": "Databases",
+			"LocalNotifications": {
+				"smallIcon": "ic_stat_icon_config_sample",
+				"iconColor": "#488AFF",
+				"sound": "beep.wav"
+			}
 		}
 	},
 	"packageClassList": [
@@ -31,6 +36,7 @@
 		"AppPlugin",
 		"HapticsPlugin",
 		"KeyboardPlugin",
+		"LocalNotificationsPlugin",
 		"PreferencesPlugin",
 		"SplashScreenPlugin",
 		"StatusBarPlugin"

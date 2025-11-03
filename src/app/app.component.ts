@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
 import { Platform } from '@ionic/angular';
 import { SplashScreen } from '@capacitor/splash-screen';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import { DbInitService } from './core/services/db-inti.service';
 import { SqliteDbService } from './core/services/db.service';
 
@@ -30,10 +31,14 @@ export class AppComponent {
     await this.platform.ready();
     console.log('[App] Platform ready — initializing SQLite...');
     
-    // Initialize database first (which handles web store init)
+    // Request notification permissions early
+    const permResult = await LocalNotifications.requestPermissions();
+    console.log('[App] Notification permissions:', permResult);
+    
+    // Initialize database
     await this.dbInit.init();
     console.log('[App] Database initialized.');
-    
+
     await new Promise(r => setTimeout(r, 400));
     await SplashScreen.hide();
   } catch (err) {
