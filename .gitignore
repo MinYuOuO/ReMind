@@ -69,10 +69,8 @@ testem.log
 .DS_Store
 Thumbs.db
 
-# --- Environment & Firebase ---
-# DO NOT COMMIT real Firebase keys or secrets
+# --- Environment ---
 /src/environments/environment.ts
 /src/environments/environment.prod.ts
 .env
 .env.*
-firebase-debug.log
