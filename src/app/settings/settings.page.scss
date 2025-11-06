@@ -63,6 +63,7 @@
   align-items: center;
   padding: 18px 16px 100px;
   gap: 18px;
+  position: relative;
 }
 
 .avatar-wrap {
@@ -211,4 +212,428 @@ ion-header[translucent] {
   top: 0;
   z-index: 20;
   background: transparent;
+}
+
+/* Calendar & personal-card adjustments (keeps original rules intact, adds missing pieces
+   so the calendar rendered in settings.page.html matches friend-list styles) */
+
+.personal-card {
+  position: relative;
+}
+
+/* ensure the readonly birthday input uses readable text and doesn't inherit a dark bar */
+.personal-card ion-item[button] {
+  --background: transparent;
+  --background-focused: transparent;
+  --padding-start: 12px;
+  --padding-end: 12px;
+}
+
+.personal-card ion-input[readonly] {
+  color: #111;
+  opacity: 1;
+}
+
+/* Calendar container */
+.calendar-wrap {
+  margin: 8px 16px 0;
+  background: #fff;
+  color: #111;
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  /* keep it visually separated from the black bars */
+}
+
+/* Header with navigation */
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 6px;
+  user-select: none;
+}
+
+.calendar-header button {
+  background: transparent;
+  border: none;
+  color: #333;
+  font-size: 14px;
+  padding: 6px 8px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.calendar-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #222;
+}
+
+/* Grid layout for weekdays and days */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.calendar-weekday {
+  font-size: 11px;
+  text-align: center;
+  color: #777;
+  padding: 4px 0;
+}
+
+/* Individual day cell */
+.calendar-cell {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: transparent;
+  color: #222;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+/* empty cells (before/after month) */
+.calendar-cell.empty {
+  opacity: 0.18;
+  cursor: default;
+  color: rgba(0, 0, 0, 0.15);
+  background: transparent;
+}
+
+/* selected day appearance */
+.calendar-cell.selected {
+  background: #387ef5;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(56, 126, 245, 0.18);
+}
+
+/* hover affordance on clickable days */
+.calendar-cell:not(.empty):hover {
+  background: rgba(56, 126, 245, 0.06);
+}
+
+/* make sure the calendar doesn't overflow the page */
+.calendar-wrap {
+  max-width: calc(100% - 24px);
+  overflow: hidden;
+}
+
+/* small screens: slightly reduce sizes */
+@media (max-width: 420px) {
+  .calendar-cell {
+    min-height: 32px;
+    font-size: 13px;
+  }
+
+  .calendar-header button {
+    padding: 4px 6px;
+    font-size: 13px;
+  }
+}
+
+/* Personal card — input row visuals (matches provided image style) */
+.personal-card .card-block {
+  display: block;
+  gap: 8px;
+}
+
+/* common input row look */
+.personal-card .card-block .input-row {
+  --background: #fff;
+  --background-focused: #fff;
+  margin: 8px 12px;
+  border-radius: 10px;
+  padding: 8px 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+  align-items: center;
+  display: flex;
+  height: 48px;
+}
+
+/* icon on left */
+.personal-card .card-block .input-row ion-icon {
+  font-size: 20px;
+  margin-right: 8px;
+  color: rgba(51, 51, 51, 0.36);
+}
+
+/* name field: blue, slightly larger and bolder per image */
+.personal-card .card-block ion-input.field-name,
+.personal-card .card-block .field-name {
+  color: var(--ion-color-primary, #387ef5);
+  font-weight: 600;
+  font-size: 15px;
+  width: 100%;
+}
+
+/* Strongly enforce input text / placeholder colors for personal card fields */
+.personal-card .card-block ion-input.field-name,
+.personal-card .card-block ion-input.field-name input {
+  color: var(--ion-color-primary, #387ef5) !important;
+}
+
+.personal-card .card-block ion-input.field-name input::placeholder {
+  color: rgba(56,126,245,0.35) !important;
+}
+
+/* contact/detail field uses darker neutral color */
+.personal-card .card-block ion-input.field-detail,
+.personal-card .card-block ion-input.field-detail input {
+  color: #20354e !important;
+}
+
+.personal-card .card-block ion-input.field-detail input::placeholder {
+  color: rgba(32,53,78,0.35) !important;
+}
+
+/* contact & birthday: neutral darker text */
+.personal-card .card-block ion-input.field-detail,
+.personal-card .card-block ion-input.field-bday,
+.personal-card .card-block .field-detail,
+.personal-card .card-block .field-bday {
+  color: #222;
+  font-weight: 500;
+  font-size: 14px;
+  width: 100%;
+}
+
+/* Ensure textarea notes keep dark text */
+.personal-card .notes-area ion-textarea,
+.personal-card .notes-area ion-textarea textarea {
+  color: #20354e !important;
+}
+
+/* Notes textarea: force black text */
+.personal-card .notes-area ion-textarea.notes-text,
+.personal-card .notes-area ion-textarea.notes-text textarea {
+  color: #000 !important;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+/* tiny spacing tweak so the input content aligns like the screenshot */
+.personal-card .card-block .input-row .native-input,
+.personal-card .card-block .input-row input {
+  padding: 0;
+  margin: 0;
+}
+
+/* Calendar & personal-card adjustments (keeps original rules intact, adds missing pieces
+   so the calendar rendered in settings.page.html matches friend-list styles) */
+
+.personal-card {
+  position: relative;
+}
+
+/* ensure the readonly birthday input uses readable text and doesn't inherit a dark bar */
+.personal-card ion-item[button] {
+  --background: transparent;
+  --background-focused: transparent;
+  --padding-start: 12px;
+  --padding-end: 12px;
+}
+
+.personal-card ion-input[readonly] {
+  color: #111;
+  opacity: 1;
+}
+
+/* Calendar container */
+.calendar-wrap {
+  margin: 8px 16px 0;
+  background: #fff;
+  color: #111;
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  /* keep it visually separated from the black bars */
+}
+
+/* Header with navigation */
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 6px;
+  user-select: none;
+}
+
+.calendar-header button {
+  background: transparent;
+  border: none;
+  color: #333;
+  font-size: 14px;
+  padding: 6px 8px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.calendar-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #222;
+}
+
+/* Grid layout for weekdays and days */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.calendar-weekday {
+  font-size: 11px;
+  text-align: center;
+  color: #777;
+  padding: 4px 0;
+}
+
+/* Individual day cell */
+.calendar-cell {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: transparent;
+  color: #222;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+/* empty cells (before/after month) */
+.calendar-cell.empty {
+  opacity: 0.18;
+  cursor: default;
+  color: rgba(0, 0, 0, 0.15);
+  background: transparent;
+}
+
+/* selected day appearance */
+.calendar-cell.selected {
+  background: #387ef5;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(56, 126, 245, 0.18);
+}
+
+/* hover affordance on clickable days */
+.calendar-cell:not(.empty):hover {
+  background: rgba(56, 126, 245, 0.06);
+}
+
+/* make sure the calendar doesn't overflow the page */
+.calendar-wrap {
+  max-width: calc(100% - 24px);
+  overflow: hidden;
+}
+
+/* small screens: slightly reduce sizes */
+@media (max-width: 420px) {
+  .calendar-cell {
+    min-height: 32px;
+    font-size: 13px;
+  }
+
+  .calendar-header button {
+    padding: 4px 6px;
+    font-size: 13px;
+  }
+}
+
+/* Personal card — input row visuals (matches provided image style) */
+.personal-card .card-block {
+  display: block;
+  gap: 8px;
+}
+
+/* common input row look */
+.personal-card .card-block .input-row {
+  --background: #fff;
+  --background-focused: #fff;
+  margin: 8px 12px;
+  border-radius: 10px;
+  padding: 8px 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+  align-items: center;
+  display: flex;
+  height: 48px;
+}
+
+/* icon on left */
+.personal-card .card-block .input-row ion-icon {
+  font-size: 20px;
+  margin-right: 8px;
+  color: rgba(51, 51, 51, 0.36);
+}
+
+/* name field: blue, slightly larger and bolder per image */
+.personal-card .card-block ion-input.field-name,
+.personal-card .card-block .field-name {
+  color: var(--ion-color-primary, #387ef5);
+  font-weight: 600;
+  font-size: 15px;
+  width: 100%;
+}
+
+/* Strongly enforce input text / placeholder colors for personal card fields */
+.personal-card .card-block ion-input.field-name,
+.personal-card .card-block ion-input.field-name input {
+  color: var(--ion-color-primary, #387ef5) !important;
+}
+
+.personal-card .card-block ion-input.field-name input::placeholder {
+  color: rgba(56,126,245,0.35) !important;
+}
+
+/* contact/detail field uses darker neutral color */
+.personal-card .card-block ion-input.field-detail,
+.personal-card .card-block ion-input.field-detail input {
+  color: #20354e !important;
+}
+
+.personal-card .card-block ion-input.field-detail input::placeholder {
+  color: rgba(32,53,78,0.35) !important;
+}
+
+/* contact & birthday: neutral darker text */
+.personal-card .card-block ion-input.field-detail,
+.personal-card .card-block ion-input.field-bday,
+.personal-card .card-block .field-detail,
+.personal-card .card-block .field-bday {
+  color: #222;
+  font-weight: 500;
+  font-size: 14px;
+  width: 100%;
+}
+
+/* Ensure textarea notes keep dark text */
+.personal-card .notes-area ion-textarea,
+.personal-card .notes-area ion-textarea textarea {
+  color: #20354e !important;
+}
+
+/* Notes textarea: force black text */
+.personal-card .notes-area ion-textarea.notes-text,
+.personal-card .notes-area ion-textarea.notes-text textarea {
+  color: #000 !important;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+/* tiny spacing tweak so the input content aligns like the screenshot */
+.personal-card .card-block .input-row .native-input,
+.personal-card .card-block .input-row input {
+  padding: 0;
+  margin: 0;
 }

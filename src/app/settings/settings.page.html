@@ -157,25 +157,50 @@
       </div>
 
       <div class="card-block">
-        <div class="card-row">
-          <ion-icon name="person-outline"></ion-icon>
-          <span>Jxx Jxx Jxx</span>
-        </div>
-        <div class="card-row">
-          <ion-icon name="call-outline"></ion-icon>
-          <span>018 - 1234 5678</span>
-        </div>
-        <div class="card-row">
-          <ion-icon name="calendar-outline"></ion-icon>
-          <span>01 / 01 / 2000</span>
+        <ion-item lines="none" class="input-row">
+          <ion-icon name="person-outline" slot="start"></ion-icon>
+          <ion-input class="field-name" placeholder="Full name" [(ngModel)]="personalUsername"></ion-input>
+        </ion-item>
+
+        <ion-item lines="none" class="input-row">
+          <ion-icon name="call-outline" slot="start"></ion-icon>
+          <ion-input class="field-detail" placeholder="Contact details" [(ngModel)]="personalContactDetails"></ion-input>
+        </ion-item>
+
+        <ion-item lines="none" button (click)="toggleCalendar(true)">
+          <ion-icon name="calendar-outline" slot="start"></ion-icon>
+          <ion-input [value]="personalBirthday" placeholder="Birthday (YYYY-MM-DD)" readonly></ion-input>
+        </ion-item>
+        <div *ngIf="calendarOpen" class="calendar-wrap">
+          <div class="calendar-header">
+            <button (click)="prevYear()" type="button">&lt;&lt;</button>
+            <button (click)="prevMonth()" type="button">&lt;</button>
+            <div class="calendar-title">{{ monthNames[calMonth] }} {{ calYear }}</div>
+            <button (click)="nextMonth()" type="button">&gt;</button>
+            <button (click)="nextYear()" type="button">&gt;&gt;</button>
+          </div>
+          <div class="calendar-grid">
+            <div class="calendar-weekday" *ngFor="let w of weekdayNames">{{ w }}</div>
+            <div class="calendar-cell"
+                 *ngFor="let day of calendarCells; let i = index"
+                 [class.empty]="day === null"
+                 [class.selected]="day !== null && isSelectedDay(day!)"
+                 (click)="day !== null && selectDay(day!)">
+              {{ day !== null ? day : '' }}
+            </div>
+          </div>
         </div>
       </div>
 
       <div class="notes-block">
         <label class="notes-label">Notes</label>
         <div class="notes-area">
-          <!-- later can bind ngModel -->
+          <ion-textarea rows="5" placeholder="Notes about yourself" [(ngModel)]="personalNotes"></ion-textarea>
         </div>
+      </div>
+
+      <div style="padding:16px;">
+        <ion-button expand="block" (click)="savePersonalCard()">Save Personal Card</ion-button>
       </div>
     </section>
 

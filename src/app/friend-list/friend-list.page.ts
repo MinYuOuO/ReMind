@@ -217,8 +217,11 @@ export class FriendListPage implements OnInit {
       await this.identity.ready();
       this.userId = await this.identity.ensureUserId();
 
-      await this.userRepo.ensureLocal(this.userId, 'Local User');
-
+      // Do not call ensureLocal here to avoid overwriting the saved username.
+      // The DB is initialized via DbInitService and SettingsPage reads/writes
+      // the deterministic 'u_local' row directly.
+      // await this.userRepo.ensureLocal(this.userId);
+      
       await this.load();
       this.contactOptions = this.contacts();
 

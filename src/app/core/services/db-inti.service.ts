@@ -205,16 +205,20 @@ export class DbInitService
       }
 
       // Seed local user row (idempotent)
+      console.log('[DB] seeding local user u_local (username may be empty)');
       await this.db.run(
         `INSERT OR IGNORE INTO user (user_id, username) VALUES (?, ?)`,
-        ['u_local', 'Local User']
+        ['u_local', '']
       );
+      console.log('[DB] seed complete (INSERT OR IGNORE executed)');
 
       // Persist schema + seed to web store and close wrapper so data is flushed
       try {
+        console.log('[DB] saving to web store and closing DB wrapper...');
         await this.db.saveToStoreAndClose();
         console.log('[DB] persisted schema and seed to web store');
       } catch (e) {
+        console.warn('[DB] failed to persist schema/seed:', e);
         console.warn('[DB] failed to persist schema/seed:', e);
       }
 
