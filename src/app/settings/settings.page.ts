@@ -359,7 +359,12 @@ export class SettingsPage implements OnInit {
         console.warn('[Settings] saveToStoreAndClose failed', e);
       }
 
-      alert('Personal card saved.');
+      // on success, return to main settings view (no popup)
+      console.log('[Settings] Personal card saved:', {
+        user_id: this.personalUserId,
+        username: this.personalUsername,
+      });
+      this.view = 'main';
     } catch (err) {
       console.error('[Settings] savePersonalCard failed', err);
       alert('Failed to save personal card.');
