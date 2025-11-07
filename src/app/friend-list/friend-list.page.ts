@@ -49,7 +49,11 @@ import {
   chatbubblesOutline,
   chevronDownOutline,
   paperPlaneOutline,
-  sparklesOutline, reorderThreeOutline, closeOutline, saveOutline } from 'ionicons/icons';
+  sparklesOutline,
+  reorderThreeOutline,
+  closeOutline,
+  saveOutline,
+} from 'ionicons/icons';
 
 import { ContactRepo, Contact, Relationship } from '../core/repos/contact.repo';
 import { DbInitService } from '../core/services/db-inti.service';
@@ -58,6 +62,7 @@ import { UserRepo } from '../core/repos/user.repo';
 import { UserIdentityService } from '../core/services/user-identity.service';
 
 import { AiService } from '../core/services/ai.service';
+import { AiSettingService } from '../core/services/ai-setting.service';
 import { InteractionRepo } from '../core/repos/interaction.repo';
 import {
   CognitiveUnitRepo,
@@ -92,7 +97,7 @@ import type { InteractionFacts } from '../core/services/ai.service';
     IonSelectOption,
     IonModal,
     IonTextarea,
-    IonSearchbar
+    IonSearchbar,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
@@ -141,6 +146,13 @@ export class FriendListPage implements OnInit {
     contact: null,
     rawNotes: '',
   };
+
+  private readonly EMPTY_FACTS = {
+    summary: '',
+    facts: [],
+    contact_notes: [],
+    categories: [],
+  } as const;
 
   // select options
   contactOptions: Contact[] = [];
@@ -203,9 +215,31 @@ export class FriendListPage implements OnInit {
     private interactionRepo: InteractionRepo,
     private aiService: AiService,
     private cuRepo: CognitiveUnitRepo,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private aiSetting: AiSettingService
   ) {
-    addIcons({notificationsOutline,shieldCheckmarkOutline,personOutline,add,arrowBack,trash,camera,briefcaseOutline,starOutline,callOutline,calendarOutline,save,chatbubblesOutline,createOutline,paperPlaneOutline,reorderThreeOutline,closeOutline,saveOutline,sparklesOutline,chevronDownOutline,});
+    addIcons({
+      notificationsOutline,
+      shieldCheckmarkOutline,
+      personOutline,
+      add,
+      arrowBack,
+      trash,
+      camera,
+      briefcaseOutline,
+      starOutline,
+      callOutline,
+      calendarOutline,
+      save,
+      chatbubblesOutline,
+      createOutline,
+      paperPlaneOutline,
+      reorderThreeOutline,
+      closeOutline,
+      saveOutline,
+      sparklesOutline,
+      chevronDownOutline,
+    });
   }
 
   async ngOnInit() {
@@ -221,7 +255,7 @@ export class FriendListPage implements OnInit {
       // The DB is initialized via DbInitService and SettingsPage reads/writes
       // the deterministic 'u_local' row directly.
       // await this.userRepo.ensureLocal(this.userId);
-      
+
       await this.load();
       this.contactOptions = this.contacts();
 
@@ -229,7 +263,7 @@ export class FriendListPage implements OnInit {
       await this.notificationService.scheduleBirthdayNotifications();
 
       // // Add notification tap handler
-      // LocalNotifications.addListener('localNotificationActionPerformed', 
+      // LocalNotifications.addListener('localNotificationActionPerformed',
       //   (notification) => {
       //     const contactId = notification.notification.extra?.contactId;
       //     if (contactId) {
@@ -391,14 +425,8 @@ export class FriendListPage implements OnInit {
       // 1) save interaction
       await this.db.run(
         `INSERT INTO interaction (
-        interaction_id,
-        contact_id,
-        user_id,
-        interaction_date,
-        context,
-        user_summary,
-        raw_notes,
-        created_at
+        interaction_id, contact_id, user_id, interaction_date,
+        context, user_summary, raw_notes, created_at
       ) VALUES (?,?,?,?,?,?,?,?)`,
         [
           interaction_id,
@@ -412,28 +440,32 @@ export class FriendListPage implements OnInit {
         ]
       );
 
-      // 2) call AI — now returns facts
-      const facts = await this.aiService.summarizeInteractionToFacts({
-        interaction_id,
-        contact_id: contact.contact_id,
-        user_id: this.userId,
-        context: 'social',
-        user_summary: this.interaction.topic ?? '',
-        raw_notes: this.interaction.rawNotes ?? '',
-      });
+      // 2) configure provider from Settings just-in-time
+      const aiReady = await this.ensureAiProviderConfigured();
 
-      // 3) close input modal
+      // 3) call AI (may return null if provider not configured)
+      const facts =
+        aiReady === 'ready'
+          ? await this.aiService.summarizeInteractionToFacts({
+              interaction_id,
+              contact_id: contact.contact_id,
+              user_id: this.userId,
+              context: 'social',
+              user_summary: this.interaction.topic ?? '',
+              raw_notes: this.interaction.rawNotes ?? '',
+            })
+          : null;
+
+      // 4) close input modal and show review
       this.showInteractionModal.set(false);
-
-      // 4) cache for review screen
       this.lastInteractionId = interaction_id;
       this.lastInteractionContactId = contact.contact_id;
-      this.lastAiFacts.set(facts);
 
-      // 5) open review screen
+      // Always open AI review; if no AI, show empty summary
+      this.lastAiFacts.set(facts ?? (this.EMPTY_FACTS as any));
       this.showAiReview.set(true);
 
-      // also refresh AI notes if this contact is currently being edited
+      // Refresh cognitive units if editing same contact
       if (this.editingContactId === contact.contact_id) {
         await this.loadCognitiveUnitsForContact(contact.contact_id);
       }
@@ -495,7 +527,7 @@ export class FriendListPage implements OnInit {
         // Notify for new contact
         await this.notificationService.notifyNewContact({
           contact_id: contactId,
-          name: this.newContact.name
+          name: this.newContact.name,
         });
       }
 
@@ -747,6 +779,20 @@ export class FriendListPage implements OnInit {
     }
   }
 
+  private async ensureAiProviderConfigured(): Promise<'ready' | 'none'> {
+    const s = await this.aiSetting.getActive();
+    if (s.provider === 'openai' && s.apiKey?.trim()) {
+      this.aiService.useOpenAI(s.apiKey, s.model || 'gpt-4o-mini');
+      return 'ready';
+    }
+    if (s.provider === 'deepseek' && s.apiKey?.trim()) {
+      this.aiService.useDeepSeek(s.apiKey, s.model || 'deepseek-chat');
+      return 'ready';
+    }
+    // leave provider unset => AiService will return null
+    return 'none';
+  }
+
   closeAiReview() {
     this.showAiReview.set(false);
     this.lastAiFacts.set(null);
@@ -767,12 +813,20 @@ export class FriendListPage implements OnInit {
       alert('No previous interaction to re-process.');
       return;
     }
-
     try {
-      // get original interaction from repo
       const last = await this.interactionRepo.getById(this.lastInteractionId);
       if (!last) {
         alert('Cannot find original interaction.');
+        return;
+      }
+
+      const aiReady = await this.ensureAiProviderConfigured();
+      if (aiReady === 'none') {
+        // keep the review page open but inform the user
+        alert(
+          'AI provider is not configured. Set your API key in Settings → AI.'
+        );
+        this.lastAiFacts.set(this.EMPTY_FACTS as any);
         return;
       }
 
@@ -785,9 +839,7 @@ export class FriendListPage implements OnInit {
         raw_notes: last.raw_notes ?? '',
       });
 
-      this.lastAiFacts.set(facts);
-
-      // reload cognitive units for that contact
+      this.lastAiFacts.set(facts ?? (this.EMPTY_FACTS as any));
       await this.loadCognitiveUnitsForContact(last.contact_id);
     } catch (err) {
       console.error('[FriendList] rejectAiAndResend failed', err);
@@ -801,30 +853,30 @@ export class FriendListPage implements OnInit {
       // First check if we have permission
       const permResult = await LocalNotifications.requestPermissions();
       console.log('Permission result:', permResult);
-      
+
       if (!permResult.display) {
         alert('Please enable notifications in your device settings');
         return;
       }
 
       const notificationId = Math.floor(Math.random() * 100000);
-      
+
       // Send notification immediately
       await LocalNotifications.schedule({
         notifications: [
           {
             id: notificationId,
-            title: "Test Notification",
-            body: "This is a test notification! 📱",
+            title: 'Test Notification',
+            body: 'This is a test notification! 📱',
             // Fix: sound should be string or null
             sound: 'notification.wav',
             attachments: undefined,
             actionTypeId: '',
-            extra: null
-          }
-        ]
+            extra: null,
+          },
+        ],
       });
-      
+
       console.log('Test notification sent!');
     } catch (err) {
       console.error('Failed to send test notification:', err);
@@ -843,13 +895,15 @@ export class FriendListPage implements OnInit {
   //   // Mark notifications as read
   //   await this.notificationService.markAllAsRead();
   //   this.hasUnreadNotifications.set(false);
-    
+
   // }
 
   async onNotificationClick(notification: any) {
     // Handle notification click - e.g. open relevant contact
     if (notification.contactId) {
-      const contact = this.contacts().find(c => c.contact_id === notification.contactId);
+      const contact = this.contacts().find(
+        (c) => c.contact_id === notification.contactId
+      );
       if (contact) {
         this.openEdit(contact);
       }
