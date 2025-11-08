@@ -30,7 +30,7 @@ import {
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import { NgModule } from '@angular/core';
+import { Router } from '@angular/router';
 
 import {
   notificationsOutline,
@@ -216,7 +216,8 @@ export class FriendListPage implements OnInit {
     private aiService: AiService,
     private cuRepo: CognitiveUnitRepo,
     private notificationService: NotificationService,
-    private aiSetting: AiSettingService
+    private aiSetting: AiSettingService,
+    private router: Router
   ) {
     addIcons({
       notificationsOutline,
@@ -822,10 +823,13 @@ export class FriendListPage implements OnInit {
 
       const aiReady = await this.ensureAiProviderConfigured();
       if (aiReady === 'none') {
-        // keep the review page open but inform the user
-        alert(
-          'AI provider is not configured. Set your API key in Settings → AI.'
+        const confirmed = confirm(
+          'AI provider is not configured.\nWould you like to open Settings → AI now?'
         );
+        if (confirmed) {
+          // Navigate directly to AI Settings tab
+          this.router.navigate(['/settings'], { queryParams: { tab: 'ai' } });
+        }
         this.lastAiFacts.set(this.EMPTY_FACTS as any);
         return;
       }

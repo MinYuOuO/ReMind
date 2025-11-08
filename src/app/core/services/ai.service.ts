@@ -167,18 +167,23 @@ class DeepSeekProvider implements AiProvider {
   public readonly name = 'deepseek';
   constructor(
     private apiKey: string,
-    private model = 'deepseek-chat',
-    private baseUrl = 'https://api.deepseek.com/chat/completions'
+    private model = 'DeepSeek-V3.2-Exp',
+    private baseUrl = 'https://api.deepseek.com/v1'
   ) {}
 
   private async chat(messages: any[], temperature = 0.2): Promise<string> {
-    const res = await fetch(this.baseUrl, {
+    const res = await fetch(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ model: this.model, messages, temperature }),
+      body: JSON.stringify({
+        model: this.model,
+        messages,
+        temperature,
+        stream: false, // non-streaming mode
+      }),
     });
     const data = await res.json().catch(() => ({}));
     return (
