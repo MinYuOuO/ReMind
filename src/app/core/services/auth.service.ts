@@ -80,14 +80,18 @@ export class AuthService {
   }
 
   async loginWithBiometric(): Promise<boolean> {
+    // Only attempt biometric if the user previously enabled it
+    const enabled = await this.isBiometricEnabled();
+    if (!enabled) return false;
+
     // Placeholder: try to call a native biometric plugin if installed.
     // If not available, return false to let UI fallback to password.
     try {
       const win: any = window as any;
-      const plugin = win?.Plugins?.Biometric || win?.Biometric || win?.Fingerprint;
+      const plugin = win?.Plugins?.Biometric || win?.Biometric || win?.Fingerprint || win?.CapacitorBiometric;
       if (plugin && typeof plugin.verify === 'function') {
         const res = await plugin.verify();
-        if (res && res.verified) {
+        if (res && (res.verified === true || res.success === true)) {
           this._auth$.next(true);
           return true;
         }
@@ -95,6 +99,7 @@ export class AuthService {
     } catch (e) {
       console.warn('[Auth] biometric plugin call failed', e);
     }
+
     return false;
   }
 }

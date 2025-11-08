@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonContent, IonHeader, IonToolbar, IonTitle, IonInput, IonItem, IonLabel, IonButton, IonList, IonIcon } from '@ionic/angular/standalone';
@@ -13,11 +13,37 @@ import { lockClosedOutline } from 'ionicons/icons';
   styleUrls: ['login.page.scss'],
   imports: [CommonModule, FormsModule, IonContent, IonHeader, IonToolbar, IonTitle, IonInput, IonItem, IonLabel, IonButton, IonList, IonIcon]
 })
-export class LoginPage {
+export class LoginPage implements OnInit {
   password = '';
   loading = false;
+  biometricAvailable = false;
+  biometricEnabled = false;
+  hasPassword = false;
 
   constructor(private auth: AuthService, private router: Router) {}
+
+  async ngOnInit() {
+    try {
+      this.hasPassword = await this.auth.hasPassword();
+      this.biometricEnabled = await this.auth.isBiometricEnabled();
+
+      // If biometric is enabled, attempt biometric login automatically
+      if (this.biometricEnabled) {
+        this.loading = true;
+        try {
+          const ok = await this.auth.loginWithBiometric();
+          if (ok) {
+            await this.router.navigateByUrl('/');
+            return;
+          }
+        } finally {
+          this.loading = false;
+        }
+      }
+    } catch (e) {
+      console.warn('[Login] init failed', e);
+    }
+  }
 
   async login() {
     this.loading = true;
@@ -27,6 +53,20 @@ export class LoginPage {
         await this.router.navigateByUrl('/');
       } else {
         alert('Invalid password');
+      }
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  async tryBiometric() {
+    this.loading = true;
+    try {
+      const ok = await this.auth.loginWithBiometric();
+      if (ok) {
+        await this.router.navigateByUrl('/');
+      } else {
+        alert('Biometric login failed or is not available. Use password or enable biometric in Settings.');
       }
     } finally {
       this.loading = false;
