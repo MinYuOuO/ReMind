@@ -72,17 +72,38 @@
 
         <ion-item *ngIf="hasPassword" class="menu-card">
           <ion-label position="stacked">Old Password</ion-label>
-          <ion-input type="password" [(ngModel)]="oldPassword" placeholder="Current password"></ion-input>
+          <div style="display: flex; align-items: center; width: 100%">
+            <ion-input [type]="showOldPassword ? 'text' : 'password'" [(ngModel)]="oldPassword" placeholder="Enter old password"></ion-input>
+            <ion-icon 
+              [name]="showOldPassword ? 'eye-off-outline' : 'eye-outline'"
+              (click)="showOldPassword = !showOldPassword"
+              style="font-size: 1.5em; margin-left: 8px; cursor: pointer;"
+            ></ion-icon>
+          </div>
         </ion-item>
 
         <ion-item class="menu-card">
           <ion-label position="stacked">New Password</ion-label>
-          <ion-input type="password" [(ngModel)]="newPassword" placeholder="New password"></ion-input>
+          <div style="display: flex; align-items: center; width: 100%">
+            <ion-input [type]="showNewPassword ? 'text' : 'password'" [(ngModel)]="newPassword" placeholder="Enter new password"></ion-input>
+            <ion-icon 
+              [name]="showNewPassword ? 'eye-off-outline' : 'eye-outline'"
+              (click)="showNewPassword = !showNewPassword"
+              style="font-size: 1.5em; margin-left: 8px; cursor: pointer;"
+            ></ion-icon>
+          </div>
         </ion-item>
 
         <ion-item class="menu-card">
           <ion-label position="stacked">Confirm New Password</ion-label>
-          <ion-input type="password" [(ngModel)]="confirmPassword" placeholder="Confirm new password"></ion-input>
+          <div style="display: flex; align-items: center; width: 100%">
+            <ion-input [type]="showConfirmPassword ? 'text' : 'password'" [(ngModel)]="confirmPassword" placeholder="Confirm new password"></ion-input>
+            <ion-icon 
+              [name]="showConfirmPassword ? 'eye-off-outline' : 'eye-outline'"
+              (click)="showConfirmPassword = !showConfirmPassword"
+              style="font-size: 1.5em; margin-left: 8px; cursor: pointer;"
+            ></ion-icon>
+          </div>
         </ion-item>
 
         <ion-item lines="none">

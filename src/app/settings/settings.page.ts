@@ -28,13 +28,13 @@ import {
   arrowBack,
   lockClosedOutline,
   sparklesOutline,
-  settingsOutline, callOutline, calendarOutline, mailOutline } from 'ionicons/icons';
+  settingsOutline, callOutline, calendarOutline, mailOutline, eyeOutline, eyeOffOutline } from 'ionicons/icons';
 
 import { AiSettingService } from '../core/services/ai-setting.service';
-import { AuthService } from '../core/services/auth.service';
 import { ActivatedRoute } from '@angular/router';
 import { DbInitService } from '../core/services/db-inti.service';
 import { SqliteDbService } from '../core/services/db.service';
+import { AuthService } from '../core/services/auth.service';
 
 addIcons({
   'person-outline': personOutline,
@@ -49,6 +49,8 @@ addIcons({
   'call-outline': callOutline,
   'calendar-outline': calendarOutline,
   'mail-outline': mailOutline,
+  eyeOutline,
+  eyeOffOutline,
 });
 
 // Add this small interface near the top of the file (after imports)
@@ -120,12 +122,19 @@ export class SettingsPage implements OnInit {
   ];
   weekdayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-  // --- Security fields ---
+  // Password and biometric settings
+  hasPassword = false;
   oldPassword = '';
   newPassword = '';
   confirmPassword = '';
   biometricEnabled = false;
-  hasPassword = false;
+
+  // Password visibility toggles
+  showOldPassword = false;
+  showNewPassword = false;
+  showConfirmPassword = false;
+  readonly eyeOutline = eyeOutline;
+  readonly eyeOffOutline = eyeOffOutline;
 
   private buildCalendar(year = this.calYear, month = this.calMonth) {
     const firstOfMonth = new Date(year, month, 1);
@@ -195,8 +204,8 @@ export class SettingsPage implements OnInit {
     private aiSettings: AiSettingService,
     private route: ActivatedRoute,
     private dbInit: DbInitService,         // added
-    private db: SqliteDbService            // added
-    , private auth: AuthService
+    private db: SqliteDbService,            // added
+    private auth: AuthService              // added
   ) {
       // constructor intentionally does not call addIcons again
   }
@@ -215,53 +224,9 @@ export class SettingsPage implements OnInit {
       }
     });
 
-    // load security state
-    try {
-      await this.loadSecurityState();
-    } catch (e) {
-      console.warn('[Settings] loadSecurityState failed', e);
-    }
-  }
-
-  private async loadSecurityState() {
+    // Load password and biometric settings
     this.hasPassword = await this.auth.hasPassword();
     this.biometricEnabled = await this.auth.isBiometricEnabled();
-  }
-
-  async changePassword() {
-    if (!this.newPassword || !this.confirmPassword) {
-      alert('Please fill new password and confirm');
-      return;
-    }
-    if (this.newPassword !== this.confirmPassword) {
-      alert('New password and confirm do not match');
-      return;
-    }
-
-    const old = this.hasPassword ? this.oldPassword : null;
-    const ok = await this.auth.setPassword(old, this.newPassword);
-    if (ok) {
-      alert('Password saved');
-      this.oldPassword = '';
-      this.newPassword = '';
-      this.confirmPassword = '';
-      this.hasPassword = true;
-    } else {
-      alert('Failed to set password. Did you enter the correct old password?');
-    }
-  }
-
-  async toggleBiometric() {
-    if (this.biometricEnabled) {
-      await this.auth.disableBiometric();
-      this.biometricEnabled = false;
-      alert('Biometric disabled');
-    } else {
-      // Try to enable (scaffold only)
-      await this.auth.enableBiometric();
-      this.biometricEnabled = true;
-      alert('Biometric enabled (scaffold). Integrate a native plugin for production.');
-    }
   }
 
   goBack() {
@@ -426,5 +391,32 @@ export class SettingsPage implements OnInit {
       console.error('[Settings] savePersonalCard failed', err);
       alert('Failed to save personal card.');
     }
+  }
+
+  async changePassword() {
+    if (!this.newPassword || this.newPassword !== this.confirmPassword) {
+      alert('Passwords do not match or are empty');
+      return;
+    }
+
+    const ok = await this.auth.setPassword(this.oldPassword, this.newPassword);
+    if (ok) {
+      this.oldPassword = '';
+      this.newPassword = '';
+      this.confirmPassword = '';
+      this.hasPassword = true;
+      alert('Password changed successfully');
+    } else {
+      alert('Failed to change password');
+    }
+  }
+
+  async toggleBiometric() {
+    if (this.biometricEnabled) {
+      await this.auth.disableBiometric();
+    } else {
+      await this.auth.enableBiometric();
+    }
+    this.biometricEnabled = await this.auth.isBiometricEnabled();
   }
 }
