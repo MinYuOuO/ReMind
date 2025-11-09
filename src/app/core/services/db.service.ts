@@ -463,4 +463,28 @@ export class SqliteDbService {
       this.db = undefined;
     }
   }
+
+  async export(): Promise<string> {
+    try {
+      await this.open();
+      
+      // Get all tables
+      const tables = await this.query<{name: string}>(`
+        SELECT name FROM sqlite_master 
+        WHERE type='table' AND name NOT LIKE 'sqlite_%'
+      `);
+
+      // Build full database export
+      const exportData: any = {};
+      for (const table of tables) {
+        const rows = await this.query(`SELECT * FROM ${table.name}`);
+        exportData[table.name] = rows;
+      }
+
+      return JSON.stringify(exportData);
+    } catch (error) {
+      console.error('Database export failed:', error);
+      throw error;
+    }
+  }
 }

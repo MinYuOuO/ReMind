@@ -35,6 +35,8 @@ import { ActivatedRoute } from '@angular/router';
 import { DbInitService } from '../core/services/db-inti.service';
 import { SqliteDbService } from '../core/services/db.service';
 import { AuthService } from '../core/services/auth.service';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { utils as XLSXUtils, write as XLSXWrite } from 'xlsx';
 
 addIcons({
   'person-outline': personOutline,
@@ -418,5 +420,76 @@ export class SettingsPage implements OnInit {
       await this.auth.enableBiometric();
     }
     this.biometricEnabled = await this.auth.isBiometricEnabled();
+  }
+
+  private downloadFile(data: string, fileName: string, type: string) {
+    const blob = new Blob([data], { type });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    window.URL.revokeObjectURL(url);
+  }
+
+  private downloadExcel(workbook: any, fileName: string) {
+    // Write workbook and get output
+    const wbout = XLSXWrite(workbook, { 
+      bookType: 'xlsx',
+      type: 'buffer'  // Changed to buffer type
+    });
+
+    // Create blob from buffer
+    const blob = new Blob([wbout], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+
+    // Download file
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link); // Add link to body
+    link.click();
+    document.body.removeChild(link); // Clean up
+    window.URL.revokeObjectURL(url);
+  }
+
+  async exportDatabase(format: 'sqlite' | 'excel') {
+    try {
+      const tables = await this.db.query<{name: string}>(`
+        SELECT name FROM sqlite_master 
+        WHERE type='table' AND name NOT LIKE 'sqlite_%'
+      `);
+
+      if (format === 'sqlite') {
+        const dbData = await this.db.export();
+        const fileName = `remind_backup_${new Date().toISOString().slice(0,10)}.json`;
+        this.downloadFile(
+          JSON.stringify(dbData, null, 2),
+          fileName,
+          'application/json'
+        );
+        alert('Database exported successfully');
+      } else {
+        const workbook = XLSXUtils.book_new();
+        
+        for (const table of tables) {
+          const rows = await this.db.query(`SELECT * FROM ${table.name}`);
+          const worksheet = XLSXUtils.json_to_sheet(rows, {
+            cellDates: true  // Properly handle dates
+          });
+          XLSXUtils.book_append_sheet(workbook, worksheet, table.name);
+        }
+
+        const fileName = `remind_backup_${new Date().toISOString().slice(0,10)}.xlsx`;
+        this.downloadExcel(workbook, fileName);
+        alert('Database exported successfully');
+      }
+    } catch (error: unknown) {
+      console.error('[Settings] Export failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert('Failed to export database: ' + errorMessage);
+    }
   }
 }
