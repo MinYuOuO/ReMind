@@ -7,7 +7,7 @@ const SCHEMA_SQL = `
 -- USER
 CREATE TABLE IF NOT EXISTS user (
   user_id        TEXT PRIMARY KEY,
-  username       TEXT NOT NULL,
+  username       TEXT NOT NULL UNIQUE,  -- Added UNIQUE constraint
   contact_detail TEXT,
   birthday       TEXT,   -- 'YYYY-MM-DD'
   notes          TEXT
@@ -21,10 +21,11 @@ CREATE TABLE IF NOT EXISTS contact (
   relationship   TEXT NOT NULL CHECK (relationship IN ('friend','best_friend','colleague','family')),
   contact_detail TEXT,
   birthday       TEXT,   -- 'YYYY-MM-DD'
-  created_at     TEXT NOT NULL,
-  updated_at     TEXT NOT NULL,
+  created_at     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', '+0800')),
+  updated_at     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', '+0800')),
   notes          TEXT,
   FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE
+  -- Removed UNIQUE constraint to allow same names for different user_ids
 );
 CREATE INDEX IF NOT EXISTS idx_contact_user ON contact(user_id);
 CREATE INDEX IF NOT EXISTS idx_contact_name ON contact(name);
@@ -182,44 +183,50 @@ export class DbInitService
       if (currentVersion === 0) {
         try {
           await this.db.execute(SCHEMA_SQL);
-        } catch (batchErr) {
-          console.warn('[DB] batch schema failed — per-statement fallback', batchErr);
-          const stmts = this.splitSql(SCHEMA_SQL);
-          for (const stmt of stmts) {
-            // skip explicit transaction markers if present
-            const up = stmt.trim().toUpperCase();
-            if (!stmt || up === 'BEGIN' || up.startsWith('BEGIN ') || up === 'COMMIT' || up === 'END') continue;
-            try {
-              // use execute for DDL/DML; run() can also work but execute is safer for statements
-              await this.db.execute(stmt);
-            } catch (sErr) {
-              console.warn('[DB] statement failed (continuing):', stmt, sErr);
-            }
-          }
+
+          // Clean up data and fix relationships
+          await this.db.execute(`
+            BEGIN TRANSACTION;
+            
+            -- Remove contacts with invalid user_ids (not in user table)
+            DELETE FROM contact 
+            WHERE user_id NOT IN (SELECT user_id FROM user);
+
+            -- Remove any remaining 'u_local' references
+            DELETE FROM contact WHERE user_id = 'u_local';
+            DELETE FROM user WHERE user_id = 'u_local';
+
+            -- Fix timestamps for remaining valid contacts
+            UPDATE contact 
+            SET created_at = datetime(created_at, '+0800'),
+                updated_at = datetime(updated_at, '+0800')
+            WHERE created_at NOT LIKE '%+08%';
+
+            -- Log cleanup actions
+            INSERT INTO ai_processing_log (
+              log_id,
+              interaction_id,
+              processed_at,
+              input_text,
+              status
+            ) VALUES (
+              'cleanup_' || strftime('%Y%m%d%H%M%S', 'now'),
+              'system',
+              datetime('now'),
+              'Cleaned up invalid contacts and user references',
+              'success'
+            );
+
+            COMMIT;
+          `);
+
+        } catch (err) {
+          console.error('[DB] schema/migration failed:', err);
+          throw err;
         }
-        try { await this.db.execute('PRAGMA user_version = 1;'); }
-        catch (e) { console.warn('[DB] warning: could not set user_version', e); }
       } else {
         console.log(`[DB] schema user_version=${currentVersion} — skipping full schema`);
         // TODO: migrations when bumping to 2,3,...
-      }
-
-      // Seed local user row (idempotent)
-      console.log('[DB] seeding local user u_local (username may be empty)');
-      await this.db.run(
-        `INSERT OR IGNORE INTO user (user_id, username) VALUES (?, ?)`,
-        ['u_local', '']
-      );
-      console.log('[DB] seed complete (INSERT OR IGNORE executed)');
-
-      // Persist schema + seed to web store and close wrapper so data is flushed
-      try {
-        console.log('[DB] saving to web store and closing DB wrapper...');
-        await this.db.saveToStoreAndClose();
-        console.log('[DB] persisted schema and seed to web store');
-      } catch (e) {
-        console.warn('[DB] failed to persist schema/seed:', e);
-        console.warn('[DB] failed to persist schema/seed:', e);
       }
 
       this.initialized = true;
