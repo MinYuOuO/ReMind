@@ -36,7 +36,7 @@ import { DbInitService } from '../core/services/db-inti.service';
 import { SqliteDbService } from '../core/services/db.service';
 import { AuthService } from '../core/services/auth.service';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
-import { utils as XLSXUtils, write as XLSXWrite } from 'xlsx';
+import { utils as XLSXUtils, write as XLSXWrite, read as XLSXRead } from 'xlsx';
 
 addIcons({
   'person-outline': personOutline,
@@ -421,6 +421,207 @@ export class SettingsPage implements OnInit {
     }
     this.biometricEnabled = await this.auth.isBiometricEnabled();
   }
+
+  // ------------------ IMPORT HANDLERS (added) ------------------
+  private async createSimpleTableIfNotExists(tableName: string, columns: string[]) {
+    // create columns as TEXT; primary key not set to avoid conflicts on unknown schema
+    const cols = columns.map(c => `"${c}" TEXT`).join(', ');
+    await this.db.run(`CREATE TABLE IF NOT EXISTS "${tableName}" (${cols})`);
+  }
+
+  private async upsertRowsIntoTable(tableName: string, rows: any[]) {
+    if (!rows || rows.length === 0) return;
+    const cols = Object.keys(rows[0]);
+    await this.createSimpleTableIfNotExists(tableName, cols);
+
+    // build INSERT OR REPLACE
+    const placeholders = cols.map(_ => '?').join(',');
+    const sql = `INSERT OR REPLACE INTO "${tableName}" (${cols.map(c => `"${c}"`).join(',')}) VALUES (${placeholders})`;
+
+    // insert rows one by one (could be optimized with transaction in db service)
+    for (const r of rows) {
+      const vals = cols.map(c => {
+        const v = r[c];
+        if (v === undefined || v === null) return null;
+        if (typeof v === 'object') return JSON.stringify(v);
+        return String(v);
+      });
+      await this.db.run(sql, vals);
+    }
+  }
+
+  async onExcelSelected(ev: Event) {
+    try {
+      const input = ev.target as HTMLInputElement;
+      if (!input.files || input.files.length === 0) return;
+      const f = input.files[0];
+
+      // Inform user to backup first
+      if (!confirm('Importing Excel will attempt to merge sheets into your DB. Please backup first (export). Continue?')) {
+        input.value = '';
+        return;
+      }
+
+      const buffer = await f.arrayBuffer();
+      const wb = XLSXRead(new Uint8Array(buffer), { type: 'array' });
+      await this.dbInit.init();
+      await this.db.open();
+
+      for (const sheetName of wb.SheetNames) {
+        const ws = wb.Sheets[sheetName];
+        const rows: any[] = XLSXUtils.sheet_to_json(ws, { defval: null });
+        if (!rows || rows.length === 0) continue;
+        await this.upsertRowsIntoTable(sheetName, rows);
+      }
+
+      // optional: persist store/close if supported
+      try { await this.db.saveToStoreAndClose?.(); } catch(e) { /* ignore */ }
+
+      alert('Excel imported successfully');
+    } catch (err) {
+      console.error('[Settings] onExcelSelected failed', err);
+      alert('Failed to import Excel: ' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      // reset file input
+      const input = ev.target as HTMLInputElement; if (input) input.value = '';
+    }
+  }
+
+  async onSqliteSelected(ev: Event) {
+    try {
+      const input = ev.target as HTMLInputElement;
+      if (!input.files || input.files.length === 0) return;
+      const f = input.files[0];
+
+      if (!confirm('Importing a backup can overwrite or merge data. Please export your current DB first. Continue?')) {
+        input.value = '';
+        return;
+      }
+
+      // Read file text
+      const text = await f.text();
+
+      let parsed: any;
+      try {
+        parsed = JSON.parse(text);
+        // Handle case where file contains a JSON string (double-encoded)
+        if (typeof parsed === 'string') {
+          try {
+            parsed = JSON.parse(parsed);
+            console.log('[Settings] Detected double-encoded JSON; parsed inner object.');
+          } catch (innerErr) {
+            console.warn('[Settings] Inner JSON parse failed', innerErr);
+            // keep parsed as string so downstream will error out with helpful message
+          }
+        }
+      } catch (jsonErr) {
+        // If user selected a raw .db/.sqlite file, we cannot import it via JSON merge here.
+        const name = (f.name || '').toLowerCase();
+        if (name.endsWith('.db') || name.endsWith('.sqlite') || name.endsWith('.sqlite3')) {
+          alert('Selected file appears to be a raw SQLite database file. This import flow accepts JSON backups (created by the app export). Replacing a raw DB file requires a native plugin and is not supported via the browser file import.');
+          input.value = '';
+          return;
+        }
+        console.error('[Settings] JSON parse failed for backup file', jsonErr);
+        alert('Failed to parse backup file as JSON. Make sure you exported a JSON backup via the app export feature.');
+        input.value = '';
+        return;
+      }
+
+      // If parsing resulted in a string (still), show clearer message and bail.
+      if (typeof parsed === 'string') {
+        alert('Backup file contained a JSON string. The importer attempted to decode it but failed to produce an object. Please ensure the export file is a valid JSON object (not a string-wrapped JSON).');
+        input.value = '';
+        return;
+      }
+
+      await this.dbInit.init();
+      await this.db.open();
+
+      // Helper to try many possible shapes and return map<name, rows[]>
+      const tableMap: Record<string, any[]> = {};
+
+      // 1) shape: { tables: [ { name, rows } ] }
+      if (parsed && Array.isArray(parsed.tables)) {
+        for (const t of parsed.tables) {
+          const name = t.name || t.table || 'unknown';
+          const rows = t.rows || t.values || t.data || [];
+          if (Array.isArray(rows) && rows.length) tableMap[name] = rows;
+        }
+      }
+
+      // 2) shape: { database: { tables: { tableName: { values | rows } } } }
+      if (parsed && parsed.database && parsed.database.tables && typeof parsed.database.tables === 'object') {
+        for (const [k, v] of Object.entries(parsed.database.tables)) {
+          if (Array.isArray((v as any).values)) tableMap[k] = (v as any).values;
+          else if (Array.isArray((v as any).rows)) tableMap[k] = (v as any).rows;
+          else if (Array.isArray(v as any)) tableMap[k] = v as any[];
+        }
+      }
+
+      // 3) shape: simple map { tableName: [ rows... ], ... }
+      if (parsed && typeof parsed === 'object') {
+        for (const key of Object.keys(parsed)) {
+          const val = parsed[key];
+          if (Array.isArray(val)) {
+            // avoid overwriting entries already discovered
+            if (!tableMap[key]) tableMap[key] = val;
+          }
+        }
+      }
+
+      // 4) shape: { tables: { tableName: [ rows ] } }
+      if (parsed && parsed.tables && typeof parsed.tables === 'object' && !Array.isArray(parsed.tables)) {
+        for (const key of Object.keys(parsed.tables)) {
+          const val = parsed.tables[key];
+          if (Array.isArray(val)) {
+            if (!tableMap[key]) tableMap[key] = val;
+          }
+        }
+      }
+
+      // If still empty, attempt to find any nested arrays inside object
+      if (Object.keys(tableMap).length === 0) {
+        const inspect = (obj: any, prefix = '') => {
+          if (!obj || typeof obj !== 'object') return;
+          for (const k of Object.keys(obj)) {
+            const v = obj[k];
+            if (Array.isArray(v) && v.length && typeof v[0] === 'object') {
+              const name = prefix ? `${prefix}_${k}` : k;
+              if (!tableMap[name]) tableMap[name] = v;
+            } else if (typeof v === 'object') {
+              inspect(v, prefix ? `${prefix}_${k}` : k);
+            }
+          }
+        };
+        inspect(parsed);
+      }
+
+      console.log('[Settings] parsed backup → discovered tables:', Object.keys(tableMap));
+
+      if (Object.keys(tableMap).length === 0) {
+        alert('No table data found in the backup file. Make sure the file was exported by the app or is a valid JSON backup.');
+        input.value = '';
+        return;
+      }
+
+      for (const [name, rows] of Object.entries(tableMap)) {
+        if (Array.isArray(rows) && rows.length) {
+          await this.upsertRowsIntoTable(name, rows);
+        }
+      }
+
+      try { await this.db.saveToStoreAndClose?.(); } catch(e) { /* ignore */ }
+
+      alert('Backup imported successfully');
+    } catch (err) {
+      console.error('[Settings] onSqliteSelected failed', err);
+      alert('Failed to import backup: ' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      const input = ev.target as HTMLInputElement; if (input) input.value = '';
+    }
+  }
+  // ------------------ END IMPORT HANDLERS ------------------
 
   private downloadFile(data: string, fileName: string, type: string) {
     const blob = new Blob([data], { type });
