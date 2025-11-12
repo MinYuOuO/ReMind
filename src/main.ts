@@ -14,11 +14,19 @@ import { DbInitService } from './app/core/services/db-inti.service';
 import { JeepSqlite } from 'jeep-sqlite/dist/components/jeep-sqlite';
 import { defineCustomElements } from 'jeep-sqlite/loader';
 
+const debugRoute = {
+  path: 'debug/db-inspector',
+  loadComponent: () => import('./app/debug/db-inspector.component').then(m => m.DbInspectorComponent)
+};
+
+// Merge debug route before the app routes so it cannot be shadowed by wildcard/default redirects
+const mergedRoutes = [debugRoute, ...routes];
+
 const appConfig: ApplicationConfig = {
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
     provideIonicAngular(),
-    provideRouter(routes, withPreloading(PreloadAllModules)),
+    provideRouter(mergedRoutes, withPreloading(PreloadAllModules)),
     {
       provide: 'APP_INIT',
       useFactory: (dbInit: DbInitService) => {

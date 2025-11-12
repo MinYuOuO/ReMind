@@ -487,4 +487,87 @@ export class SqliteDbService {
       throw error;
     }
   }
+
+  // New: Open exported DB JSON in a new browser tab (pretty-printed).
+  async visualizeExportInNewTab(): Promise<void> {
+    try {
+      const json = await this.export();
+      let pretty: string;
+      try {
+        pretty = JSON.stringify(JSON.parse(json), null, 2);
+      } catch {
+        pretty = json; // fallback if json isn't valid JSON string
+      }
+
+      if (Capacitor.isNativePlatform()) {
+        console.warn('[DB] visualizeExportInNewTab: running on native platform; opening in-app browser may not work. Consider using downloadExportFile().');
+      }
+
+      const html = `
+        <!doctype html>
+        <html>
+        <head>
+          <meta charset="utf-8"/>
+          <title>Remind DB Export</title>
+          <style>
+            html,body { height:100%; margin:0; }
+            body { font-family: monospace; padding:12px; background:#f6f8fa; color:#111; }
+            pre { white-space: pre-wrap; word-wrap: break-word; }
+            .meta { font-size:12px; color:#666; margin-bottom:8px; }
+          </style>
+        </head>
+        <body>
+          <div class="meta">Remind DB export — opened ${new Date().toLocaleString()}</div>
+          <pre>${this.escapeHtml(pretty)}</pre>
+        </body>
+        </html>
+      `;
+
+      const w = window.open('', '_blank');
+      if (w && w.document) {
+        w.document.open();
+        w.document.write(html);
+        w.document.close();
+      } else {
+        // fallback: use blob URL if popup blocked
+        const blob = new Blob([html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 15000);
+      }
+    } catch (err) {
+      console.error('[DB] visualizeExportInNewTab failed:', err);
+      throw err;
+    }
+  }
+
+  // New: Trigger download of exported DB as a JSON file
+  async downloadExportFile(filename = 'remind-export.json'): Promise<void> {
+    try {
+      const json = await this.export();
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      // revoke url shortly after download started
+      setTimeout(() => URL.revokeObjectURL(url), 15000);
+    } catch (err) {
+      console.error('[DB] downloadExportFile failed:', err);
+      throw err;
+    }
+  }
+
+  // Small helper to avoid injecting raw HTML into the new tab
+  private escapeHtml(s: string): string {
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
 }
