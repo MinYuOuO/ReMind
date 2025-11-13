@@ -164,28 +164,31 @@ export class RoulettePage {
 
   /** Spin controls */
   startRoll() {
-    if (!this.options.length) {
-      this.useDefaults();
-    }
-    if (this.isSpinning) return;
-
-    this.isSpinning = true;
-    this.resultText = '';
-
-    const i = Math.floor(Math.random() * this.options.length);
-    this.selectedIndex = i;
-
-    const center = i * this.segmentAngle + this.segmentAngle / 2;
-    const extraTurns = 5; // nice pace
-    const delta = 360 - center;
-
-    this.spinDegrees = this.spinDegrees + extraTurns * 360 + delta;
-
-    // safety fallback
-    window.setTimeout(() => {
-      if (this.isSpinning) this.finishSpin();
-    }, 3000);
+  if (!this.options.length) {
+    this.useDefaults();
   }
+  if (this.isSpinning) return;
+
+  this.isSpinning = true;
+  this.resultText = '';
+
+  // Random number of extra degrees (0-360) for variety
+  const randomDegrees = Math.random() * 360;
+  
+  // Spin 5-8 full rotations plus the random amount
+  const extraTurns = 5 + Math.floor(Math.random() * 3);
+  const totalSpin = extraTurns * 360 + randomDegrees;
+
+  this.spinDegrees = this.spinDegrees + totalSpin;
+
+  // Don't calculate selectedIndex here - we'll calculate it based on final position
+  this.selectedIndex = -1;
+
+  // safety fallback
+  window.setTimeout(() => {
+    if (this.isSpinning) this.finishSpin();
+  }, 3000);
+}
 
   onSpinEnd(evt: TransitionEvent) {
     const el = evt.target as HTMLElement;
@@ -194,10 +197,23 @@ export class RoulettePage {
   }
 
   private finishSpin() {
-    this.isSpinning = false;
-    this.resultText = this.options[this.selectedIndex] ?? '';
-    try {
-      navigator.vibrate?.(20);
-    } catch {}
-  }
+  this.isSpinning = false;
+  
+  // Normalize the rotation to 0-360 range
+  const normalizedDegrees = this.spinDegrees % 360;
+  
+  // Pointer is at top (90°). We need to find which segment is under it.
+  // The segments start at index 0 and rotate with the wheel
+  // Account for the 22.5° offset in CSS (segments are centered in their slice)
+  const adjustedAngle = (360 - normalizedDegrees + 90 + 22.5) % 360;
+  
+  // Calculate which segment this angle falls into
+  this.selectedIndex = Math.floor(adjustedAngle / this.segmentAngle) % this.options.length;
+  
+  this.resultText = this.options[this.selectedIndex] ?? '';
+  
+  try {
+    navigator.vibrate?.(20);
+  } catch {}
+}
 }
