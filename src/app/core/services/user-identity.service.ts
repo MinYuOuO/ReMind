@@ -57,6 +57,34 @@ export class UserIdentityService {
       // 4) make sure row exists in SQLite
       await this.ensureUserRow(userId);
 
+      // 4b) If this user has no contacts but the DB contains contacts for another user,
+      // adopt that user id so Home will show the imported contacts.
+      try {
+        await this.db.open();
+        // count contacts for current user
+        const cntRows = await this.db.query<{ cnt: number }>(
+          'SELECT COUNT(1) as cnt FROM contact WHERE user_id = ?',
+          [userId]
+        );
+        const cnt = (cntRows && cntRows[0] && typeof cntRows[0].cnt === 'number') ? cntRows[0].cnt : 0;
+        if (cnt === 0) {
+          // find any user_id that actually has contacts
+          const other = await this.db.query<{ user_id: string }>(
+            `SELECT DISTINCT user_id FROM contact WHERE user_id IS NOT NULL LIMIT 1`
+          );
+          if (other && other.length > 0 && other[0].user_id) {
+            const candidate = other[0].user_id;
+            console.log(`[UserIdentity] switching current user to '${candidate}' because '${userId}' has no contacts`);
+            userId = candidate;
+            await this.ensureUserRow(userId);
+            await Preferences.set({ key: PREF_KEY, value: userId });
+          }
+        }
+      } catch (e) {
+        console.warn('[UserIdentity] contact-based user auto-switch check failed', e);
+        // ignore and proceed with existing userId
+      }
+
       // 5) cache in memory
       this._userId = userId;
     })();
