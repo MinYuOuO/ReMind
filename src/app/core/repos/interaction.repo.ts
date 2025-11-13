@@ -35,9 +35,10 @@ export class InteractionRepo {
     const date = params.interaction_date || now;
 
     await this.db.run(
-      `INSERT INTO interaction
-       (interaction_id, contact_id, user_id, interaction_date, context, user_summary, raw_notes, created_at)
-       VALUES (?,?,?,?,?,?,?,?)`,
+      `INSERT INTO interaction (
+        interaction_id, contact_id, user_id, interaction_date,
+        context, user_summary, raw_notes, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
       [
         id,
         params.contact_id,

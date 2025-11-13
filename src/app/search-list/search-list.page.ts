@@ -45,6 +45,7 @@ import { UserIdentityService } from '../core/services/user-identity.service';
 import { AiService } from '../core/services/ai.service';
 import { DbInitService } from '../core/services/db-inti.service';
 import { SqliteDbService } from '../core/services/db.service';
+import { RSearchService, SearchResult } from '../core/services/rsearch.service';
 
 import { Router } from '@angular/router';
 import { AiSettingService } from '../core/services/ai-setting.service';
@@ -103,11 +104,17 @@ interface InsightRow {
 })
 export class RSearchPage implements OnInit {
   // UI view switch
-  view: 'list' | 'search' = 'list';
+  view: 'list' | 'search' | 'results' = 'list';
 
   // form models
   keyword = '';
   question = '';
+
+  // actual contact we select
+  searchTerm = '';
+  searchResults = signal<SearchResult[]>([]);
+  isSearching = signal(false);
+  hasSearched = signal(false);
 
   // actual contact we select
   selectedContact: Contact | null = null;
@@ -134,9 +141,20 @@ export class RSearchPage implements OnInit {
     private aiSetting: AiSettingService,
     private dbInit: DbInitService,
     private db: SqliteDbService,
-    private router: Router
+    private router: Router,
+    private rsearchService: RSearchService
   ) {
-      addIcons({arrowBack,notificationsOutline,shieldCheckmarkOutline,sparklesOutline,personOutline,chevronDownOutline,reorderThreeOutline,paperPlaneOutline});}
+    addIcons({
+      arrowBack,
+      notificationsOutline,
+      shieldCheckmarkOutline,
+      sparklesOutline,
+      personOutline,
+      chevronDownOutline,
+      reorderThreeOutline,
+      paperPlaneOutline,
+    });
+  }
 
   async ngOnInit() {
     // make sure DB and user are ready
@@ -174,6 +192,59 @@ export class RSearchPage implements OnInit {
     return (this.keyword?.trim()?.length ?? 0) > 0;
   }
 
+  async onSearch() {
+    const term = this.searchTerm.trim();
+    if (!term) {
+      this.searchResults.set([]);
+      this.hasSearched.set(false);
+      return;
+    }
+
+    this.isSearching.set(true);
+    this.hasSearched.set(true);
+
+    try {
+      const results = await this.rsearchService.searchByCognitivePatterns(term);
+      this.searchResults.set(results);
+      this.view = 'results';
+    } catch (error) {
+      console.error('Error:', error);
+      this.searchResults.set([]);
+    } finally {
+      this.isSearching.set(false);
+    }
+  }
+
+  async onAdvancedSearch() {
+    // 这里可以实现更复杂的搜索界面
+    const filters = {
+      personality_traits: ['外向', '乐观'], // 示例过滤器
+      interests: ['科技', '阅读'],
+      communication_style: ['直接'],
+      min_confidence: 4,
+    };
+
+    this.isSearching.set(true);
+
+    try {
+      const results = await this.rsearchService.advancedSearch(filters);
+      this.searchResults.set(results);
+      this.view = 'results';
+    } catch (error) {
+      console.error('Error:', error);
+      this.searchResults.set([]);
+    } finally {
+      this.isSearching.set(false);
+    }
+  }
+
+  clearSearch() {
+    this.searchTerm = '';
+    this.searchResults.set([]);
+    this.hasSearched.set(false);
+    this.view = 'list';
+  }
+
   // user typed in "Ask for anything..." → go to search view
   openSearch() {
     if (this.hasQuery()) {
@@ -188,6 +259,7 @@ export class RSearchPage implements OnInit {
     this.aiAnswer.set('');
     this.keyword = '';
     this.question = '';
+    this.clearSearch();
   }
 
   async send() {
@@ -262,5 +334,15 @@ export class RSearchPage implements OnInit {
 
   trackByInsight(index: number, item: InsightRow) {
     return item.insight_id;
+  }
+
+   trackBySearchResult(index: number, item: SearchResult) {
+    return item.contact_id;
+  }
+
+  getScoreColor(score: number): string {
+    if (score >= 80) return 'success';
+    if (score >= 60) return 'warning';
+    return 'medium';
   }
 }
