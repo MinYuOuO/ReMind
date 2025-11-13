@@ -13,12 +13,12 @@ const config: CapacitorConfig = {
       iosIsEncryption: true,
       iosKeychainPrefix: 'angular-sqlite-app-starter',
       iosBiometric: {
-        biometricAuth: true,
+        biometricAuth: false,
         biometricTitle: "Biometric login for capacitor sqlite"
       },
       androidIsEncryption: true,
       androidBiometric: {
-        biometricAuth: true,
+        biometricAuth: false,
         biometricTitle: "Biometric login for capacitor sqlite",
         biometricSubTitle: "Log in using your biometric"
       },

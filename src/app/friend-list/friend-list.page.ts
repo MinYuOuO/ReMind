@@ -53,21 +53,18 @@ import {
   reorderThreeOutline,
   closeOutline,
   saveOutline,
+  informationCircleOutline,
 } from 'ionicons/icons';
 
 import { ContactRepo, Contact, Relationship } from '../core/repos/contact.repo';
 import { DbInitService } from '../core/services/db-inti.service';
 import { SqliteDbService } from '../core/services/db.service';
-import { UserRepo } from '../core/repos/user.repo';
 import { UserIdentityService } from '../core/services/user-identity.service';
 
 import { AiService } from '../core/services/ai.service';
 import { AiSettingService } from '../core/services/ai-setting.service';
 import { InteractionRepo } from '../core/repos/interaction.repo';
-import {
-  CognitiveUnitRepo,
-  CognitiveUnit,
-} from '../core/repos/cognitive-unit.repo';
+import { CognitiveService } from '../core/services/cognitive.service';
 import { NotificationService } from '../core/services/notification.service';
 
 import type { InteractionFacts } from '../core/services/ai.service';
@@ -104,13 +101,13 @@ import type { InteractionFacts } from '../core/services/ai.service';
 export class FriendListPage implements OnInit {
   // current user
   userId = '';
+  currentContactNotes: string = '';
+  cognitiveSummary = signal<string>('');
 
   // UI state
   loading = signal(true);
   contacts = signal<Contact[]>([]);
   query = signal<string>('');
-
-  aiUnits: CognitiveUnit[] = [];
 
   // computed filtered contacts
   filteredContacts = computed(() => {
@@ -208,16 +205,15 @@ export class FriendListPage implements OnInit {
   constructor(
     private platform: Platform,
     private contactsRepo: ContactRepo,
-    private userRepo: UserRepo,
     private identity: UserIdentityService,
     private dbInit: DbInitService,
     private db: SqliteDbService,
     private interactionRepo: InteractionRepo,
     private aiService: AiService,
-    private cuRepo: CognitiveUnitRepo,
     private notificationService: NotificationService,
     private aiSetting: AiSettingService,
-    private router: Router
+    private router: Router,
+    private cognitiveService: CognitiveService
   ) {
     addIcons({
       notificationsOutline,
@@ -231,6 +227,7 @@ export class FriendListPage implements OnInit {
       starOutline,
       callOutline,
       calendarOutline,
+      informationCircleOutline,
       save,
       chatbubblesOutline,
       createOutline,
@@ -335,8 +332,7 @@ export class FriendListPage implements OnInit {
       notes: c.notes ?? '',
     };
 
-    // load AI notes for this contact
-    await this.loadCognitiveUnitsForContact(c.contact_id);
+    await this.loadCognitiveSummaryForContact(c.contact_id);
 
     this.showModal.set(true);
   }
@@ -351,7 +347,6 @@ export class FriendListPage implements OnInit {
       birthday: null,
       notes: '',
     };
-    this.aiUnits = []; // clear when closing
   }
 
   async load(event?: CustomEvent) {
@@ -444,18 +439,42 @@ export class FriendListPage implements OnInit {
       // 2) configure provider from Settings just-in-time
       const aiReady = await this.ensureAiProviderConfigured();
 
-      // 3) call AI (may return null if provider not configured)
-      const facts =
-        aiReady === 'ready'
-          ? await this.aiService.summarizeInteractionToFacts({
-              interaction_id,
-              contact_id: contact.contact_id,
-              user_id: this.userId,
-              context: 'social',
-              user_summary: this.interaction.topic ?? '',
-              raw_notes: this.interaction.rawNotes ?? '',
-            })
-          : null;
+      let facts = null;
+
+      // 3) call AI
+      if (aiReady === 'ready') {
+        const aiResult = await this.aiService.processInteraction({
+          interaction_id,
+          contact_id: contact.contact_id,
+          user_id: this.userId,
+          context: 'social',
+          user_summary: this.interaction.topic ?? '',
+          raw_notes: this.interaction.rawNotes ?? '',
+        });
+
+        facts = aiResult.success ? aiResult.facts : null;
+
+        // 修改：使用 CognitiveService 处理认知总结更新
+        if (facts && this.cognitiveService) {
+          try {
+            const cognitiveResult =
+              await this.cognitiveService.processInteractionAndUpdateSummary({
+                interaction_id,
+                contact_id: contact.contact_id,
+                user_id: this.userId,
+                context: this.interaction.topic ? 'meeting' : 'social',
+                user_summary: this.interaction.topic ?? '',
+                raw_notes: this.interaction.rawNotes ?? '',
+              });
+
+            if (cognitiveResult.success) {
+              console.log('Cognitive summary updated successfully');
+            }
+          } catch (cognitiveError) {
+            console.error('Cognitive processing failed:', cognitiveError);
+          }
+        }
+      }
 
       // 4) close input modal and show review
       this.showInteractionModal.set(false);
@@ -466,13 +485,32 @@ export class FriendListPage implements OnInit {
       this.lastAiFacts.set(facts ?? (this.EMPTY_FACTS as any));
       this.showAiReview.set(true);
 
-      // Refresh cognitive units if editing same contact
       if (this.editingContactId === contact.contact_id) {
-        await this.loadCognitiveUnitsForContact(contact.contact_id);
+        await this.loadCognitiveSummaryForContact(contact.contact_id);
+        await this.refreshContactNotes(contact.contact_id);
       }
     } catch (err) {
       console.error('[FriendList] onGenerateInteraction failed', err);
       alert('Failed to save interaction');
+    }
+  }
+
+  private async refreshContactNotes(contactId: string): Promise<void> {
+    try {
+      const contact = await this.db.query<{ notes: string }>(
+        'SELECT notes FROM contact WHERE contact_id = ?',
+        [contactId]
+      );
+
+      if (contact && contact.length > 0) {
+        this.currentContactNotes = contact[0].notes;
+        if (this.editingContactId === contactId) {
+          this.newContact.notes = this.currentContactNotes;
+        }
+        console.log('Contact notes have been updated: ', this.currentContactNotes);
+      }
+    } catch (error) {
+      console.error('Refreshing Contacts Notes failed: ', error);
     }
   }
 
@@ -550,7 +588,6 @@ export class FriendListPage implements OnInit {
         birthday: null,
         notes: '',
       };
-      this.aiUnits = [];
       await this.load();
     } catch (err) {
       console.error('Failed to create/update contact:', err);
@@ -739,7 +776,6 @@ export class FriendListPage implements OnInit {
     };
     this.calendarOpen = false;
     this.showInteractionModal.set(false);
-    this.aiUnits = [];
     this.showModal.set(true);
     console.log('[FriendList] Add modal opened — ready for new contact');
   }
@@ -764,19 +800,81 @@ export class FriendListPage implements OnInit {
         birthday: null,
         notes: '',
       };
-      this.aiUnits = [];
       await this.load();
     } catch (err) {
       console.error('Failed to delete contact:', err);
     }
   }
 
-  private async loadCognitiveUnitsForContact(contact_id: string) {
+  private formatCognitiveSummary(summary: any): string {
+    if (typeof summary === 'string') {
+      return summary;
+    }
+
+    // 如果 summary 是 CognitiveSummary 对象，手动格式化为字符串
+    if (summary && typeof summary === 'object') {
+      const parts: string[] = [];
+
+      if (summary.personality_traits && summary.personality_traits.length > 0) {
+        parts.push(`trails: ${summary.personality_traits.join('; ')}`);
+      }
+
+      if (
+        summary.communication_style &&
+        summary.communication_style.length > 0
+      ) {
+        parts.push(
+          `communication style: ${summary.communication_style.join('; ')}`
+        );
+      }
+
+      if (summary.values_interests && summary.values_interests.length > 0) {
+        parts.push(
+          `values ​​interests: ${summary.values_interests.join('; ')}`
+        );
+      }
+
+      if (
+        summary.relationship_patterns &&
+        summary.relationship_patterns.length > 0
+      ) {
+        parts.push(
+          `relationship pattern: ${summary.relationship_patterns.join('; ')}`
+        );
+      }
+
+      if (summary.important_notes && summary.important_notes.length > 0) {
+        parts.push(`Important matters: ${summary.important_notes.join('; ')}`);
+      }
+
+      if (summary.last_updated) {
+        parts.push(`last updated: ${new Date(summary.last_updated)}`);
+      }
+
+      return parts.length > 0
+        ? parts.join('\n')
+        : 'No cognitive information available.';
+    }
+
+    return 'Unable to parse cognitive information';
+  }
+
+  private async loadCognitiveSummaryForContact(contact_id: string) {
     try {
-      this.aiUnits = await this.cuRepo.listByContact(contact_id);
+      if (this.cognitiveService) {
+        const summary = await this.cognitiveService.getCognitiveSummary(
+          contact_id
+        );
+        const formattedSummary = this.formatCognitiveSummary(summary);
+        this.cognitiveSummary.set(formattedSummary);
+        console.log('Cognitive Summary loaded:', formattedSummary);
+      } else {
+        console.warn('CognitiveService not available');
+        this.cognitiveSummary.set('Cognitive services unavailable');
+      }
     } catch (e) {
-      console.warn('[FriendList] loadCognitiveUnitsForContact failed', e);
-      this.aiUnits = [];
+      console.warn('[FriendList] loadCognitiveSummaryForContact failed', e);
+      this.cognitiveSummary.set('Failed to load cognitive summary');
     }
   }
 
@@ -800,12 +898,11 @@ export class FriendListPage implements OnInit {
   }
 
   async acceptAi() {
-    // simplest version: just close; data is already in cognitive_unit
     this.closeAiReview();
 
-    // optional: reload right-side notes if editing that contact
+    // 修改：刷新认知总结而不是 cognitive units
     if (this.editingContactId) {
-      await this.loadCognitiveUnitsForContact(this.editingContactId);
+      await this.loadCognitiveSummaryForContact(this.editingContactId);
     }
   }
 
@@ -827,14 +924,13 @@ export class FriendListPage implements OnInit {
           'AI provider is not configured.\nWould you like to open Settings → AI now?'
         );
         if (confirmed) {
-          // Navigate directly to AI Settings tab
           this.router.navigate(['/settings'], { queryParams: { tab: 'ai' } });
         }
         this.lastAiFacts.set(this.EMPTY_FACTS as any);
         return;
       }
 
-      const facts = await this.aiService.summarizeInteractionToFacts({
+      const aiResult = await this.aiService.processInteraction({
         interaction_id: last.interaction_id,
         contact_id: last.contact_id,
         user_id: last.user_id,
@@ -843,8 +939,11 @@ export class FriendListPage implements OnInit {
         raw_notes: last.raw_notes ?? '',
       });
 
+      const facts = aiResult.success ? aiResult.facts : null;
       this.lastAiFacts.set(facts ?? (this.EMPTY_FACTS as any));
-      await this.loadCognitiveUnitsForContact(last.contact_id);
+
+      // 修改：刷新认知总结而不是 cognitive units
+      await this.loadCognitiveSummaryForContact(last.contact_id);
     } catch (err) {
       console.error('[FriendList] rejectAiAndResend failed', err);
       alert('Failed to re-generate AI notes.');
