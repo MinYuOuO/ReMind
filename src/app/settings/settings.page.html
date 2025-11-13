@@ -66,7 +66,7 @@
     <!-- ========== PRIVACY ========== -->
     <section *ngSwitchCase="'privacy'" class="subpage">
       <ion-list lines="none" class="menu-list">
-        <ion-item>
+        <ion-item class="menu-card">
           <ion-label>Change / Set Password</ion-label>
         </ion-item>
 
@@ -106,11 +106,11 @@
           </div>
         </ion-item>
 
-        <ion-item lines="none">
+        <ion-item lines="none" class="menu-card">
           <ion-button expand="block" (click)="changePassword()">{{ hasPassword ? 'Change Password' : 'Set Password' }}</ion-button>
         </ion-item>
 
-        <ion-item>
+        <ion-item class="menu-card">
           <ion-label>Biometric Login</ion-label>
           <ion-button fill="clear" (click)="toggleBiometric()">{{ biometricEnabled ? 'Disable' : 'Enable' }}</ion-button>
         </ion-item>
@@ -146,7 +146,7 @@
           ></ion-input>
         </ion-item>
 
-        <ion-item lines="none">
+        <ion-item lines="none" class="menu-card">
           <ion-button expand="block" (click)="saveAi()" [disabled]="saving">
             {{ saving ? 'Saving...' : 'Save AI Settings' }}
           </ion-button>
