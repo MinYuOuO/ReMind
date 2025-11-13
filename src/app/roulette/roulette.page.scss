@@ -181,23 +181,22 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 100%;
-  height: 100%;
-  transform: translate(-50%, -50%) rotate(calc(var(--i) * 45deg));
-  transform-origin: center;
+  width: 50%;
+  height: 0;
+  transform-origin: left center;
+  transform: rotate(calc(var(--i) * 45deg + 22.5deg));
   pointer-events: none;
 }
 
 .labels .text {
   position: absolute;
-  left: 35%;
+  left: 55%;
   top: 50%;
-  transform: translateY(-50%) rotate(calc(var(--i) * -45deg));
-  width: 160px;
-  /* bigger place */
-  line-height: 1.15;
+  transform: translateY(-50%);
+  width: 70px;
+  line-height: 1.2;
   font-weight: 800;
-  font-size: 14px;
+  font-size: 12px;
   color: #193b7a;
   text-align: center;
   display: block;
@@ -207,8 +206,8 @@
 /* Optional: small bump on larger screens */
 @media (min-width: 420px) {
   .labels .text {
-    width: 180px;
-    font-size: 15px;
+    width: 75px;
+    font-size: 13px;
   }
 }
 
@@ -230,6 +229,7 @@
   font-size: 18px;
   box-shadow: 0 10px 22px rgba(38, 64, 120, .18), inset 0 4px 10px rgba(255, 255, 255, .7);
   transition: transform .12s ease, box-shadow .12s ease;
+  z-index: 3;
 }
 
 .spin-btn:active {
