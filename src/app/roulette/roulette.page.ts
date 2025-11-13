@@ -200,17 +200,30 @@ export class RoulettePage {
   this.isSpinning = false;
   
   // Normalize the rotation to 0-360 range
-  const normalizedDegrees = this.spinDegrees % 360;
+  let normalizedDegrees = this.spinDegrees % 360;
+  if (normalizedDegrees < 0) normalizedDegrees += 360;
   
-  // Pointer is at top (90°). We need to find which segment is under it.
-  // The segments start at index 0 and rotate with the wheel
-  // Account for the 22.5° offset in CSS (segments are centered in their slice)
-  const adjustedAngle = (360 - normalizedDegrees + 90 + 22.5) % 360;
+  // The pointer is at the bottom (270 degrees)
+  // Each segment is 45 degrees (360 / 8)
+  // Segments start with index 0 at 0 degrees and go clockwise
+  // With the 22.5 degree offset, segment 0 is centered at 22.5 degrees
   
-  // Calculate which segment this angle falls into
-  this.selectedIndex = Math.floor(adjustedAngle / this.segmentAngle) % this.options.length;
+  // Calculate where 270 degrees (bottom pointer) lands after rotation
+  const pointerPosition = (270 - normalizedDegrees + 360) % 360;
   
+  // Find which segment this position falls into
+  // Subtract 22.5 to account for the offset, then divide by segment size
+  let segmentIndex = Math.floor((pointerPosition + 360 - 22.5) % 360 / this.segmentAngle);
+  
+  this.selectedIndex = segmentIndex % this.options.length;
   this.resultText = this.options[this.selectedIndex] ?? '';
+  
+  // Debug logging - remove this after testing
+  console.log('Spin degrees:', this.spinDegrees);
+  console.log('Normalized:', normalizedDegrees);
+  console.log('Pointer position:', pointerPosition);
+  console.log('Selected index:', this.selectedIndex);
+  console.log('Result:', this.resultText);
   
   try {
     navigator.vibrate?.(20);
