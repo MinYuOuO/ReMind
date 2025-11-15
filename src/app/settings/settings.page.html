@@ -19,13 +19,11 @@
     <!-- ========== MAIN PAGE ========== -->
     <section *ngSwitchCase="'main'" class="main-settings">
       <ion-list lines="none" class="menu-list">
-        <!-- 新增：Personal Card -->
         <ion-item button (click)="open('card')" class="menu-card">
           <ion-icon name="person-outline" slot="start"></ion-icon>
           <ion-label>Personal Card</ion-label>
         </ion-item>
 
-        <!-- 新增：Notification -->
         <ion-item button (click)="open('notification')" class="menu-card">
           <ion-icon name="notifications-outline" slot="start"></ion-icon>
           <ion-label>Notification</ion-label>
@@ -43,7 +41,7 @@
 
         <ion-item button class="menu-card">
           <ion-icon name="notifications-outline" slot="start"></ion-icon>
-          <ion-label>Notification Settings</ion-label>
+          <ion-label>Monotization</ion-label>
         </ion-item>
 
         <ion-item button (click)="open('data')" class="menu-card">

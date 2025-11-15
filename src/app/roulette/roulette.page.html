@@ -11,18 +11,32 @@
 
 <ion-content [fullscreen]="true" class="page">
   <ng-container [ngSwitch]="view">
-    <!-- ASK -->
+    <!-- ASK SCREEN -->
     <section *ngSwitchCase="'ask'" class="screen ask-screen">
       <div class="question-card glass">
-        <div class="q-title">Ask a question</div>
+        <div class="q-title">Ask a Question</div>
 
-        <!-- INPUT BOX -->
+        <!-- Contact Selection -->
         <ion-item lines="none" class="field-card">
-          <ion-icon
-            name="chatbubbles-outline"
-            slot="start"
-            class="field-icon"
-          ></ion-icon>
+          <ion-icon name="person-outline" slot="start" class="field-icon"></ion-icon>
+          <ion-select
+            [(ngModel)]="selectedContact"
+            label="Select Contact"
+            placeholder="Choose a contact (optional)"
+            interface="popover"
+          >
+            <ion-select-option
+              *ngFor="let contact of contacts"
+              [value]="contact"
+            >
+              {{ contactLabel(contact) }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <!-- Question Input -->
+        <ion-item lines="none" class="field-card">
+          <ion-icon name="chatbubbles-outline" slot="start" class="field-icon"></ion-icon>
           <ion-textarea
             [(ngModel)]="question"
             autoGrow="true"
@@ -31,34 +45,71 @@
           ></ion-textarea>
         </ion-item>
 
+        <!-- Generate with AI Button -->
         <ion-button
           class="primary-btn"
           expand="block"
           (click)="generateWithAI()"
           [disabled]="isGenerating"
         >
-          <ion-spinner
-            *ngIf="isGenerating"
-            name="crescent"
-            style="margin-right: 8px"
-          ></ion-spinner>
-          {{ isGenerating ? 'Thinking…' : 'Generate with AI' }}
+          <ion-spinner *ngIf="isGenerating" name="crescent" style="margin-right: 8px"></ion-spinner>
+          <ion-icon *ngIf="!isGenerating" name="sparkles-outline" slot="start"></ion-icon>
+          {{ isGenerating ? 'Thinking...' : 'Generate with AI' }}
         </ion-button>
 
-        <!-- Preview the 8 labels if we already have them -->
+        <!-- Generic Suggestions Button -->
+        <ion-button
+          class="secondary-btn"
+          expand="block"
+          fill="outline"
+          (click)="generateGenericWithAI()"
+          [disabled]="isGenerating"
+        >
+          Generic Suggestions
+        </ion-button>
+
+        <!-- Preview Section -->
         <div class="preview" *ngIf="options?.length">
-          <div class="preview-title">Preview (8)</div>
-          <div class="chips">
+          <div class="preview-title">AI Suggestions Preview ({{options.length}} options)</div>
+          
+          <!-- Personalized Suggestions Display -->
+          <div *ngIf="personalizedSuggestions.length > 0" class="personalization-info">
+            <div class="personalization-item" *ngFor="let suggestion of personalizedSuggestions">
+              <span class="category-icon">{{ getCategoryIcon(suggestion.category) }}</span>
+              <span class="suggestion-text">{{ suggestion.suggestion }}</span>
+              <ion-badge color="success" class="confidence-badge">
+                {{ getConfidenceDisplay(suggestion) }}
+              </ion-badge>
+              <div class="personalization-reason" *ngIf="suggestion.personalization">
+                {{ suggestion.personalization }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Regular Preview (without personalization) -->
+          <div class="chips" *ngIf="personalizedSuggestions.length === 0">
             <ion-chip *ngFor="let opt of options">{{ opt }}</ion-chip>
           </div>
-          <ion-button class="primary-btn" expand="block" (click)="view='roll'"
-            >Open Roulette</ion-button
-          >
+
+          <!-- Open Roulette Button -->
+          <ion-button class="primary-btn" expand="block" (click)="view='roll'">
+            Open Roulette
+          </ion-button>
         </div>
+
+        <!-- Default Options Button -->
+        <ion-button
+          class="tertiary-btn"
+          expand="block"
+          fill="clear"
+          (click)="useDefaults()"
+        >
+          Use Default Options
+        </ion-button>
       </div>
     </section>
 
-    <!-- ROLL -->
+    <!-- ROLL SCREEN -->
     <section *ngSwitchCase="'roll'" class="screen roll-screen">
       <div class="wheel-wrap">
         <div
@@ -75,7 +126,7 @@
             </li>
           </ul>
 
-          <!-- Hub button -->
+          <!-- Center Spin Button -->
           <button
             class="spin-btn"
             (click)="startRoll()"
@@ -92,10 +143,32 @@
         <div class="pointer" aria-hidden="true"></div>
       </div>
 
+      <!-- Result Banner -->
       <div class="banner">
-        {{ isSpinning ? 'Rolling…' : (resultText || 'Tap SPIN to start') }}
+        {{ isSpinning ? 'Spinning...' : (resultText || 'Tap SPIN to start') }}
       </div>
 
+      <!-- Personalized Result Details -->
+      <div *ngIf="!isSpinning && resultText && personalizedSuggestions.length > 0" class="result-details">
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>🎯 Personalized Suggestion</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <div *ngFor="let suggestion of personalizedSuggestions">
+              <div *ngIf="suggestion.suggestion === resultText" class="matched-suggestion">
+                <p><strong>{{ suggestion.suggestion }}</strong></p>
+                <p class="personalization-reason">{{ suggestion.personalization }}</p>
+                <ion-badge [color]="suggestion.confidence > 0.7 ? 'success' : 'warning'">
+                  {{ getConfidenceDisplay(suggestion) }}
+                </ion-badge>
+              </div>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </div>
+
+      <!-- Action Buttons -->
       <ion-button
         class="secondary-btn"
         expand="block"
@@ -103,6 +176,15 @@
         (click)="startRoll()"
       >
         Spin Again
+      </ion-button>
+
+      <ion-button
+        class="tertiary-btn"
+        expand="block"
+        fill="clear"
+        (click)="goBack()"
+      >
+        Back to Edit
       </ion-button>
     </section>
   </ng-container>

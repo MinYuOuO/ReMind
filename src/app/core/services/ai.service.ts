@@ -215,14 +215,14 @@ class OpenAIProvider implements AiProvider {
     const json = tryExtractJson(text);
 
     const defaults = [
-      '发消息问候最近在忙什么项目',
-      '分享一个对方可能感兴趣的链接',
-      '约个简短的咖啡或视频通话',
-      '询问上次提到的挑战进展如何',
-      '发送一段鼓励的语音消息',
-      '推荐符合对方喜好的书籍电影',
-      '计划一次轻松的散步或午餐',
-      '为对方的小成就点赞庆祝',
+      'Send a message to ask what projects youve been busy',
+      'Share a link',
+      'arrange a short coffee or video call',
+      'Inquire about the progress of the challenge mentioned',
+      'Send an encouraging voice message',
+      'Recommend books and movies that match the other preferences',
+      'Plan a relaxing walk or lunch',
+      'Celebrate each small achievements',
     ];
 
     if (Array.isArray(json)) {
@@ -284,7 +284,7 @@ class DeepSeekProvider implements AiProvider {
       {
         role: 'system',
         content:
-          '你是一个专业的人际关系分析师，擅长从社交互动中提取结构化信息。请严格遵循JSON格式输出。',
+          'You are a professional interpersonal relations analyst, skilled at extracting structured information from social interactions. Please strictly adhere to the JSON format for output.',
       },
       {
         role: 'user',
@@ -296,7 +296,7 @@ class DeepSeekProvider implements AiProvider {
     const json = tryExtractJson(text) || {};
 
     return {
-      summary: String(json.summary || '互动已记录')
+      summary: String(json.summary || 'Interaction recorded')
         .trim()
         .slice(0, 200),
       facts: Array.isArray(json.facts)
@@ -339,7 +339,7 @@ class DeepSeekProvider implements AiProvider {
       {
         role: 'system',
         content:
-          '你是一个贴心的关系顾问，提供温暖实用的建议。请用JSON格式回复。',
+          'You are a caring relationship advisor, offering warm and practical advice. Please reply in JSON format.',
       },
       {
         role: 'user',
@@ -367,24 +367,24 @@ class DeepSeekProvider implements AiProvider {
       {
         role: 'system',
         content:
-          '你是一个创意社交教练，擅长提供具体可行的关系维护建议。请返回JSON数组格式。',
+          'You are a creative social coach, skilled at providing concrete and actionable relationship maintenance advice. Please return a JSON array.',
       },
       {
         role: 'user',
-        content: `生成${n}个加强友谊的具体建议，每个建议8-15字，要求具体可行。返回JSON数组格式。`,
+        content: `Generate ${n} specific suggestions for strengthening friendships, each suggestion being 4-10 words long and feasible. Return the results as a JSON array.`,
       },
     ];
 
-    const text = await this.chat(messages, 0.7);
+    const text = await this.chat(messages, 0.6);
     const json = tryExtractJson(text);
 
     const defaults = [
-      '发消息问候最近在忙什么',
-      '分享一个有趣的链接',
-      '约个简短的咖啡时间',
-      '询问上次提到的进展',
-      '发送鼓励的语音消息',
-      '推荐合适的书籍电影',
+      'Send a message to ask what youve been up to lately',
+      'Sharing an interesting link',
+      'arrange a short coffee break',
+      'Inquire about the progress mentioned last time',
+      'Send encouraging voice messages',
+      'Recommend suitable books and movies',
     ];
 
     if (Array.isArray(json)) {
@@ -399,7 +399,7 @@ class DeepSeekProvider implements AiProvider {
 
   async generateText(prompt: string): Promise<string> {
     const messages = [
-      { role: 'system', content: '你是一个有帮助的助手。' },
+      { role: 'system', content: 'You are a helpful assistant' },
       { role: 'user', content: prompt },
     ];
 
@@ -577,7 +577,7 @@ export class AiService {
       );
       const aiResult = await this.provider.generateInsightText(prompt);
 
-      const content = aiResult.suggestion || aiResult.summary || '暂无洞察建议';
+      const content = aiResult.suggestion || aiResult.summary || 'No insights or suggestions available';
 
       const insight = await this.insightRepo.create(
         args.contact_id,
@@ -641,14 +641,14 @@ export class AiService {
   // Roulette suggestions
   async generateRouletteSuggestions(count = 8): Promise<RouletteResult> {
     const defaults = [
-      '发个消息问候近况',
-      '分享有趣的图片或文章',
-      '约个简短的咖啡时间',
-      '询问工作或兴趣进展',
-      '发送鼓励的语音消息',
-      '推荐合适的书籍电影',
-      '计划轻松的散步活动',
-      '为小成就点赞庆祝',
+      'Send a message to ask how you are doing',
+      'Share interesting pictures or articles',
+      'Arrange a short coffee break',
+      'Ask about work or interest progress',
+      'Send encouraging voice messages',
+      'Recommend suitable books and movies',
+      'Plan a relaxing walk.',
+      'Celebrate small achievements',
     ];
 
     if (!this.provider) {
@@ -717,20 +717,19 @@ export class AiService {
     }
 
     try {
-      // 构建洞察生成提示词
+      // Build insights to generate prompts
       const prompt = this.buildPersonInsightPrompt(args);
 
-      // 使用 AI 生成洞察
+      // Using AI to generate insights
       const aiResult = await this.provider.generateInsightText(prompt);
 
-      // 获取洞察内容
+      // Get insights
       const content =
         aiResult.suggestion ||
         aiResult.summary ||
-        (args.question ? `关于"${args.question}"的洞察` : '关系维护建议');
+        (args.question ? `about"${args.question}"insight` : 'relationship maintenance suggestions');
 
-      // 这里需要调用 insightRepo 来创建洞察记录
-      // 由于我们没有 insightRepo 的完整实现，这里创建一个简化版本
+      // calling insightRepo to create insight records.
       const insightId = await this.createInsightRecord({
         contact_id: args.contact_id,
         user_id: args.user_id,
@@ -811,8 +810,8 @@ export class AiService {
 
       return insightId;
     } catch (error) {
-      console.error('创建洞察记录失败:', error);
-      // 即使数据库操作失败，也返回一个ID，不阻塞主流程
+      console.error('Insight record creation failed:', error);
+      // Even if the database operation fails, it returns an ID and does not block the main process
       return insightId;
     }
   }
@@ -852,7 +851,7 @@ export class AiService {
     );
 
     if (logs.length === 0) {
-      return '暂无认知总结';
+      return 'No summary of knowledge yet';
     }
 
     // Simple aggregation of recent insights
@@ -867,6 +866,6 @@ export class AiService {
       })
       .filter((s) => s.length > 0);
 
-    return summaries.slice(0, 3).join('；') || '认知信息正在构建中';
+    return summaries.slice(0, 3).join('；') || 'Cognitive information is being constructed';
   }
 }
