@@ -1,3 +1,72 @@
 .page {
+  --background: linear-gradient(
+    to bottom,
+    #c7dffd 0%,
+    #e4f0ff 45%,
+    #ffffff 100%
+  );
+}
+
+/* 让列表整体居中一点，看起来像一个卡片区域 */
+.page ion-list {
+  background: transparent;
+  max-width: 380px;
+  margin: 18vh auto 0 auto; // 往下偏一点
   padding: 16px;
+  border-radius: 18px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(8px);
+}
+
+/* 每个输入区域的样式 */
+.page ion-item {
+  --background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+/* label 用堆叠样式时稍微加粗一点 */
+.page ion-label {
+  font-weight: 500;
+}
+
+/* 密码输入那一行：让 input + icon 在一条水平线上 */
+.password-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.password-row ion-input {
+  flex: 1;
+}
+
+/* 眼睛 icon 的统一样式 */
+.eye-icon {
+  font-size: 1.5rem;
+  margin-left: 8px;
+  cursor: pointer;
+}
+
+/* 登录按钮：占满整行 + 上下留空一点 */
+.page ion-button {
+  width: 100%;
+}
+
+/* 主要 Login 按钮和其他按钮之间留一点距离 */
+.page ion-item[lines='none'] + ion-item[lines='none'] {
+  margin-top: 4px;
+}
+
+/* header 做成透明 / 简洁一点 */
+ion-header,
+ion-toolbar {
+  --background: transparent;
+  --border-width: 0;
+}
+
+ion-title {
+  text-align: center;
+  color: #295ea8;
+  font-weight: 600;
 }

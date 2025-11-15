@@ -8,14 +8,18 @@
   <ion-list>
     <ion-item>
       <ion-label position="stacked">Password</ion-label>
-      <div style="display: flex; align-items: center; width: 100%">
-        <ion-input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password" placeholder="Enter password"></ion-input>
-        <ion-icon 
-          [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"
-          (click)="showPassword = !showPassword"
-          style="font-size: 1.5em; margin-left: 8px; cursor: pointer;"
-        ></ion-icon>
-      </div>
+      <div class="password-row">
+  <ion-input
+    [type]="showPassword ? 'text' : 'password'"
+    [(ngModel)]="password"
+    placeholder="Enter password">
+  </ion-input>
+  <ion-icon 
+    class="eye-icon"
+    [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"
+    (click)="showPassword = !showPassword">
+  </ion-icon>
+</div>
     </ion-item>
 
     <ion-item lines="none">
