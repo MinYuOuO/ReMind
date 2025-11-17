@@ -202,6 +202,12 @@ export class FriendListPage implements OnInit {
   notifications = signal<any[]>([]);
   hasUnreadNotifications = signal(false);
 
+  loadingContacts = signal(false);
+  savingContact = signal(false);
+  generatingInteraction = signal(false);
+  processingAI = signal(false);
+  deletingContact = signal(false);
+
   constructor(
     private platform: Platform,
     private contactsRepo: ContactRepo,
@@ -404,6 +410,7 @@ export class FriendListPage implements OnInit {
   }
 
   async onGenerateInteraction() {
+    this.generatingInteraction.set(true);
     try {
       if (!this.interaction.contact) {
         alert('Please choose a contact for this interaction');
@@ -492,6 +499,8 @@ export class FriendListPage implements OnInit {
     } catch (err) {
       console.error('[FriendList] onGenerateInteraction failed', err);
       alert('Failed to save interaction');
+    } finally {
+      this.generatingInteraction.set(false);
     }
   }
 
@@ -507,7 +516,10 @@ export class FriendListPage implements OnInit {
         if (this.editingContactId === contactId) {
           this.newContact.notes = this.currentContactNotes;
         }
-        console.log('Contact notes have been updated: ', this.currentContactNotes);
+        console.log(
+          'Contact notes have been updated: ',
+          this.currentContactNotes
+        );
       }
     } catch (error) {
       console.error('Refreshing Contacts Notes failed: ', error);
@@ -534,6 +546,7 @@ export class FriendListPage implements OnInit {
   }
 
   async onSubmit() {
+    this.savingContact.set(true);
     if (!this.newContact.name) return;
 
     try {
@@ -781,6 +794,7 @@ export class FriendListPage implements OnInit {
   }
 
   async onDelete() {
+    this.deletingContact.set(true);
     if (!this.editingContactId) return;
     try {
       await this.contactsRepo.delete(this.editingContactId);
@@ -803,6 +817,8 @@ export class FriendListPage implements OnInit {
       await this.load();
     } catch (err) {
       console.error('Failed to delete contact:', err);
+    } finally {
+      this.deletingContact.set(false);
     }
   }
 
@@ -907,6 +923,7 @@ export class FriendListPage implements OnInit {
   }
 
   async rejectAiAndResend() {
+    this.processingAI.set(true);
     if (!this.lastInteractionId || !this.lastInteractionContactId) {
       alert('No previous interaction to re-process.');
       return;
@@ -947,6 +964,8 @@ export class FriendListPage implements OnInit {
     } catch (err) {
       console.error('[FriendList] rejectAiAndResend failed', err);
       alert('Failed to re-generate AI notes.');
+    } finally {
+      this.processingAI.set(false);
     }
   }
 

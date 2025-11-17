@@ -1,60 +1,136 @@
 .page {
-  --background: linear-gradient(180deg, #9fb7d6 0%, #eaf1f8 60%, #ffffff 100%);
+  --background: var(--app-background-gradient) !important;
+  background: var(--app-background-gradient) !important;
 }
 
-/* Header */
 .page-toolbar {
-  background: linear-gradient(180deg, #9fb7d6 0%, #b8c9de 100%);
+  --background: var(--app-toolbar-gradient) !important;
+  --color: var(--app-text-light) !important;
+  --ion-toolbar-background: var(--app-toolbar-gradient) !important;
+  
+  background: var(--app-toolbar-gradient) !important;
+  color: var(--app-text-light) !important;
+  animation: app-fadeInDown 0.6s ease-out both;
+
+  .toolbar-background {
+    --background: var(--app-toolbar-gradient) !important;
+    background: var(--app-toolbar-gradient) !important;
+  }
 
   ion-title {
+    --color: var(--app-text-light) !important;
+    color: var(--app-text-light) !important;
     font-weight: 800;
     text-align: center;
   }
 
-  ion-icon {
-    font-size: 20px;
+  ion-button[fill="clear"] {
+    --color: var(--app-text-light) !important;
+    color: var(--app-text-light) !important;
+    
+    ion-icon {
+      color: var(--app-text-light) !important;
+    }
   }
 }
 
-/* Main & Subpages */
+/* ===== MAIN SETTINGS PAGE ===== */
+.main-settings {
+  animation: app-fadeInScale 0.6s ease-out both;
+}
+
 .menu-list {
+  --background: transparent !important;
+  --ion-item-background: transparent !important;
+  
   padding: 16px;
-  background: transparent;
+  background: transparent !important;
+  animation: app-fadeIn 0.6s ease-out 0.1s both;
 }
 
 .menu-card {
-  --background: #ffffff;
-  color: #5d7390;
+  --background: var(--app-card-bg) !important;
+  --color: var(--app-text-dark) !important;
+  
+  background: var(--app-card-bg) !important;
+  color: var(--app-text-dark) !important;
   border-radius: 12px;
-  border: 1px solid #dce3f1;
+  border: var(--app-card-border);
   margin: 10px 0;
-  box-shadow: 0 6px 16px rgba(38, 64, 120, 0.08);
+  box-shadow: var(--app-card-shadow);
   align-items: center;
+  transition: var(--app-transition-smooth);
+  animation: app-slideInRight 0.5s ease-out both;
+  animation-fill-mode: both;
+
+  // Staggered animation for menu items
+  @for $i from 1 through 10 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.05}s;
+    }
+  }
+
+  &:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 8px rgba(38, 64, 120, 0.12);
+  }
 
   ion-icon {
-    color: #6b7aa6;
+    color: var(--app-text-medium) !important;
     font-size: 22px;
     margin-right: 8px;
   }
 
   ion-label {
-    color: #1e3a8a;
+    color: var(--app-text-dark) !important;
     font-weight: 700;
   }
 }
 
-.empty-tip {
-  text-align: center;
-  color: #6b7aa6;
-  margin-top: 30vh;
-  font-weight: 600;
-}
-
+/* ===== SUBPAGES ===== */
 .subpage {
   padding: 16px;
+  animation: app-slideInRight 0.5s ease-out both;
 }
 
-/* -------- PERSONAL CARD STYLE -------- */
+.empty-tip {
+  text-align: center;
+  color: var(--app-text-medium);
+  margin-top: 30vh;
+  font-weight: 600;
+  animation: app-fadeIn 0.6s ease-out both;
+}
+
+/* ===== BUTTON STYLES ===== */
+ion-button {
+  --background: var(--app-primary-color) !important;
+  --color: var(--app-text-light) !important;
+  --border-radius: 12px !important;
+  --box-shadow: 0 4px 12px rgba(93, 120, 176, 0.2) !important;
+  
+  background: var(--app-primary-color) !important;
+  color: var(--app-text-light) !important;
+  font-weight: 700;
+  transition: var(--app-transition-smooth);
+  
+  &:active {
+    transform: scale(0.95);
+  }
+  
+  &[fill="clear"] {
+    --background: transparent !important;
+    --color: var(--app-text-dark) !important;
+    
+    background: transparent !important;
+    color: var(--app-text-dark) !important;
+  }
+  
+  &[expand="block"] {
+    animation: app-fadeInUp 0.6s ease-out 0.2s both;
+  }
+}
+
+/* ===== PERSONAL CARD STYLES ===== */
 .personal-card {
   display: flex;
   flex-direction: column;
@@ -62,10 +138,12 @@
   padding: 18px 16px 100px;
   gap: 18px;
   position: relative;
+  animation: app-fadeInScale 0.6s ease-out both;
 }
 
 .avatar-wrap {
   margin-top: 6px;
+  animation: app-bounceIn 0.8s ease-out 0.1s both;
 }
 
 .avatar-circle {
@@ -78,137 +156,200 @@
   align-items: center;
   justify-content: center;
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.05);
-}
+  transition: var(--app-transition-smooth);
 
-.avatar-circle ion-icon {
-  font-size: 54px;
-  color: #4f6ea5;
+  &:active {
+    transform: scale(0.95);
+  }
+
+  ion-icon {
+    font-size: 54px;
+    color: #4f6ea5;
+  }
 }
 
 .card-block {
   width: 100%;
   max-width: 360px;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--app-card-bg);
   border-radius: 16px;
   padding: 14px 14px 6px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  box-shadow: 0 10px 24px rgba(21, 43, 79, 0.07);
+  box-shadow: var(--app-card-shadow);
+  animation: app-slideInUp 0.6s ease-out 0.2s both;
 }
 
-.card-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: #e5edf3;
+.input-row {
+  --background: var(--app-card-bg) !important;
+  --color: var(--app-text-dark) !important;
+  
+  background: var(--app-card-bg) !important;
+  color: var(--app-text-dark) !important;
+  margin: 8px 12px;
   border-radius: 10px;
-  padding: 10px 12px;
-  color: #30486a;
-  font-weight: 600;
-}
+  padding: 8px 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+  align-items: center;
+  display: flex;
+  height: 48px;
+  animation: app-fadeInRight 0.5s ease-out both;
+  animation-fill-mode: both;
 
-.card-row ion-icon {
-  font-size: 20px;
-  color: #4f6ea5;
+  @for $i from 1 through 5 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.1}s;
+    }
+  }
+
+  ion-icon {
+    font-size: 20px;
+    margin-right: 8px;
+    color: var(--app-text-medium) !important;
+  }
+
+  ion-input {
+    --color: var(--app-text-dark) !important;
+    color: var(--app-text-dark) !important;
+    font-weight: 700;
+    
+    &::part(placeholder) {
+      color: var(--app-text-medium);
+      opacity: 0.7;
+    }
+  }
+
+  .field-name {
+    --color: var(--ion-color-primary) !important;
+    color: var(--ion-color-primary) !important;
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  .field-detail {
+    --color: var(--app-text-dark) !important;
+    color: var(--app-text-dark) !important;
+    font-weight: 500;
+    font-size: 14px;
+  }
 }
 
 .notes-block {
   width: 100%;
   max-width: 360px;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--app-card-bg);
   border-radius: 16px;
   padding: 14px 14px 16px;
-  box-shadow: 0 10px 24px rgba(21, 43, 79, 0.07);
+  box-shadow: var(--app-card-shadow);
+  animation: app-slideInUp 0.6s ease-out 0.3s both;
 }
 
 .notes-label {
   display: block;
   font-weight: 600;
-  color: #30486a;
+  color: var(--app-text-dark);
   margin-bottom: 8px;
+  animation: app-fadeIn 0.6s ease-out 0.4s both;
 }
 
 .notes-area {
   min-height: 140px;
-  background: #e5edf3;
+  background: var(--app-card-bg);
   border-radius: 12px;
-  border: 1px solid rgba(36, 68, 114, 0.05);
+  border: var(--app-card-border);
+  animation: app-expandIn 0.5s ease-out 0.5s both;
+
+  ion-textarea {
+    --color: var(--app-text-dark) !important;
+    color: var(--app-text-dark) !important;
+    
+    &::part(placeholder) {
+      color: var(--app-text-medium);
+      opacity: 0.7;
+    }
+  }
 }
 
-/* -------- NOTIFICATION STYLE -------- */
+/* ===== NOTIFICATION STYLES ===== */
 .noti-page {
   padding: 16px 16px 110px;
+  animation: app-fadeIn 0.6s ease-out both;
 }
 
 .noti-section-title {
   font-weight: 700;
-  color: #2f4d6c;
+  color: var(--app-text-dark);
   margin-bottom: 14px;
+  animation: app-fadeInDown 0.6s ease-out both;
 }
 
 .noti-card {
   display: flex;
   gap: 12px;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--app-card-bg);
   border-radius: 14px;
   padding: 12px 14px;
   margin-bottom: 12px;
   align-items: center;
-  box-shadow: 0 10px 24px rgba(21, 43, 79, 0.05);
-  border: 1px solid rgba(220, 227, 241, 0.6);
+  box-shadow: var(--app-card-shadow);
+  border: var(--app-card-border);
+  transition: var(--app-transition-smooth);
+  animation: app-slideInUp 0.5s ease-out both;
+  animation-fill-mode: both;
+
+  @for $i from 1 through 10 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.05}s;
+    }
+  }
+
+  &:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 8px rgba(38, 64, 120, 0.12);
+  }
 }
 
 .noti-left {
   width: 38px;
   height: 38px;
   border-radius: 9999px;
-  background: #e5edf3;
+  background: var(--app-avatar-bg);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-}
+  animation: app-pulse 2s infinite;
 
-.noti-left ion-icon {
-  font-size: 20px;
-  color: #4f6ea5;
+  ion-icon {
+    font-size: 20px;
+    color: var(--app-avatar-color);
+  }
 }
 
 .noti-body {
   flex: 1;
+  animation: app-fadeIn 0.6s ease-out 0.1s both;
 }
 
 .noti-title {
   font-weight: 700;
-  color: #20354e;
+  color: var(--app-text-dark);
   font-size: 0.9rem;
 }
 
 .noti-sub {
   font-size: 0.7rem;
-  color: #5d7390;
+  color: var(--app-text-medium);
 }
 
-.noti-action {
-  background: #4f6ea5;
-  color: #fff;
-  border-radius: 9999px;
-  padding: 4px 10px 5px;
-  font-size: 0.68rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.noti-action.secondary {
-  background: #dae3f1;
-  color: #2f4d6c;
-}
-
-/* Trash button styling for notification cards */
-.noti-card ion-button.trash-btn {
-  --background: #4f6ea5;
-  --color: #ffffff;
+.trash-btn {
+  --background: var(--app-primary-color) !important;
+  --color: var(--app-text-light) !important;
+  
+  position: absolute;
+  right: 8px;
+  top: 8px;
   height: 40px;
   width: 40px;
   min-width: 0;
@@ -217,55 +358,29 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 12px rgba(79,110,165,0.12);
-  --border-radius: 50%;
+  box-shadow: 0 6px 12px rgba(93, 120, 176, 0.12);
+  
+  ion-icon {
+    font-size: 18px;
+    color: var(--app-text-light) !important;
+  }
+
+  &:active {
+    transform: scale(0.9);
+  }
 }
 
-.noti-card ion-button.trash-btn ion-icon {
-  font-size: 18px;
-  color: #fff;
-  line-height: 1;
-}
-
-ion-header[translucent] {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: transparent;
-}
-
-/* Calendar & personal-card adjustments (keeps original rules intact, adds missing pieces
-   so the calendar rendered in settings.page.html matches friend-list styles) */
-
-.personal-card {
-  position: relative;
-}
-
-/* ensure the readonly birthday input uses readable text and doesn't inherit a dark bar */
-.personal-card ion-item[button] {
-  --background: transparent;
-  --background-focused: transparent;
-  --padding-start: 12px;
-  --padding-end: 12px;
-}
-
-.personal-card ion-input[readonly] {
-  color: #111;
-  opacity: 1;
-}
-
-/* Calendar container */
+/* ===== CALENDAR STYLES ===== */
 .calendar-wrap {
   margin: 8px 16px 0;
-  background: #fff;
-  color: #111;
+  background: var(--app-calendar-bg);
+  color: var(--app-text-dark);
   border-radius: 8px;
   padding: 8px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
-  /* keep it visually separated from the black bars */
+  box-shadow: var(--app-card-shadow);
+  animation: app-expandIn 0.3s ease-out both;
 }
 
-/* Header with navigation */
 .calendar-header {
   display: flex;
   align-items: center;
@@ -273,80 +388,149 @@ ion-header[translucent] {
   gap: 8px;
   padding: 4px 6px;
   user-select: none;
+  animation: app-fadeIn 0.6s ease-out both;
 }
 
 .calendar-header button {
-  background: transparent;
+  --background: transparent !important;
+  --color: var(--app-text-dark) !important;
+  
+  background: transparent !important;
   border: none;
-  color: #333;
+  color: var(--app-text-dark) !important;
   font-size: 14px;
   padding: 6px 8px;
   cursor: pointer;
   line-height: 1;
+  transition: var(--app-transition-quick);
+
+  &:active {
+    transform: scale(0.9);
+  }
 }
 
 .calendar-title {
   font-weight: 600;
   font-size: 14px;
-  color: #222;
+  color: var(--app-text-dark);
 }
 
-/* Grid layout for weekdays and days */
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 6px;
   margin-top: 8px;
+  animation: app-fadeIn 0.6s ease-out 0.1s both;
 }
 
 .calendar-weekday {
   font-size: 11px;
   text-align: center;
-  color: #777;
+  color: var(--app-text-medium);
   padding: 4px 0;
+  animation: app-fadeIn 0.6s ease-out both;
+
+  @for $i from 1 through 7 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.05}s;
+    }
+  }
 }
 
-/* Individual day cell */
 .calendar-cell {
   min-height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 6px;
-  background: transparent;
-  color: #222;
+  background: var(--app-calendar-cell-bg);
+  color: var(--app-calendar-cell-color);
   cursor: pointer;
   font-size: 14px;
-  transition: background 120ms ease, color 120ms ease;
+  transition: var(--app-transition-quick);
+  animation: app-fadeInScale 0.4s ease-out both;
+
+  @for $i from 1 through 42 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.02}s;
+    }
+  }
+
+  &:not(.empty):active {
+    transform: scale(0.9);
+  }
+  
+  &.empty {
+    background: transparent;
+    color: var(--app-calendar-empty-color);
+  }
+  
+  &.selected {
+    background: linear-gradient(180deg, #4f78e6, #3560c8);
+    color: var(--app-text-light);
+    box-shadow: 0 6px 16px rgba(79, 120, 230, 0.18);
+    animation: app-pulse 0.5s ease-out both;
+  }
 }
 
-/* empty cells (before/after month) */
-.calendar-cell.empty {
-  opacity: 0.18;
-  cursor: default;
-  color: rgba(0, 0, 0, 0.15);
-  background: transparent;
+/* ===== FORM ELEMENTS ===== */
+ion-select {
+  --background: var(--app-card-bg) !important;
+  --color: var(--app-text-dark) !important;
+  
+  background: var(--app-card-bg) !important;
+  color: var(--app-text-dark) !important;
 }
 
-/* selected day appearance */
-.calendar-cell.selected {
-  background: #387ef5;
-  color: #fff;
-  box-shadow: 0 2px 6px rgba(56, 126, 245, 0.18);
+ion-input {
+  --background: var(--app-card-bg) !important;
+  --color: var(--app-text-dark) !important;
+  --placeholder-color: var(--app-text-medium) !important;
+  
+  background: var(--app-card-bg) !important;
+  color: var(--app-text-dark) !important;
+  
+  &[type="password"] {
+    --placeholder-color: var(--app-text-medium) !important;
+  }
 }
 
-/* hover affordance on clickable days */
-.calendar-cell:not(.empty):hover {
-  background: rgba(56, 126, 245, 0.06);
+/* ===== PASSWORD VISIBILITY TOGGLE ===== */
+.password-toggle {
+  font-size: 1.5em;
+  margin-left: 8px;
+  cursor: pointer;
+  color: var(--app-text-medium);
+  transition: var(--app-transition-quick);
+  animation: app-fadeIn 0.6s ease-out both;
+
+  &:active {
+    transform: scale(0.9);
+  }
 }
 
-/* make sure the calendar doesn't overflow the page */
-.calendar-wrap {
-  max-width: calc(100% - 24px);
-  overflow: hidden;
+/* ===== LOADING STATES ===== */
+.saving {
+  opacity: 0.7;
+  pointer-events: none;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-top: 2px solid var(--app-text-light);
+    border-radius: 50%;
+    animation: button-spin 0.8s linear infinite;
+    top: 50%;
+    left: 50%;
+    margin-left: -10px;
+    margin-top: -10px;
+  }
 }
 
-/* small screens: slightly reduce sizes */
+/* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 420px) {
   .calendar-cell {
     min-height: 32px;
@@ -357,303 +541,41 @@ ion-header[translucent] {
     padding: 4px 6px;
     font-size: 13px;
   }
-}
-
-/* Personal card — input row visuals (matches provided image style) */
-.personal-card .card-block {
-  display: block;
-  gap: 8px;
-}
-
-/* common input row look */
-.personal-card .card-block .input-row {
-  --background: #fff;
-  --background-focused: #fff;
-  margin: 8px 12px;
-  border-radius: 10px;
-  padding: 8px 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
-  align-items: center;
-  display: flex;
-  height: 48px;
-}
-
-/* icon on left */
-.personal-card .card-block .input-row ion-icon {
-  font-size: 20px;
-  margin-right: 8px;
-  color: rgba(51, 51, 51, 0.36);
-}
-
-/* name field: blue, slightly larger and bolder per image */
-.personal-card .card-block ion-input.field-name,
-.personal-card .card-block .field-name {
-  color: var(--ion-color-primary, #387ef5);
-  font-weight: 600;
-  font-size: 15px;
-  width: 100%;
-}
-
-/* Strongly enforce input text / placeholder colors for personal card fields */
-.personal-card .card-block ion-input.field-name,
-.personal-card .card-block ion-input.field-name input {
-  color: var(--ion-color-primary, #387ef5) !important;
-}
-
-.personal-card .card-block ion-input.field-name input::placeholder {
-  color: rgba(56,126,245,0.35) !important;
-}
-
-/* contact/detail field uses darker neutral color */
-.personal-card .card-block ion-input.field-detail,
-.personal-card .card-block ion-input.field-detail input {
-  color: #20354e !important;
-}
-
-.personal-card .card-block ion-input.field-detail input::placeholder {
-  color: rgba(32,53,78,0.35) !important;
-}
-
-/* contact & birthday: neutral darker text */
-.personal-card .card-block ion-input.field-detail,
-.personal-card .card-block ion-input.field-bday,
-.personal-card .card-block .field-detail,
-.personal-card .card-block .field-bday {
-  color: #222;
-  font-weight: 500;
-  font-size: 14px;
-  width: 100%;
-}
-
-/* Ensure textarea notes keep dark text */
-.personal-card .notes-area ion-textarea,
-.personal-card .notes-area ion-textarea textarea {
-  color: #20354e !important;
-}
-
-/* Notes textarea: force black text */
-.personal-card .notes-area ion-textarea.notes-text,
-.personal-card .notes-area ion-textarea.notes-text textarea {
-  color: #000 !important;
-  font-size: 14px;
-  line-height: 1.35;
-}
-
-/* tiny spacing tweak so the input content aligns like the screenshot */
-.personal-card .card-block .input-row .native-input,
-.personal-card .card-block .input-row input {
-  padding: 0;
-  margin: 0;
-}
-
-/* Calendar & personal-card adjustments (keeps original rules intact, adds missing pieces
-   so the calendar rendered in settings.page.html matches friend-list styles) */
-
-.personal-card {
-  position: relative;
-}
-
-/* ensure the readonly birthday input uses readable text and doesn't inherit a dark bar */
-.personal-card ion-item[button] {
-  --background: transparent;
-  --background-focused: transparent;
-  --padding-start: 12px;
-  --padding-end: 12px;
-}
-
-.personal-card ion-input[readonly] {
-  color: #111;
-  opacity: 1;
-}
-
-/* Calendar container */
-.calendar-wrap {
-  margin: 8px 16px 0;
-  background: #fff;
-  color: #111;
-  border-radius: 8px;
-  padding: 8px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
-  /* keep it visually separated from the black bars */
-}
-
-/* Header with navigation */
-.calendar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 4px 6px;
-  user-select: none;
-}
-
-.calendar-header button {
-  background: transparent;
-  border: none;
-  color: #333;
-  font-size: 14px;
-  padding: 6px 8px;
-  cursor: pointer;
-  line-height: 1;
-}
-
-.calendar-title {
-  font-weight: 600;
-  font-size: 14px;
-  color: #222;
-}
-
-/* Grid layout for weekdays and days */
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.calendar-weekday {
-  font-size: 11px;
-  text-align: center;
-  color: #777;
-  padding: 4px 0;
-}
-
-/* Individual day cell */
-.calendar-cell {
-  min-height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  background: transparent;
-  color: #222;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background 120ms ease, color 120ms ease;
-}
-
-/* empty cells (before/after month) */
-.calendar-cell.empty {
-  opacity: 0.18;
-  cursor: default;
-  color: rgba(0, 0, 0, 0.15);
-  background: transparent;
-}
-
-/* selected day appearance */
-.calendar-cell.selected {
-  background: #387ef5;
-  color: #fff;
-  box-shadow: 0 2px 6px rgba(56, 126, 245, 0.18);
-}
-
-/* hover affordance on clickable days */
-.calendar-cell:not(.empty):hover {
-  background: rgba(56, 126, 245, 0.06);
-}
-
-/* make sure the calendar doesn't overflow the page */
-.calendar-wrap {
-  max-width: calc(100% - 24px);
-  overflow: hidden;
-}
-
-/* small screens: slightly reduce sizes */
-@media (max-width: 420px) {
-  .calendar-cell {
-    min-height: 32px;
-    font-size: 13px;
-  }
-
-  .calendar-header button {
-    padding: 4px 6px;
-    font-size: 13px;
+  
+  .avatar-circle {
+    width: 80px;
+    height: 80px;
+    
+    ion-icon {
+      font-size: 44px;
+    }
   }
 }
 
-/* Personal card — input row visuals (matches provided image style) */
-.personal-card .card-block {
-  display: block;
-  gap: 8px;
+@media (min-width: 768px) {
+  .card-block,
+  .notes-block {
+    max-width: 480px;
+  }
 }
 
-/* common input row look */
-.personal-card .card-block .input-row {
-  --background: #fff;
-  --background-focused: #fff;
-  margin: 8px 12px;
-  border-radius: 10px;
-  padding: 8px 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
-  align-items: center;
-  display: flex;
-  height: 48px;
+/* ===== ENSURE IONIC COMPONENT BACKGROUNDS ===== */
+/* Fix list backgrounds */
+.list-md,
+.list-ios {
+  --background: transparent !important;
+  --ion-item-background: transparent !important;
+  background: transparent !important;
 }
 
-/* icon on left */
-.personal-card .card-block .input-row ion-icon {
-  font-size: 20px;
-  margin-right: 8px;
-  color: rgba(51, 51, 51, 0.36);
+/* Fix content background */
+ion-content {
+  --background: var(--app-background-gradient) !important;
+  background: var(--app-background-gradient) !important;
 }
 
-/* name field: blue, slightly larger and bolder per image */
-.personal-card .card-block ion-input.field-name,
-.personal-card .card-block .field-name {
-  color: var(--ion-color-primary, #387ef5);
-  font-weight: 600;
-  font-size: 15px;
-  width: 100%;
-}
-
-/* Strongly enforce input text / placeholder colors for personal card fields */
-.personal-card .card-block ion-input.field-name,
-.personal-card .card-block ion-input.field-name input {
-  color: var(--ion-color-primary, #387ef5) !important;
-}
-
-.personal-card .card-block ion-input.field-name input::placeholder {
-  color: rgba(56,126,245,0.35) !important;
-}
-
-/* contact/detail field uses darker neutral color */
-.personal-card .card-block ion-input.field-detail,
-.personal-card .card-block ion-input.field-detail input {
-  color: #20354e !important;
-}
-
-.personal-card .card-block ion-input.field-detail input::placeholder {
-  color: rgba(32,53,78,0.35) !important;
-}
-
-/* contact & birthday: neutral darker text */
-.personal-card .card-block ion-input.field-detail,
-.personal-card .card-block ion-input.field-bday,
-.personal-card .card-block .field-detail,
-.personal-card .card-block .field-bday {
-  color: #222;
-  font-weight: 500;
-  font-size: 14px;
-  width: 100%;
-}
-
-/* Ensure textarea notes keep dark text */
-.personal-card .notes-area ion-textarea,
-.personal-card .notes-area ion-textarea textarea {
-  color: #20354e !important;
-}
-
-/* Notes textarea: force black text */
-.personal-card .notes-area ion-textarea.notes-text,
-.personal-card .notes-area ion-textarea.notes-text textarea {
-  color: #000 !important;
-  font-size: 14px;
-  line-height: 1.35;
-}
-
-/* tiny spacing tweak so the input content aligns like the screenshot */
-.personal-card .card-block .input-row .native-input,
-.personal-card .card-block .input-row input {
-  padding: 0;
-  margin: 0;
+/* Fix item backgrounds */
+ion-item {
+  --background: transparent !important;
+  background: transparent !important;
 }

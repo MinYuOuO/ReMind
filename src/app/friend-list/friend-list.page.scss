@@ -1,16 +1,54 @@
-/* Page background */
+/* ===== VARIABLES ===== */
+$transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+$transition-quick: all 0.2s ease-out;
+
+/* ===== PAGE SPECIFIC STYLES ===== */
 .page {
-  --background: linear-gradient(180deg, #9fb7d6 0%, #eaf1f8 60%, #ffffff 100%);
+  --background: var(--app-background-gradient);
+  
+  /* 确保内容在header下面 */
+  padding-top: constant(safe-area-inset-top);
+  padding-top: env(safe-area-inset-top);
 }
 
-/* Header */
+/* ===== HEADER - FIX OVERLAP ISSUE ===== */
 .page-toolbar {
-  background: linear-gradient(180deg, #9fb7d6 0%, #b8c9de 100%);
+  --background: var(--app-toolbar-gradient) !important;
+  background: var(--app-toolbar-gradient);
+  position: relative;
+  overflow: hidden;
+  min-height: 56px; /* 确保有足够高度 */
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  }
 
   ion-title {
     font-weight: 800;
     text-align: center;
     margin-left: 25%;
+    color: var(--app-text-light);
+    animation: app-fadeInDown 0.6s ease-out both;
+  }
+
+  ion-button {
+    animation: app-fadeInRight 0.6s ease-out 0.1s both;
+    
+    ion-icon {
+      font-size: 20px;
+      color: var(--app-text-light);
+      transition: $transition-quick;
+    }
+
+    &:active ion-icon {
+      transform: scale(0.9);
+    }
   }
 
   @media (min-width: 768px) {
@@ -18,135 +56,231 @@
       margin-left: 100px;
     }
   }
-
-  ion-icon {
-    font-size: 20px;
-  }
 }
 
-/* Search */
+/* ===== SEARCH ===== */
 .search-container {
   padding: 12px;
+  animation: app-slideInDown 0.5s ease-out both;
 }
 
 .search {
-  --background: #fff;
+  --background: var(--app-search-bg);
   --border-radius: 16px;
-  --placeholder-color: #6b7aa6;
-  --color: #1e3a8a;
+  --placeholder-color: var(--app-text-medium);
+  --color: var(--app-text-dark);
+  transition: $transition-smooth;
+
+  &:focus-within {
+    --background: var(--app-search-focus-bg);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 107, 217, 0.15);
+  }
 }
 
-/* Empty state */
+/* ===== EMPTY STATE ===== */
 .empty {
   text-align: center;
   margin-top: 10vh;
-  color: var(--ion-color-medium);
+  color: var(--app-text-medium);
+  animation: app-fadeInScale 0.8s ease-out both;
 
   img {
     width: 150px;
     opacity: 0.9;
     margin-bottom: 1rem;
+    animation: app-float 3s ease-in-out infinite;
+    
+    /* 深色模式图片调整 */
+    .theme-dark & {
+      filter: invert(0.8) hue-rotate(180deg) brightness(1.2);
+    }
   }
 
   h2 {
     margin: 0.25rem 0;
+    color: var(--app-text-dark);
+    animation: app-fadeInUp 0.6s ease-out 0.2s both;
+  }
+
+  p {
+    color: var(--app-text-medium);
+    animation: app-fadeInUp 0.6s ease-out 0.3s both;
   }
 }
 
-/* Contact list */
-.list-md {
-  background: none;
-}
-
+/* ===== CONTACT LIST ===== */
 .contacts-list {
   padding: 8px 12px 110px;
-  background: transparent;
+  animation: app-fadeIn 0.6s ease-out both;
 }
 
 .contact-card {
-  --background: #fff;
-  border-radius: 14px;
-  margin: 10px 0;
-  box-shadow: 0 6px 16px rgba(38, 64, 120, 0.08);
+  background: var(--app-card-bg); /* 使用卡片背景色 */
+  border-radius: var(--app-card-radius);
+  box-shadow: var(--app-card-shadow);
+  border: var(--app-card-border);
   display: flex;
   align-items: center;
   min-height: 70px;
+  margin: 10px 0;
+  transition: $transition-smooth;
+  animation: app-slideInUp 0.5s ease-out both;
+  animation-fill-mode: both;
+
+  // Staggered animation
+  @for $i from 1 through 20 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.05}s;
+    }
+  }
+
+  &:hover, &:active {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  }
+
+  &.loading {
+    opacity: 0.7;
+    pointer-events: none;
+    
+    .avatar, .name, .meta {
+      background: linear-gradient(90deg, 
+        rgba(var(--app-primary-color-rgb), 0.1) 25%, 
+        rgba(var(--app-primary-color-rgb), 0.2) 50%, 
+        rgba(var(--app-primary-color-rgb), 0.1) 75%);
+      background-size: 200% 100%;
+      animation: loading-pulse 1.5s infinite;
+      border-radius: 4px;
+    }
+    
+    .avatar {
+      min-width: 42px;
+    }
+    
+    .name {
+      width: 120px;
+      height: 16px;
+    }
+    
+    .meta {
+      width: 80px;
+      height: 12px;
+      margin-top: 4px;
+    }
+  }
 }
 
 .avatar {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: #e6ebf5;
+  background: var(--app-avatar-bg);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 12px;
+  transition: $transition-smooth;
 
   ion-icon {
     font-size: 22px;
-    color: #7a8fb0;
+    color: var(--app-avatar-color);
+    transition: $transition-quick;
+  }
+
+  .contact-card:active & {
+    transform: scale(0.95);
   }
 }
 
 .name {
-  color: #3b6bd9;
+  color: var(--app-text-dark); /* 使用主文本颜色 */
   font-weight: 800;
   margin: 0;
   font-size: 1rem;
 }
 
 .meta {
-  color: #6b7aa6;
+  color: var(--app-text-medium); /* 使用次文本颜色 */
   margin: 0;
   font-size: 0.85rem;
 }
 
-/* FAB */
+/* ===== FAB BUTTON ===== */
 .fab-add {
+  --background: var(--app-primary-color) !important;
+  --color: var(--app-text-light) !important;
+  --box-shadow: 0 4px 12px rgba(93, 120, 176, 0.3);
+  
   width: 52px;
   height: 52px;
   border-radius: 12px;
-  color: #fff !important;
-}
-
-/* Modal */
-ion-modal.friend-modal {
-  --width: 100%;
-  --height: 100%;
-
-  &::part(content) {
-    display: flex;
-    flex-direction: column;
-    /* ensure the modal content has a visible background on desktop */
-    background: linear-gradient(180deg, #9fb7d6 0%, #eaf1f8 60%, #ffffff 100%) !important;
+  background: var(--app-primary-color) !important;
+  color: var(--app-text-light) !important;
+  animation: app-bounceIn 0.6s ease-out 0.5s both;
+  transition: $transition-smooth;
+  
+  &:active {
+    transform: scale(0.9);
   }
 }
 
-/* Edit Screen Wrapper*/
+/* ===== MODALS ===== */
+ion-modal.friend-modal,
+ion-modal.interaction-modal,
+ion-modal.ai-review-modal {
+  --width: 100%;
+  --height: 100%;
+  
+  &::part(content) {
+    display: flex;
+    flex-direction: column;
+    background: var(--app-background-gradient);
+    border-radius: 0px;
+  }
+  
+  @media (min-width: 768px) {
+    --width: 600px;
+    --height: 80%;
+    --border-radius: 20px;
+  }
+}
+
+/* ===== EDIT SCREEN ===== */
 .edit-screen {
   display: flex;
   flex-direction: column;
   height: 100%;
   width: 100%;
-  background: linear-gradient(180deg, #9fb7d6 0%, #eaf1f8 60%, #ffffff 100%);
+  background: var(--app-background-gradient);
   border-radius: 0px;
   overflow: hidden;
+  animation: app-modalSlideIn 0.4s ease-out;
 }
 
-/* Toolbar */
+/* ===== EDIT TOOLBAR ===== */
 .edit-toolbar {
+  --background: var(--app-toolbar-gradient) !important;
+  background: var(--app-toolbar-gradient);
+
   ion-icon {
-    color: #fff;
+    color: var(--app-text-light);
     font-size: 22px;
+    transition: $transition-quick;
+  }
+
+  ion-button:active ion-icon {
+    transform: scale(0.9);
   }
 }
 
 .edit-title {
   text-align: center;
   font-weight: 800;
-  color: #fff;
+  color: var(--app-text-light);
   margin-left: auto;
+  animation: app-fadeIn 0.6s ease-out both;
+  --color: var(--app-text-light) !important;
 }
 
 .edit-content {
@@ -157,15 +291,16 @@ ion-modal.friend-modal {
   overflow-y: auto;
   padding: 0 16px 20px;
   --background: transparent;
+  animation: app-fadeIn 0.6s ease-out 0.2s both;
 }
 
-
-/* Profile */
+/* ===== PROFILE SECTION ===== */
 .profile-area {
   display: flex;
   flex-direction: column;
   align-items: center;
   margin: 16px 0 12px;
+  animation: app-fadeInUp 0.6s ease-out both;
 }
 
 .profile-camera {
@@ -177,106 +312,214 @@ ion-modal.friend-modal {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--app-text-light);
   font-size: 28px;
   box-shadow: 0 6px 16px rgba(32, 54, 96, 0.1);
+  transition: $transition-smooth;
+  cursor: pointer;
+
+  &:active {
+    transform: scale(0.95);
+    background: rgba(255, 255, 255, 0.3);
+  }
 }
 
 .offline-label {
-  color: #fff;
+  color: var(--app-text-light);
   font-size: 12px;
   font-weight: 600;
   margin-top: 8px;
+  animation: app-fadeIn 0.6s ease-out 0.1s both;
 }
 
-/* Field cards */
+/* ===== FIELD CARDS ===== */
 .field-card {
-  --background: #ffffff;
-  --color: #1e3a8a;
-  border-radius: 12px;
-  border: 1px solid #dce3f1;
+  background: var(--app-card-bg);
+  border-radius: var(--app-card-radius);
+  box-shadow: var(--app-card-shadow);
+  border: var(--app-card-border);
+  --color: var(--app-text-dark);
   margin: 10px 0;
   align-items: center;
+  transition: $transition-smooth;
+  animation: app-slideInRight 0.5s ease-out both;
+  animation-fill-mode: both;
+
+  // Staggered animation
+  @for $i from 1 through 10 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.08}s;
+    }
+  }
+
+  &:focus-within {
+    border-color: var(--app-primary-color);
+    box-shadow: 0 4px 12px rgba(100, 127, 188, 0.25);
+    transform: translateY(-1px);
+  }
 
   ion-icon {
-    color: #6b7aa6 !important;
+    color: var(--app-text-medium) !important;
   }
 
-  ion-input,
-  ion-select {
-    color: #1e3a8a;
+  ion-input, ion-select, ion-textarea {
+    color: var(--app-text-dark);
     font-weight: 700;
+    
+    &::part(placeholder) {
+      color: var(--app-text-medium);
+      opacity: 0.7;
+    }
   }
-
-  ion-select::part(text),
-  ion-input::part(native) {
-    --placeholder-color: rgba(30,58,138,0.45);
+  
+  &.loading {
+    opacity: 0.6;
+    pointer-events: none;
+    
+    ion-input, ion-select, ion-textarea {
+      background: linear-gradient(90deg, 
+        rgba(var(--app-primary-color-rgb), 0.1) 25%, 
+        rgba(var(--app-primary-color-rgb), 0.2) 50%, 
+        rgba(var(--app-primary-color-rgb), 0.1) 75%);
+      background-size: 200% 100%;
+      animation: loading-pulse 1.5s infinite;
+      border-radius: 8px;
+      min-height: 20px;
+    }
   }
 }
 
-.field-icon,
-.rating-icon {
-  color: #6b7aa6 !important;
-}
-
-.date-label {
-  color: #1e3a8a;
-  font-weight: 700;
-}
-
-/* Save button */
+/* ===== BUTTONS ===== */
 .save-footer {
   display: grid;
   justify-content: center;
   padding: 16px;
   background: transparent;
+  animation: app-fadeInUp 0.6s ease-out 0.3s both;
 }
 
-.save-btn {
-  --background: #5d78b0;
+.save-btn, .add-interaction-btn {
+  --background: var(--app-primary-color) !important;
+  --color: var(--app-text-light) !important;
   --border-radius: 12px;
-  color: #fff;
+  --box-shadow: 0 4px 12px rgba(93, 120, 176, 0.2);
+  
+  background: var(--app-primary-color) !important;
+  color: var(--app-text-light) !important;
   font-weight: 700;
+  transition: $transition-smooth;
+  border-radius: 20px;
+  
+  &:active {
+    transform: scale(0.95);
+  }
+  
+  &.loading {
+    position: relative;
+    color: transparent !important;
+    pointer-events: none;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border: 2px solid transparent;
+      border-top: 2px solid #fff;
+      border-radius: 50%;
+      animation: button-spin 0.8s linear infinite;
+      top: 50%;
+      left: 50%;
+      margin-left: -10px;
+      margin-top: -10px;
+    }
+  }
 }
 
 .add-interaction-btn {
-  --background: #5d78b0;
-  --border-radius: 12px;
-  color: #fff;
-  font-weight: 700;
   margin: 20px;
 }
 
-/* Calendar */
+.primary-btn {
+  --background: linear-gradient(180deg, #4f78e6, #3560c8) !important;
+  --color: var(--app-text-light) !important;
+  --border-radius: 12px;
+  --box-shadow: 0 4px 12px rgba(79, 120, 230, 0.2);
+  
+  background: linear-gradient(180deg, #4f78e6, #3560c8) !important;
+  color: var(--app-text-light) !important;
+  font-weight: 700;
+  transition: $transition-smooth;
+  
+  &:active {
+    transform: scale(0.95);
+  }
+  
+  &.loading {
+    position: relative;
+    color: transparent !important;
+    pointer-events: none;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border: 2px solid transparent;
+      border-top: 2px solid #fff;
+      border-radius: 50%;
+      animation: button-spin 0.8s linear infinite;
+      top: 50%;
+      left: 50%;
+      margin-left: -10px;
+      margin-top: -10px;
+    }
+  }
+}
+
+.send-btn {
+  margin-top: 20px;
+}
+
+/* ===== CALENDAR ===== */
 .inline-calendar {
-  background: #fff;
+  background: var(--app-calendar-bg);
   border-radius: 12px;
   padding: 10px;
   margin-top: 10px;
-}
-
-.cal-nav {
-  min-width: 40px;
-  min-height: 30px;
+  animation: app-expandIn 0.3s ease-out;
 }
 
 .cal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: #1e3a8a;
+  color: var(--app-text-dark);
   font-weight: 700;
+}
+
+.cal-nav {
+  min-width: 40px;
+  min-height: 30px;
+  transition: $transition-quick;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+
+  &:active {
+    transform: scale(0.9);
+  }
 }
 
 .cal-weekdays {
   margin: 15px 0 5px 0;
   text-align: center;
   min-height: 25px;
-  color: #1e3a8a;
+  color: var(--app-text-dark);
 }
 
-.cal-weekdays,
-.cal-grid {
+.cal-weekdays, .cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 6px;
@@ -293,45 +536,188 @@ ion-modal.friend-modal {
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  background: rgba(30, 58, 138, 0.03);
-  color: #13407a;
-  font-weight: 700;
-}
+  background: var(--app-calendar-cell-bg);
+  color: var(--app-calendar-cell-color);
+  transition: $transition-quick;
+  cursor: pointer;
 
-.cal-cell.empty {
-  background: transparent;
-  color: rgba(30, 58, 138, 0.25);
-}
-
-.cal-cell.selected {
-  background: linear-gradient(180deg, #4f78e6, #3560c8);
-  color: #fff;
-  box-shadow: 0 6px 16px rgba(79, 120, 230, 0.18);
-}
-
-/* Interaction modal - reuse edit-screen visual language */
-ion-modal.interaction-modal {
-  --width: 100%;
-  --height: 100%;
-  --background: transparent;
-
-  &::part(content) {
-    display: flex;
-    flex-direction: column;
-    background: linear-gradient(180deg, #9fb7d6 0%, #eaf1f8 60%, #ffffff 100%);
-    border-radius: 0px;
-    padding: 0;
+  &:not(.empty):active {
+    transform: scale(0.9);
+  }
+  
+  &.empty {
+    background: transparent;
+    color: var(--app-calendar-empty-color);
+  }
+  
+  &.selected {
+    background: var(--app-primary-color);
+    color: var(--app-text-light);
+    box-shadow: 0 6px 16px rgba(100, 127, 188, 0.18);
+    animation: app-pulse 0.5s ease-out both;
   }
 }
 
-.form-wrap {
-  padding: 16px;
+.cal-actions {
+  text-align: center;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid var(--app-card-border);
 }
 
-/* primary button style reuse */
-.primary-btn {
-  --background: linear-gradient(180deg,#4f78e6,#3560c8);
-  --border-radius: 12px;
-  color: #fff;
-  font-weight: 700;
+/* ===== INTERACTION MODAL ===== */
+.form-wrap {
+  padding: 16px;
+  background: var(--app-background-gradient);
+  min-height: 100%;
+  animation: app-fadeIn 0.6s ease-out 0.1s both;
+}
+
+.textarea {
+  align-items: flex-start;
+  
+  ion-textarea {
+    min-height: 100px;
+  }
+}
+
+/* ===== AI REVIEW MODAL ===== */
+.ai-review-body {
+  background: var(--app-background-gradient);
+  min-height: 100%;
+  animation: app-fadeIn 0.6s ease-out 0.1s both;
+  
+  .ai-block {
+    color: var(--app-text-dark);
+    padding: 16px;
+    animation: app-slideInUp 0.5s ease-out 0.2s both;
+    
+    h3, h4 {
+      color: var(--app-text-dark);
+      margin-bottom: 12px;
+    }
+    
+    h3 {
+      font-size: 1.2rem;
+      border-bottom: 2px solid var(--app-primary-color);
+      padding-bottom: 8px;
+    }
+    
+    h4 {
+      font-size: 1rem;
+      margin-top: 20px;
+      color: var(--app-secondary-color);
+    }
+    
+    ul {
+      color: var(--app-text-medium);
+      padding-left: 20px;
+      
+      li {
+        margin-bottom: 8px;
+        line-height: 1.4;
+      }
+    }
+    
+    &.loading {
+      opacity: 0.7;
+      
+      h3, h4, ul {
+        background: linear-gradient(90deg, 
+          rgba(var(--app-primary-color-rgb), 0.1) 25%, 
+          rgba(var(--app-primary-color-rgb), 0.2) 50%, 
+          rgba(var(--app-primary-color-rgb), 0.1) 75%);
+        background-size: 200% 100%;
+        animation: loading-pulse 1.5s infinite;
+        border-radius: 4px;
+        min-height: 20px;
+      }
+      
+      h3 { width: 200px; height: 24px; }
+      h4 { width: 100px; height: 20px; margin-top: 15px; }
+      ul li { width: 100%; height: 16px; margin-bottom: 8px; }
+    }
+  }
+}
+
+.ai-review-actions {
+  padding: 16px;
+  animation: app-fadeInUp 0.6s ease-out 0.3s both;
+  
+  ion-button {
+    margin: 8px 0;
+    transition: $transition-smooth;
+    
+    &:active {
+      transform: scale(0.95);
+    }
+    
+    &.loading {
+      position: relative;
+      color: transparent;
+      pointer-events: none;
+      
+      &::after {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border: 2px solid transparent;
+        border-top: 2px solid var(--app-text-light);
+        border-radius: 50%;
+        animation: button-spin 0.8s linear infinite;
+        top: 50%;
+        left: 50%;
+        margin-left: -10px;
+        margin-top: -10px;
+      }
+    }
+  }
+}
+
+/* ===== GENERATED TOOLBAR (AI Review) ===== */
+.generated-toolbar {
+  --background: var(--app-toolbar-gradient) !important;
+  background: var(--app-toolbar-gradient);
+  
+  ion-title {
+    --color: var(--app-text-light) !important;
+    color: var(--app-text-light);
+  }
+  
+  ion-icon {
+    color: var(--app-text-light);
+  }
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (min-width: 768px) {
+  .contacts-list {
+    padding: 16px 20% 110px;
+  }
+  
+  .contact-card {
+    margin: 12px 0;
+  }
+  
+  .search-container {
+    padding: 16px 20%;
+  }
+}
+
+/* ===== MODAL BACKDROP ===== */
+ion-modal::part(backdrop) {
+  background: var(--app-modal-backdrop);
+}
+
+/* ===== ENSURE CONTENT VISIBILITY ===== */
+.edit-content {
+  flex: 1;
+  display: block;
+  min-height: 0;
+  height: auto;
+  overflow-y: auto;
+  padding: 0 16px 20px;
+  background: transparent;
+  animation: app-fadeIn 0.6s ease-out 0.2s both;
 }

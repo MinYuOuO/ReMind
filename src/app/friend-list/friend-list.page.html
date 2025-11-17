@@ -29,8 +29,8 @@
 
   <!-- Friend list -->
   <ion-list *ngIf="filteredContacts().length > 0" class="contacts-list">
-    <ion-item *ngFor="let c of filteredContacts(); trackBy: trackById" class="contact-card" lines="none" button
-      (click)="openEdit(c)">
+    <ion-item *ngFor="let c of filteredContacts(); trackBy: trackById" class="contact-card"
+      [class.loading]="loadingContacts()" lines="none" button (click)="openEdit(c)">
       <div slot="start" class="avatar">
         <ion-icon name="person-outline"></ion-icon>
       </div>
@@ -149,7 +149,7 @@
             <p style="margin: 0px">Add Interaction</p>
           </ion-button>
 
-          <ion-button expand="block" class="save-btn" (click)="onSubmit()">
+          <ion-button expand="block" class="save-btn" [class.loading]="savingContact()" (click)="onSubmit()">
             <ion-icon name="save"></ion-icon>
           </ion-button>
         </div>
@@ -161,7 +161,7 @@
   <ion-modal [isOpen]="showInteractionModal()" cssClass="interaction-modal">
     <ng-template>
       <ion-header>
-        <ion-toolbar>
+        <ion-toolbar class="edit-toolbar">
           <ion-buttons slot="start">
             <ion-button (click)="closeInteraction()">
               <ion-icon name="arrow-back"></ion-icon>
@@ -237,7 +237,8 @@
           </ion-item>
 
           <!-- Generate button -->
-          <ion-button class="primary-btn send-btn" expand="block" (click)="onGenerateInteraction()">
+          <ion-button class="primary-btn send-btn" expand="block" [class.loading]="generatingInteraction()"
+            (click)="onGenerateInteraction()">
             <ion-icon name="paper-plane-outline" slot="start"></ion-icon>
             Generate
           </ion-button>
@@ -261,7 +262,7 @@
       </ion-header>
 
       <ion-content class="ai-review-body">
-        <div class="ai-block" *ngIf="lastAiFacts() as ai">
+        <div class="ai-block" *ngIf="lastAiFacts() as ai" [class.loading]="processingAI()">
           <!-- summary -->
           <h3>{{ ai['summary'] || 'No summary' }}</h3>
 
@@ -295,7 +296,7 @@
 
         <!-- Bottom actions -->
         <div class="ai-review-actions">
-          <ion-button color="danger" expand="block" (click)="rejectAiAndResend()">
+          <ion-button color="danger" expand="block" [class.loading]="processingAI()" (click)="rejectAiAndResend()">
             <ion-icon name="close-outline" slot="start"></ion-icon>
             Resend
           </ion-button>

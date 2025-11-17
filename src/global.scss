@@ -1,15 +1,4 @@
-/*
- * App Global CSS
- * ----------------------------------------------------------------------------
- * Put style rules here that you want to apply globally. These styles are for
- * the entire app and not just one component. Additionally, this file can be
- * used as an entry point to import other CSS/Sass files to be included in the
- * output CSS.
- * For more information on global stylesheets, visit the documentation:
- * https://ionicframework.com/docs/layout/global-stylesheets
- */
-
-/* Core CSS required for Ionic components to work properly */
+/* Import Ionic global styles */
 @import "@ionic/angular/css/core.css";
 
 /* Basic CSS for apps built with Ionic */
@@ -25,13 +14,488 @@
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
+/* ===== GLOBAL DESIGN SYSTEM ===== */
+:root {
+  /* Light Theme (Default) */
+  --app-background-gradient: linear-gradient(180deg, #9fb7d6 0%, #eaf1f8 60%, #ffffff 100%);
+  --app-toolbar-gradient: linear-gradient(180deg, #9fb7d6 0%, #b8c9de 100%);
+  --app-card-bg: #ffffff;
+  --app-card-shadow: 0 6px 16px rgba(38, 64, 120, 0.08);
+  --app-card-border: 1px solid #dce3f1;
+  --app-card-radius: 12px;
+  
+  --app-text-dark: #1e3a8a;
+  --app-text-medium: #6b7aa6;
+  --app-text-light: #ffffff;
+  
+  --app-primary-color: #5d78b0;
+  --app-secondary-color: #3b6bd9;
+  --app-accent-color: #4f78e6;
+  
+  --app-avatar-bg: #e6ebf5;
+  --app-avatar-color: #7a8fb0;
+  
+  --app-search-bg: #ffffff;
+  --app-search-focus-bg: #f8faff;
+  
+  --app-calendar-bg: #ffffff;
+  --app-calendar-cell-bg: rgba(30, 58, 138, 0.03);
+  --app-calendar-cell-color: #13407a;
+  --app-calendar-empty-color: rgba(30, 58, 138, 0.25);
+  
+  --app-modal-backdrop: rgba(0, 0, 0, 0.5);
+  
+  /* Animation */
+  --app-transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --app-transition-quick: all 0.2s ease-out;
+}
 
-/* @import "@ionic/angular/css/palettes/dark.always.css"; */
-/* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import '@ionic/angular/css/palettes/dark.system.css';
+/* Dark Theme */
+.theme-dark {
+  --app-background-gradient: linear-gradient(180deg, #0f1a3a 0%, #1a2b4d 60%, #2d3748 100%);
+  --app-toolbar-gradient: linear-gradient(180deg, #1e3a8a 0%, #2d4b9e 100%);
+  --app-card-bg: #1e293b;
+  --app-card-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+  --app-card-border: 1px solid #374151;
+  
+  --app-text-dark: #e2e8f0;
+  --app-text-medium: #94a3b8;
+  --app-text-light: #f1f5f9;
+  
+  --app-primary-color: #7d9bd4;
+  --app-secondary-color: #5d8ae6;
+  
+  --app-avatar-bg: #374151;
+  --app-avatar-color: #cbd5e1;
+  
+  --app-search-bg: #374151;
+  --app-search-focus-bg: #475569;
+  
+  --app-calendar-bg: #1e293b;
+  --app-calendar-cell-bg: rgba(226, 232, 240, 0.05);
+  --app-calendar-cell-color: #cbd5e1;
+  --app-calendar-empty-color: rgba(148, 163, 184, 0.3);
+  
+  --app-modal-backdrop: rgba(0, 0, 0, 0.7);
+}
+
+/* Light Theme (explicit) */
+.theme-light {
+  --app-background-gradient: linear-gradient(180deg, #9fb7d6 0%, #eaf1f8 60%, #ffffff 100%);
+  --app-toolbar-gradient: linear-gradient(180deg, #9fb7d6 0%, #b8c9de 100%);
+  --app-card-bg: #ffffff;
+  --app-card-shadow: 0 6px 16px rgba(38, 64, 120, 0.08);
+  --app-card-border: 1px solid #dce3f1;
+  
+  --app-text-dark: #1e3a8a;
+  --app-text-medium: #6b7aa6;
+  --app-text-light: #ffffff;
+  
+  --app-primary-color: #5d78b0;
+  --app-secondary-color: #3b6bd9;
+  
+  --app-avatar-bg: #e6ebf5;
+  --app-avatar-color: #7a8fb0;
+  
+  --app-search-bg: #ffffff;
+  --app-search-focus-bg: #f8faff;
+  
+  --app-calendar-bg: #ffffff;
+  --app-calendar-cell-bg: rgba(30, 58, 138, 0.03);
+  --app-calendar-cell-color: #13407a;
+  --app-calendar-empty-color: rgba(30, 58, 138, 0.25);
+  
+  --app-modal-backdrop: rgba(0, 0, 0, 0.5);
+}
+
+/* Auto mode - use system preference */
+@media (prefers-color-scheme: dark) {
+  body:not(.theme-light):not(.theme-dark) {
+    --app-background-gradient: linear-gradient(180deg, #0f1a3a 0%, #1a2b4d 60%, #2d3748 100%);
+    --app-toolbar-gradient: linear-gradient(180deg, #1e3a8a 0%, #2d4b9e 100%);
+    --app-card-bg: #1e293b;
+    --app-card-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+    --app-card-border: 1px solid #374151;
+    
+    --app-text-dark: #e2e8f0;
+    --app-text-medium: #94a3b8;
+    --app-text-light: #f1f5f9;
+    
+    --app-primary-color: #7d9bd4;
+    --app-secondary-color: #5d8ae6;
+    
+    --app-avatar-bg: #374151;
+    --app-avatar-color: #cbd5e1;
+    
+    --app-search-bg: #374151;
+    --app-search-focus-bg: #475569;
+    
+    --app-calendar-bg: #1e293b;
+    --app-calendar-cell-bg: rgba(226, 232, 240, 0.05);
+    --app-calendar-cell-color: #cbd5e1;
+    --app-calendar-empty-color: rgba(148, 163, 184, 0.3);
+    
+    --app-modal-backdrop: rgba(0, 0, 0, 0.7);
+  }
+}
+
+
+/* Global styles that apply to all themes */
+body {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Ensure modal backdrops work with theme */
+ion-modal::part(backdrop) {
+  background: var(--app-modal-backdrop);
+}
+
+/* Global utility classes */
+.app-card {
+  background: var(--app-card-bg);
+  border-radius: 14px;
+  box-shadow: var(--app-card-shadow);
+  border: var(--app-card-border);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-searchbar {
+  --background: var(--app-search-bg);
+  --border-radius: 16px;
+  --placeholder-color: var(--app-text-medium);
+  --color: var(--app-text-dark);
+  
+  &:focus-within {
+    --background: var(--app-search-focus-bg);
+  }
+}
+
+/* ===== IONIC DEFAULT STYLE OVERRIDES ===== */
+.list-md,
+.list-ios {
+  --background: var(--app-background-gradient) !important;
+  --ion-item-background: transparent !important;
+  background: var(--app-background-gradient) !important;
+}
+
+.toolbar-background {
+  --background: var(--app-toolbar-gradient) !important;
+  background: var(--app-toolbar-gradient) !important;
+}
+
+ion-content {
+  --background: var(--app-background-gradient) !important;
+  background: var(--app-background-gradient) !important;
+  
+  &::part(scroll) {
+    background: var(--app-background-gradient) !important;
+  }
+}
+
+ion-item {
+  --background: transparent !important;
+  background: transparent !important;
+  
+  &.item-md,
+  &.item-ios {
+    --background: transparent !important;
+    background: transparent !important;
+  }
+}
+
+.contacts-list,
+.fields-list {
+  --background: transparent !important;
+  background: transparent !important;
+  
+  ion-item {
+    --background: transparent !important;
+    background: transparent !important;
+  }
+}
+
+/* ===== GLOBAL ANIMATIONS ===== */
+@keyframes app-fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes app-fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes app-fadeInDown {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes app-fadeInRight {
+  from {
+    opacity: 0;
+    transform: translate3d(20px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes app-slideInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 30px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes app-slideInDown {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -30px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes app-slideInRight {
+  from {
+    opacity: 0;
+    transform: translate3d(30px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes app-bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale3d(0.3, 0.3, 0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale3d(1.05, 1.05, 1.05);
+  }
+  70% {
+    transform: scale3d(0.9, 0.9, 0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+@keyframes app-float {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -8px, 0);
+  }
+}
+
+@keyframes app-pulse {
+  0% {
+    transform: scale3d(1, 1, 1);
+  }
+  50% {
+    transform: scale3d(1.05, 1.05, 1.05);
+  }
+  100% {
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+@keyframes app-fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale3d(0.9, 0.9, 0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+@keyframes app-modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 50px, 0) scale3d(0.95, 0.95, 0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
+  }
+}
+
+@keyframes app-expandIn {
+  from {
+    opacity: 0;
+    transform: scale3d(0.9, 0.9, 0.9);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+@keyframes loading-pulse {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes button-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* ===== GLOBAL MIXINS ===== */
+@mixin app-searchbar {
+  --background: var(--app-search-bg);
+  --border-radius: 16px;
+  --placeholder-color: var(--app-text-medium);
+  --color: var(--app-text-dark);
+  transition: var(--app-transition-smooth);
+
+  &:focus-within {
+    --background: var(--app-search-focus-bg);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 107, 217, 0.15);
+  }
+}
+
+@mixin app-card {
+  background: var(--app-card-bg);
+  border-radius: var(--app-card-radius);
+  box-shadow: var(--app-card-shadow);
+  border: var(--app-card-border);
+  transition: var(--app-transition-smooth);
+  
+  &:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 8px rgba(38, 64, 120, 0.12);
+  }
+}
+
+@mixin app-button {
+  --border-radius: 12px;
+  --box-shadow: 0 4px 12px rgba(93, 120, 176, 0.2);
+  transition: var(--app-transition-smooth);
+  
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+@mixin staggered-animation($base-delay: 0.05s, $property: animation-delay) {
+  @for $i from 1 through 20 {
+    &:nth-child(#{$i}) {
+      #{$property}: #{$i * $base-delay};
+    }
+  }
+}
+
+/* Animation Mixins */
+@mixin fadeIn($delay: 0s) {
+  animation: app-fadeIn 0.6s ease-out $delay both;
+}
+
+@mixin fadeInUp($delay: 0s) {
+  animation: app-fadeInUp 0.6s ease-out $delay both;
+}
+
+@mixin fadeInDown($delay: 0s) {
+  animation: app-fadeInDown 0.6s ease-out $delay both;
+}
+
+@mixin fadeInRight($delay: 0s) {
+  animation: app-fadeInRight 0.6s ease-out $delay both;
+}
+
+@mixin slideInUp($delay: 0s) {
+  animation: app-slideInUp 0.5s ease-out $delay both;
+}
+
+@mixin slideInDown($delay: 0s) {
+  animation: app-slideInDown 0.5s ease-out $delay both;
+}
+
+@mixin slideInRight($delay: 0s) {
+  animation: app-slideInRight 0.5s ease-out $delay both;
+}
+
+@mixin bounceIn($delay: 0s) {
+  animation: app-bounceIn 0.6s ease-out $delay both;
+}
+
+@mixin float($delay: 0s) {
+  animation: app-float 3s ease-in-out $delay infinite;
+}
+
+@mixin pulse($delay: 0s) {
+  animation: app-pulse 0.5s ease-out $delay;
+}
+
+@mixin fadeInScale($delay: 0s) {
+  animation: app-fadeInScale 0.8s ease-out $delay both;
+}
+
+/* ===== GLOBAL UTILITY CLASSES ===== */
+.app-searchbar {
+  @include app-searchbar;
+}
+
+.app-card {
+  @include app-card;
+}
+
+.app-button {
+  @include app-button;
+}
+
+.app-animate-fadeIn { @include fadeIn; }
+.app-animate-fadeInUp { @include fadeInUp; }
+.app-animate-fadeInDown { @include fadeInDown; }
+.app-animate-fadeInRight { @include fadeInRight; }
+.app-animate-slideInUp { @include slideInUp; }
+.app-animate-slideInDown { @include slideInDown; }
+.app-animate-slideInRight { @include slideInRight; }
+.app-animate-bounceIn { @include bounceIn; }
+.app-animate-float { @include float; }
+.app-animate-pulse { @include pulse; }
+.app-animate-fadeInScale { @include fadeInScale; }
+
+.app-staggered-children {
+  > * {
+    animation-fill-mode: both;
+    @include staggered-animation(0.05s, animation-delay);
+  }
+}

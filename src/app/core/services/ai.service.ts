@@ -201,7 +201,7 @@ class OpenAIProvider implements AiProvider {
         content: [
           'You are a creative social coach.',
           'Return STRICT JSON ONLY: a JSON array of short strings.',
-          'Each item: 8–15 words, specific, doable, friendly, varied (text, call, meet, share, celebrate).',
+          'Each item: 1–4 words, specific, doable, friendly, varied (text, call, meet, share, celebrate).',
           'Avoid duplicates or generic fluff.',
         ].join('\n'),
       },
@@ -371,7 +371,7 @@ class DeepSeekProvider implements AiProvider {
       },
       {
         role: 'user',
-        content: `Generate ${n} specific suggestions for strengthening friendships, each suggestion being 4-10 words long and feasible. Return the results as a JSON array.`,
+        content: `Generate ${n} specific suggestions for strengthening friendships, each suggestion being 1-4 words long and feasible. Return the results as a JSON array.`,
       },
     ];
 

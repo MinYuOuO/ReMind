@@ -1,75 +1,277 @@
 .page {
-  --background: linear-gradient(
-    to bottom,
-    #c7dffd 0%,
-    #e4f0ff 45%,
-    #ffffff 100%
-  );
+  --background: var(--app-background-gradient) !important;
+  background: var(--app-background-gradient) !important;
 }
 
-/* 让列表整体居中一点，看起来像一个卡片区域 */
+/* ===== HEADER ===== */
+ion-toolbar {
+  --background: var(--app-toolbar-gradient) !important;
+  --color: var(--app-text-light) !important;
+  --ion-toolbar-background: var(--app-toolbar-gradient) !important;
+  
+  background: var(--app-toolbar-gradient) !important;
+  color: var(--app-text-light) !important;
+  animation: app-fadeInDown 0.6s ease-out both;
+
+  .toolbar-background {
+    --background: var(--app-toolbar-gradient) !important;
+    background: var(--app-toolbar-gradient) !important;
+  }
+
+  ion-title {
+    --color: var(--app-text-light) !important;
+    color: var(--app-text-light) !important;
+    font-weight: 800;
+    text-align: center;
+  }
+}
+
+/* ===== LOGIN FORM CONTAINER ===== */
 .page ion-list {
-  background: transparent;
+  --background: transparent !important;
+  background: transparent !important;
   max-width: 380px;
-  margin: 18vh auto 0 auto; // 往下偏一点
+  margin: 18vh auto 0 auto;
   padding: 16px;
   border-radius: 18px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
   backdrop-filter: blur(8px);
+  animation: app-fadeInScale 0.8s ease-out both;
 }
 
-/* 每个输入区域的样式 */
+/* ===== FORM ITEMS ===== */
 .page ion-item {
-  --background: rgba(255, 255, 255, 0.9);
+  --background: var(--app-card-bg) !important;
+  --color: var(--app-text-dark) !important;
+  
+  background: var(--app-card-bg) !important;
+  color: var(--app-text-dark) !important;
   border-radius: 12px;
   margin-bottom: 12px;
-  color: black;
+  border: var(--app-card-border);
+  box-shadow: var(--app-card-shadow);
+  transition: var(--app-transition-smooth);
+  animation: app-slideInUp 0.6s ease-out both;
+  animation-fill-mode: both;
+
+  // Staggered animation for form items
+  @for $i from 1 through 5 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.1}s;
+    }
+  }
+
+  &:focus-within {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(38, 64, 120, 0.15);
+  }
 }
 
-/* label 用堆叠样式时稍微加粗一点 */
+/* ===== LABEL STYLING ===== */
 .page ion-label {
   font-weight: 500;
+  color: var(--app-text-dark) !important;
 }
 
-/* 密码输入那一行：让 input + icon 在一条水平线上 */
+/* ===== PASSWORD ROW ===== */
 .password-row {
   display: flex;
   align-items: center;
   width: 100%;
+  animation: app-fadeIn 0.6s ease-out 0.3s both;
 }
 
 .password-row ion-input {
   flex: 1;
+  --color: var(--app-text-dark) !important;
+  --placeholder-color: var(--app-text-medium) !important;
+  
+  color: var(--app-text-dark) !important;
+  font-weight: 600;
 }
 
-/* 眼睛 icon 的统一样式 */
+/* ===== EYE ICON ===== */
 .eye-icon {
   font-size: 1.5rem;
   margin-left: 8px;
   cursor: pointer;
+  color: var(--app-text-medium) !important;
+  transition: var(--app-transition-quick);
+  
+  &:active {
+    transform: scale(0.9);
+  }
 }
 
-/* 登录按钮：占满整行 + 上下留空一点 */
+/* ===== BUTTONS ===== */
 .page ion-button {
+  --background: var(--app-primary-color) !important;
+  --color: var(--app-text-light) !important;
+  --border-radius: 12px !important;
+  --box-shadow: 0 4px 12px rgba(93, 120, 176, 0.2) !important;
+  
+  background: var(--app-primary-color) !important;
+  color: var(--app-text-light) !important;
+  font-weight: 700;
   width: 100%;
-  background-color: #0054E9;
-  color: white;
+  height: 35px;
+  border-radius: 20px;
+  transition: var(--app-transition-smooth);
+  animation: app-fadeInUp 0.6s ease-out 0.4s both;
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  &.loading {
+    position: relative;
+    color: transparent !important;
+    pointer-events: none;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border: 2px solid transparent;
+      border-top: 2px solid #fff;
+      border-radius: 50%;
+      animation: button-spin 0.8s linear infinite;
+      top: 50%;
+      left: 50%;
+      margin-left: -10px;
+      margin-top: -10px;
+    }
+  }
 }
 
-/* 主要 Login 按钮和其他按钮之间留一点距离 */
+/* ===== TERTIARY BUTTON (Biometric) ===== */
+ion-button[color="tertiary"] {
+  --background: var(--app-card-bg) !important;
+  --color: var(--app-text-dark) !important;
+  --border-color: var(--app-primary-color) !important;
+  
+  background: var(--app-card-bg) !important;
+  color: var(--app-text-dark) !important;
+  animation: app-fadeInUp 0.6s ease-out 0.5s both;
+}
+
+/* ===== CLEAR BUTTON (Settings) ===== */
+ion-button[fill="clear"] {
+  --background: transparent !important;
+  --color: var(--app-text-medium) !important;
+  
+  background: transparent !important;
+  color: var(--app-text-medium) !important;
+  animation: app-fadeInUp 0.6s ease-out 0.6s both;
+}
+
+/* ===== BUTTON SPACING ===== */
 .page ion-item[lines='none'] + ion-item[lines='none'] {
   margin-top: 4px;
 }
 
-/* header 做成透明 / 简洁一点 */
-ion-header,
-ion-toolbar {
-  --background: transparent;
-  --border-width: 0;
+/* ===== ENSURE IONIC COMPONENT BACKGROUNDS ===== */
+/* Fix list backgrounds */
+.list-md,
+.list-ios {
+  --background: transparent !important;
+  --ion-item-background: transparent !important;
+  background: transparent !important;
 }
 
-ion-title {
-  text-align: center;
-  color: #295ea8;
-  font-weight: 600;
+/* Fix content background */
+ion-content {
+  --background: var(--app-background-gradient) !important;
+  background: var(--app-background-gradient) !important;
+}
+
+/* Fix item backgrounds */
+ion-item {
+  --background: transparent !important;
+  background: transparent !important;
+  
+  &.password-item,
+  &.button-item {
+    --background: var(--app-card-bg) !important;
+    background: var(--app-card-bg) !important;
+  }
+}
+
+/* ===== LOADING STATE ===== */
+.password-row.loading {
+  opacity: 0.7;
+  pointer-events: none;
+  
+  ion-input, .eye-icon {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading-pulse 1.5s infinite;
+    border-radius: 4px;
+  }
+  
+  ion-input { height: 20px; }
+  .eye-icon { width: 24px; height: 24px; border-radius: 50%; }
+}
+
+/* ===== DARK MODE SPECIFIC ADJUSTMENTS ===== */
+.theme-dark {
+  .page ion-list {
+    background: rgba(30, 41, 59, 0.9);
+    backdrop-filter: blur(8px);
+  }
+  
+  .page ion-item {
+    background: var(--app-card-bg) !important;
+    
+    ion-input,
+    ion-label {
+      color: var(--app-text-dark) !important;
+    }
+  }
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 380px) {
+  .page ion-list {
+    margin: 12vh 16px 0 16px;
+    padding: 12px;
+  }
+}
+
+@media (min-height: 800px) {
+  .page ion-list {
+    margin: 22vh auto 0 auto;
+  }
+}
+
+/* ===== ACCESSIBILITY ===== */
+.password-row:focus-within {
+  .eye-icon {
+    color: var(--app-primary-color) !important;
+  }
+}
+
+/* ===== ANIMATION KEYFRAMES ===== */
+@keyframes button-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loading-pulse {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
