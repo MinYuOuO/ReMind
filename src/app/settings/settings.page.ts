@@ -592,103 +592,81 @@ export class SettingsPage implements OnInit {
 				? (crypto as any).randomUUID()
 				: 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2);
 
-		// contact migration: union columns, copy old rows, append incoming rows (do NOT overwrite existing contact_id)
+		// Special handling for contact table - always additive
 		if (tableName.toLowerCase() === 'contact') {
-			const hasContactIdInImport = importCols.some(c => c.toLowerCase() === 'contact_id');
-			const existingPkLower = existingPkCol ? existingPkCol.toLowerCase() : null;
-
-			if (hasContactIdInImport && existingPkLower !== 'contact_id') {
-				const tmpName = `contact_tmp_${Date.now()}`;
-				console.log(`[Settings] Migrating "${tableName}" → "${tmpName}" (existingPk=${existingPkCol ?? 'none'})`);
-
-				// union disk+import columns
-				const unionSet = new Set<string>();
-				existingColsOnDisk.forEach((c: string) => unionSet.add(c));
-				importCols.forEach((c: string) => unionSet.add(c));
-				const unionCols = Array.from(unionSet);
-				if (!unionCols.some(c => c.toLowerCase() === 'contact_id')) unionCols.unshift('contact_id');
-
+			console.log(`[Settings] Contact import: ADDITIVE mode - checking for duplicates`);
+			
+			let inserted = 0, skipped = 0, failed = 0;
+			
+			for (const [i, r] of rows.entries()) {
 				try {
-					const colsDef = unionCols
-						.map((c: string) => (c.toLowerCase() === 'contact_id' ? `"${c}" TEXT PRIMARY KEY` : `"${c}" TEXT`))
-						.join(', ');
-					await this.db.run(`CREATE TABLE IF NOT EXISTS "${tmpName}" (${colsDef})`);
+					// Check if contact already exists by name + contact_detail
+					const name = r.name || r.Name || '';
+					const contactDetail = r.contact_detail || r.contact_details || r.Contact_detail || '';
+					const userId = r.user_id || r.User_id || 'u_default';
+					
+					if (!name) {
+						console.log(`[Settings] Skipping contact row ${i+1}: no name`);
+						skipped++;
+						continue;
+					}
 
-					// copy existing rows into tmp (generate contact_id when missing)
-					try {
-						const oldRows = await this.db.query<any>(`SELECT * FROM "${tableName}"`);
-						for (const old of oldRows) {
-							const vals = unionCols.map((c: string) => {
-								if (Object.prototype.hasOwnProperty.call(old, c) && old[c] !== undefined && old[c] !== null) return old[c];
-								if (c.toLowerCase() === 'contact_id') return makeId();
-								return null;
-							});
-							const quoted = unionCols.map((c: string) => `"${c}"`).join(',');
-							const placeholders = unionCols.map(() => '?').join(',');
-							try { await this.db.run(`INSERT OR REPLACE INTO "${tmpName}" (${quoted}) VALUES (${placeholders})`, vals); }
-							catch (e) { console.warn('[Settings] copy old->tmp failed (continuing):', e); }
+					// Check for duplicates
+					const existingCheck = await this.db.query<any>(
+						`SELECT contact_id FROM contact WHERE name = ? AND contact_detail = ? LIMIT 1`,
+						[name, contactDetail]
+					);
+
+					if (existingCheck && existingCheck.length > 0) {
+						console.log(`[Settings] Skipping duplicate contact: ${name} (${contactDetail})`);
+						skipped++;
+						continue;
+					}
+
+					// Generate new contact_id
+					const newContactId = makeId();
+					
+					// Prepare values for all columns
+					const vals = importCols.map((c: string) => {
+						const lower = c.toLowerCase();
+						if (lower === 'contact_id') return newContactId;
+						if (lower === 'user_id') return userId;
+						if (lower === 'created_at' || lower === 'updated_at') {
+							return new Date().toISOString();
 						}
-					} catch (e) { console.warn('[Settings] reading existing rows failed (continuing):', e); }
+						
+						// Try to find matching key (case-insensitive)
+						if (Object.prototype.hasOwnProperty.call(r, c)) return r[c] ?? null;
+						const matchKey = Object.keys(r).find(k => k.toLowerCase() === lower);
+						return matchKey ? (r[matchKey] ?? null) : null;
+					});
 
-					// insert incoming rows into tmp only when contact_id not present
-					for (const r of rows) {
-						const vals = unionCols.map((c: string) => {
-							const lower = c.toLowerCase();
-							if (Object.prototype.hasOwnProperty.call(r, c) && r[c] !== undefined && r[c] !== null) return r[c];
-							const matchKey = Object.keys(r).find(k => k.toLowerCase() === lower);
-							return matchKey ? r[matchKey] : null;
-						});
-
-						const idxContactId = unionCols.findIndex((c: string) => c.toLowerCase() === 'contact_id');
-						let incomingContactId = idxContactId >= 0 ? vals[idxContactId] : null;
-						if (!incomingContactId) { incomingContactId = makeId(); if (idxContactId >= 0) vals[idxContactId] = incomingContactId; }
-
-						try {
-							const exists = await this.db.query<any>(`SELECT 1 FROM "${tmpName}" WHERE contact_id = ? LIMIT 1`, [incomingContactId]);
-							if (exists && exists.length > 0) { console.log(`[Settings] migrate-skip: ${incomingContactId}`); continue; }
-						} catch (chkErr) { console.warn('[Settings] tmp check failed (continuing):', chkErr); }
-
-						const quoted = unionCols.map((c: string) => `"${c}"`).join(',');
-						const placeholders = unionCols.map(() => '?').join(',');
-						try { await this.db.run(`INSERT INTO "${tmpName}" (${quoted}) VALUES (${placeholders})`, vals); }
-						catch (insertErr) { console.warn('[Settings] insert incoming->tmp failed (continuing):', insertErr); }
-					}
-
-					// swap tables
-					try {
-						await this.db.run(`DROP TABLE IF EXISTS "${tableName}"`);
-						await this.db.run(`ALTER TABLE "${tmpName}" RENAME TO "${tableName}"`);
-						console.log(`[Settings] Migration complete: "${tmpName}" -> "${tableName}"`);
-					} catch (swapErr) {
-						console.warn('[Settings] Table swap failed; cleanup', swapErr);
-						try { await this.db.run(`DROP TABLE IF EXISTS "${tmpName}"`); } catch (e) { /* ignore */ }
-					}
-
-					await this.getTableInfo(tableName);
-					return;
-				} catch (migErr) {
-					console.error('[Settings] migration failed - falling back to add-only inserts', migErr);
+					// Insert the new contact
+					const quotedCols = importCols.map((c: string) => `"${c}"`).join(',');
+					const placeholders = importCols.map(() => '?').join(',');
+					await this.db.run(
+						`INSERT INTO contact (${quotedCols}) VALUES (${placeholders})`,
+						vals
+					);
+					
+					inserted++;
+					console.log(`[Settings] Added contact ${i+1}/${rows.length}: ${name}`);
+				} catch (err) {
+					console.warn(`[Settings] Failed to import contact row ${i+1}:`, err);
+					failed++;
 				}
 			}
+
+			console.log(`[Settings] Contact import complete: inserted=${inserted}, skipped=${skipped}, failed=${failed}`);
+			return;
 		}
 
-		// Normal insert path (add-only for contact)
+		// For other tables - use additive INSERT (not REPLACE)
 		const quotedCols = importCols.map((c: string) => `"${c}"`).join(',');
 		const placeholders = importCols.map(() => '?').join(',');
-		let insertSql: string;
-		if (tableName.toLowerCase() === 'contact') {
-			insertSql = `INSERT INTO "${tableName}" (${quotedCols}) VALUES (${placeholders})`;
-		} else {
-			let useReplace = false;
-			if (existingPkCol) {
-				const pkLower = existingPkCol.toLowerCase();
-				useReplace = importCols.map(c => c.toLowerCase()).includes(pkLower);
-			}
-			insertSql = useReplace ? `INSERT OR REPLACE INTO "${tableName}" (${quotedCols}) VALUES (${placeholders})`
-								   : `INSERT INTO "${tableName}" (${quotedCols}) VALUES (${placeholders})`;
-		}
+		const insertSql = `INSERT INTO "${tableName}" (${quotedCols}) VALUES (${placeholders})`;
 
-		console.log(`[Settings] Importing ${tableName} cols=${importCols.length} strategy=${tableName.toLowerCase()==='contact'?'ADD_ONLY':(insertSql.includes('REPLACE')?'REPLACE':'INSERT')} existingPk=${existingPkCol??'none'}`);
+		console.log(`[Settings] Importing ${tableName}: ${rows.length} rows (ADDITIVE mode)`);
 
 		let inserted = 0, failed = 0, skipped = 0;
 		for (const [i, r] of rows.entries()) {
@@ -699,28 +677,29 @@ export class SettingsPage implements OnInit {
 			});
 
 			try {
-				if (tableName.toLowerCase() === 'contact') {
-					const idx = importCols.findIndex((c: string) => c.toLowerCase() === 'contact_id');
-					let contactId = idx >= 0 ? vals[idx] : null;
-					if (!contactId) { contactId = makeId(); if (idx >= 0) vals[idx] = contactId; }
-
-					try {
-						const exists = await this.db.query<any>(`SELECT 1 FROM "${tableName}" WHERE contact_id = ? LIMIT 1`, [contactId]);
-						if (exists && exists.length > 0) { skipped++; console.log(`[Settings] skip import row ${i+1}: ${contactId}`); continue; }
-					} catch (chkErr) { console.warn('[Settings] existence check failed (continuing):', chkErr); }
+				// Generate new ID if primary key column exists and value is null/empty
+				if (existingPkCol) {
+					const pkIdx = importCols.findIndex(c => c.toLowerCase() === existingPkCol.toLowerCase());
+					if (pkIdx >= 0 && (!vals[pkIdx] || vals[pkIdx] === '')) {
+						vals[pkIdx] = makeId();
+					}
 				}
 
-				const sampleObj: any = importCols.reduce((acc: any, c: string, idx: number) => { acc[c] = vals[idx]; return acc; }, {});
-				console.debug(`[Settings] [${tableName}] inserting row ${i+1}/${rows.length}:`, JSON.stringify(sampleObj).slice(0,400));
 				await this.db.run(insertSql, vals);
 				inserted++;
-			} catch (rowErr) {
-				console.warn(`[Settings] import row failed for table=${tableName} index=${i}`, rowErr);
-				failed++;
+			} catch (rowErr: any) {
+				// Check if it's a duplicate key error
+				if (rowErr?.message?.includes('UNIQUE') || rowErr?.message?.includes('PRIMARY KEY')) {
+					console.log(`[Settings] Skipping duplicate row in ${tableName} (row ${i+1})`);
+					skipped++;
+				} else {
+					console.warn(`[Settings] Import row failed for table=${tableName} index=${i}:`, rowErr);
+					failed++;
+				}
 			}
 		}
 
-		console.log(`[Settings] upsertRowsIntoTable ${tableName}: inserted=${inserted}, skipped=${skipped}, failed=${failed}, total=${rows.length}`);
+		console.log(`[Settings] Import ${tableName} complete: inserted=${inserted}, skipped=${skipped}, failed=${failed}, total=${rows.length}`);
 	}
 
 	// Download helper for JSON
@@ -796,7 +775,10 @@ export class SettingsPage implements OnInit {
 			if (!input.files || input.files.length === 0) return;
 			const f = input.files[0];
 
-			if (!confirm('Importing Excel will attempt to merge sheets into your DB. Please backup first (export). Continue?')) { input.value = ''; return; }
+			if (!confirm('Import Excel will ADD data to your database (existing data will be preserved). Continue?')) { 
+				input.value = ''; 
+				return; 
+			}
 
 			const buffer = await f.arrayBuffer();
 			const wb = XLSXRead(new Uint8Array(buffer), { type: 'array' });
@@ -807,11 +789,12 @@ export class SettingsPage implements OnInit {
 				const ws = wb.Sheets[sheetName];
 				const rows: any[] = XLSXUtils.sheet_to_json(ws, { defval: null });
 				if (!rows || rows.length === 0) continue;
+				console.log(`[Settings] Processing sheet "${sheetName}": ${rows.length} rows`);
 				await this.upsertRowsIntoTable(sheetName, rows);
 			}
 
 			try { await this.db.saveToStoreAndClose?.(); } catch(e) { /* ignore */ }
-			alert('Excel imported successfully');
+			alert('Excel imported successfully (data added, not replaced)');
 		} catch (err) {
 			console.error('[Settings] onExcelSelected failed', err);
 			alert('Failed to import Excel: ' + (err instanceof Error ? err.message : String(err)));
@@ -827,7 +810,10 @@ export class SettingsPage implements OnInit {
 			if (!input.files || input.files.length === 0) return;
 			const f = input.files[0];
 
-			if (!confirm('Importing a backup can overwrite or merge data. Please export your current DB first. Continue?')) { input.value = ''; return; }
+			if (!confirm('Import backup will ADD data to your database (existing data will be preserved). Continue?')) { 
+				input.value = ''; 
+				return; 
+			}
 
 			const text = await f.text();
 			let parsed: any;
@@ -905,12 +891,17 @@ export class SettingsPage implements OnInit {
 				return;
 			}
 
+			console.log(`[Settings] Found ${Object.keys(tableMap).length} tables to import`);
+
 			for (const [name, rows] of Object.entries(tableMap)) {
-				if (Array.isArray(rows) && rows.length) await this.upsertRowsIntoTable(name, rows);
+				if (Array.isArray(rows) && rows.length) {
+					console.log(`[Settings] Importing table "${name}": ${rows.length} rows`);
+					await this.upsertRowsIntoTable(name, rows);
+				}
 			}
 
 			try { await this.db.saveToStoreAndClose?.(); } catch(e) { /* ignore */ }
-			alert('Backup imported successfully');
+			alert('Backup imported successfully (data added, not replaced)');
 		} catch (err) {
 			console.error('[Settings] onSqliteSelected failed', err);
 			alert('Failed to import backup: ' + (err instanceof Error ? err.message : String(err)));
