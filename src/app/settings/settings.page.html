@@ -155,7 +155,7 @@
     <!-- ========== DATA MANAGEMENT ========== -->
     <section *ngSwitchCase="'data'" class="subpage">
       <ion-list lines="none" class="menu-list">
-        <ion-item>
+        <ion-item class="menu-card" style="opacity: 80%;">
           <ion-label>Export Database</ion-label>
         </ion-item>
         <ion-item button (click)="exportDatabase('sqlite')" class="menu-card">
@@ -168,7 +168,7 @@
         </ion-item>
 
         <!-- ADDED: Import controls -->
-        <ion-item>
+        <ion-item class="menu-card" style="opacity: 80%;">
           <ion-label>Import Database</ion-label>
         </ion-item>
 
