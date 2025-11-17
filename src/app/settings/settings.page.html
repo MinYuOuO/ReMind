@@ -71,46 +71,45 @@
         <ion-item *ngIf="hasPassword" class="menu-card">
           <ion-label position="stacked">Old Password</ion-label>
           <div style="display: flex; align-items: center; width: 100%">
-            <ion-input [type]="showOldPassword ? 'text' : 'password'" [(ngModel)]="oldPassword" placeholder="Enter old password"></ion-input>
-            <ion-icon 
-              [name]="showOldPassword ? 'eye-off-outline' : 'eye-outline'"
+            <ion-input [type]="showOldPassword ? 'text' : 'password'" [(ngModel)]="oldPassword"
+              placeholder="Enter old password"></ion-input>
+            <ion-icon [name]="showOldPassword ? 'eye-off-outline' : 'eye-outline'"
               (click)="showOldPassword = !showOldPassword"
-              style="font-size: 1.5em; margin-left: 8px; cursor: pointer;"
-            ></ion-icon>
+              style="font-size: 1.5em; margin-left: 8px; cursor: pointer;"></ion-icon>
           </div>
         </ion-item>
 
         <ion-item class="menu-card">
           <ion-label position="stacked">New Password</ion-label>
           <div style="display: flex; align-items: center; width: 100%">
-            <ion-input [type]="showNewPassword ? 'text' : 'password'" [(ngModel)]="newPassword" placeholder="Enter new password"></ion-input>
-            <ion-icon 
-              [name]="showNewPassword ? 'eye-off-outline' : 'eye-outline'"
+            <ion-input [type]="showNewPassword ? 'text' : 'password'" [(ngModel)]="newPassword"
+              placeholder="Enter new password"></ion-input>
+            <ion-icon [name]="showNewPassword ? 'eye-off-outline' : 'eye-outline'"
               (click)="showNewPassword = !showNewPassword"
-              style="font-size: 1.5em; margin-left: 8px; cursor: pointer;"
-            ></ion-icon>
+              style="font-size: 1.5em; margin-left: 8px; cursor: pointer;"></ion-icon>
           </div>
         </ion-item>
 
         <ion-item class="menu-card">
           <ion-label position="stacked">Confirm New Password</ion-label>
           <div style="display: flex; align-items: center; width: 100%">
-            <ion-input [type]="showConfirmPassword ? 'text' : 'password'" [(ngModel)]="confirmPassword" placeholder="Confirm new password"></ion-input>
-            <ion-icon 
-              [name]="showConfirmPassword ? 'eye-off-outline' : 'eye-outline'"
+            <ion-input [type]="showConfirmPassword ? 'text' : 'password'" [(ngModel)]="confirmPassword"
+              placeholder="Confirm new password"></ion-input>
+            <ion-icon [name]="showConfirmPassword ? 'eye-off-outline' : 'eye-outline'"
               (click)="showConfirmPassword = !showConfirmPassword"
-              style="font-size: 1.5em; margin-left: 8px; cursor: pointer;"
-            ></ion-icon>
+              style="font-size: 1.5em; margin-left: 8px; cursor: pointer;"></ion-icon>
           </div>
         </ion-item>
 
         <ion-item lines="none" class="menu-card">
-          <ion-button expand="block" (click)="changePassword()">{{ hasPassword ? 'Change Password' : 'Set Password' }}</ion-button>
+          <ion-button expand="block" (click)="changePassword()">{{ hasPassword ? 'Change Password' : 'Set Password'
+            }}</ion-button>
         </ion-item>
 
         <ion-item class="menu-card">
           <ion-label>Biometric Login</ion-label>
-          <ion-button fill="clear" (click)="toggleBiometric()">{{ biometricEnabled ? 'Disable' : 'Enable' }}</ion-button>
+          <ion-button fill="clear" (click)="toggleBiometric()">{{ biometricEnabled ? 'Disable' : 'Enable'
+            }}</ion-button>
         </ion-item>
       </ion-list>
     </section>
@@ -129,19 +128,12 @@
 
         <ion-item class="menu-card">
           <ion-label position="stacked">API Key</ion-label>
-          <ion-input
-            type="password"
-            [(ngModel)]="aiApiKey"
-            placeholder="sk-..."
-          ></ion-input>
+          <ion-input type="password" [(ngModel)]="aiApiKey" placeholder="sk-..."></ion-input>
         </ion-item>
 
         <ion-item class="menu-card">
           <ion-label position="stacked">Model</ion-label>
-          <ion-input
-            [(ngModel)]="aiModel"
-            placeholder="gpt-4o-mini"
-          ></ion-input>
+          <ion-input [(ngModel)]="aiModel" placeholder="gpt-4o-mini"></ion-input>
         </ion-item>
 
         <ion-item lines="none" class="menu-card">
@@ -186,39 +178,63 @@
 
         <!-- Hidden file inputs -->
         <input #fileInputExcel type="file" accept=".xlsx,.xls" style="display:none" (change)="onExcelSelected($event)">
-        <input #fileInputSqlite type="file" accept=".json,.db,.sqlite,.sqlite3" style="display:none" (change)="onSqliteSelected($event)">
+        <input #fileInputSqlite type="file" accept=".json,.db,.sqlite,.sqlite3" style="display:none"
+          (change)="onSqliteSelected($event)">
 
-        <ion-item class="menu-card"
-          ><ion-label>Clearing Cache</ion-label></ion-item
-        >
+        <ion-item class="menu-card"><ion-label>Clearing Cache</ion-label></ion-item>
       </ion-list>
     </section>
 
     <!-- ========== ABOUT ========== -->
     <section *ngSwitchCase="'about'" class="subpage">
       <ion-list lines="none" class="menu-list">
-        <ion-item class="menu-card"
-          ><ion-label>Application Version</ion-label></ion-item
-        >
-        <ion-item class="menu-card"
-          ><ion-label>Issue Feedback</ion-label></ion-item
-        >
-        <ion-item class="menu-card"
-          ><ion-label>Privacy Policy</ion-label></ion-item
-        >
-        <ion-item class="menu-card"
-          ><ion-label>Terms of Service</ion-label></ion-item
-        >
+        <ion-item class="menu-card">
+          <ion-label>Application Version</ion-label>
+          <ion-note slot="end">{{ appVersion }}</ion-note>
+        </ion-item>
+        <ion-item class="menu-card">
+          <ion-label>Issue Feedback</ion-label>
+          <ion-button fill="clear" slot="end" (click)="sendFeedback()">Send Feedback</ion-button>
+        </ion-item>
+        <ion-item class="menu-card">
+          <ion-label>Privacy Policy</ion-label>
+          <ion-button fill="clear" slot="end" (click)="openPrivacyPolicy()">View</ion-button>
+        </ion-item>
+        <ion-item class="menu-card">
+          <ion-label>Terms of Service</ion-label>
+          <ion-button fill="clear" slot="end" (click)="openTermsOfService()">View</ion-button>
+        </ion-item>
       </ion-list>
     </section>
 
     <!-- ========== FAQ ========== -->
     <section *ngSwitchCase="'faq'" class="subpage">
-      <ion-list lines="none" class="menu-list">
-        <ion-item class="menu-card"><ion-label>Question 1</ion-label></ion-item>
-        <ion-item class="menu-card"><ion-label>Question 2</ion-label></ion-item>
-        <ion-item class="menu-card"><ion-label>Question 3</ion-label></ion-item>
-        <ion-item class="menu-card"><ion-label>Question 4</ion-label></ion-item>
+      <ion-list lines="none" class="menu-list faq-list">
+        <ion-item class="menu-card faq-item">
+          <ion-label>What is this app?</ion-label>
+          <ion-text color="medium">This app helps you manage your personal contacts, interactions, and AI-driven
+            insights. It also allows you to customize notification and data settings.</ion-text>
+        </ion-item>
+        <ion-item class="menu-card faq-item">  
+          <ion-label>How do I add a new contact?</ion-label>
+          <ion-text color="medium">To add a new contact, go to the "Contacts" tab, then click "Add Contact" to input new
+            information.</ion-text>
+        </ion-item>
+        <ion-item class="menu-card faq-item">
+          <ion-label>How do I use AI features?</ion-label>
+          <ion-text color="medium">The AI features can be accessed under the "AI Settings" page. Here you can enable AI
+            and provide an API key to interact with AI services.</ion-text>
+        </ion-item>
+        <ion-item class="menu-card faq-item">
+          <ion-label>What should I do if I forget my password?</ion-label>
+          <ion-text color="medium">If you forget your password, go to the "Privacy Settings" and click "Reset Password"
+            to set a new one.</ion-text>
+        </ion-item>
+        <ion-item class="menu-card faq-item">
+          <ion-label>Where can I find more help?</ion-label>
+          <ion-text color="medium">For further help, please contact our support team via the "Help" section or send
+            feedback.</ion-text>
+        </ion-item>
       </ion-list>
     </section>
 
@@ -238,7 +254,8 @@
 
         <ion-item lines="none" class="input-row">
           <ion-icon name="call-outline" slot="start"></ion-icon>
-          <ion-input class="field-detail" placeholder="Contact details" [(ngModel)]="personalContactDetails"></ion-input>
+          <ion-input class="field-detail" placeholder="Contact details"
+            [(ngModel)]="personalContactDetails"></ion-input>
         </ion-item>
 
         <ion-item lines="none" class="input-row" button (click)="toggleCalendar(true)">
@@ -255,11 +272,8 @@
           </div>
           <div class="calendar-grid">
             <div class="calendar-weekday" *ngFor="let w of weekdayNames">{{ w }}</div>
-            <div class="calendar-cell"
-                 *ngFor="let day of calendarCells; let i = index"
-                 [class.empty]="day === null"
-                 [class.selected]="day !== null && isSelectedDay(day!)"
-                 (click)="day !== null && selectDay(day!)">
+            <div class="calendar-cell" *ngFor="let day of calendarCells; let i = index" [class.empty]="day === null"
+              [class.selected]="day !== null && isSelectedDay(day!)" (click)="day !== null && selectDay(day!)">
               {{ day !== null ? day : '' }}
             </div>
           </div>
@@ -298,7 +312,8 @@
             <div class="noti-title">{{ r.title }}<span *ngIf="r.contact_name"> — {{ r.contact_name }}</span></div>
             <div class="noti-sub">{{ r.description || r.due_date_display }}</div>
           </div>
-          <ion-button class="trash-btn" fill="solid" size="small" style="position:absolute; right:8px; top:8px;" (click)="$event.stopPropagation(); deleteReminder(r.reminder_id)">
+          <ion-button class="trash-btn" fill="solid" size="small" style="position:absolute; right:8px; top:8px;"
+            (click)="$event.stopPropagation(); deleteReminder(r.reminder_id)">
             <ion-icon name="trash-outline"></ion-icon>
           </ion-button>
         </div>
