@@ -26,12 +26,16 @@ const config: CapacitorConfig = {
       electronWindowsLocation: "C:\\ProgramData\\CapacitorDatabases",
       electronMacLocation: "/Volumes/Development_Lacie/Development/Databases",
       electronLinuxLocation: "Databases",
-      LocalNotifications: {
-        smallIcon: "ic_stat_icon_config_sample",
-        iconColor: "#488AFF",
-        sound: "beep.wav",
-      }
-    }
+    },
+    LocalNotifications: {
+      smallIcon: "ic_stat_icon_config_sample",
+      iconColor: "#488AFF",
+      sound: "beep.wav",
+    },
+    'capacitor-native-biometric': {
+      androidBiometricTitle: 'Biometric login for capacitor native biometric',
+      iosBiometricTitle: 'Biometric login for capacitor native biometric',
+    },
   }
 };
 export default config;

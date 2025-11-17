@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Preferences } from '@capacitor/preferences';
+import { NativeBiometric, BiometryType } from 'capacitor-native-biometric';
 
 const PW_KEY = 'auth.password_hash';
 const BIOMETRIC_KEY = 'auth.biometric_enabled';
@@ -13,7 +14,7 @@ export class AuthService {
     return this._auth$;
   }
 
-  constructor() {}
+  constructor() { }
 
   async init() {
     // Placeholder for any startup tasks (session restore etc.)
@@ -79,27 +80,45 @@ export class AuthService {
     return !!r.value;
   }
 
+
   async loginWithBiometric(): Promise<boolean> {
-    // Only attempt biometric if the user previously enabled it
-    const enabled = await this.isBiometricEnabled();
-    if (!enabled) return false;
-
-    // Placeholder: try to call a native biometric plugin if installed.
-    // If not available, return false to let UI fallback to password.
     try {
-      const win: any = window as any;
-      const plugin = win?.Plugins?.Biometric || win?.Biometric || win?.Fingerprint || win?.CapacitorBiometric;
-      if (plugin && typeof plugin.verify === 'function') {
-        const res = await plugin.verify();
-        if (res && (res.verified === true || res.success === true)) {
-          this._auth$.next(true);
-          return true;
-        }
-      }
-    } catch (e) {
-      console.warn('[Auth] biometric plugin call failed', e);
-    }
+      // First, check if biometric authentication is available
+      const result = await NativeBiometric.isAvailable();
 
-    return false;
+      if (!result.isAvailable) {
+        console.warn('Biometric authentication is not available.');
+        return false;
+      }
+
+      // Optionally, you can check if Face ID is available
+      const isFaceID = result.biometryType === BiometryType.FACE_ID;
+      console.log(`Biometric Type: ${isFaceID ? 'Face ID' : 'Fingerprint'}`);
+
+      // Request biometric authentication
+      const verified = await NativeBiometric.verifyIdentity({
+        reason: "For easy login",
+        title: "Log in",
+        subtitle: isFaceID ? "Use Face ID to log in" : "Use Fingerprint to log in",
+        description: "Please authenticate using your fingerprint or face recognition.",
+      }).then(() => true)
+        .catch(() => false);
+
+      // If verification fails, return false
+      if (!verified) {
+        console.log('Biometric authentication failed');
+        return false;
+      }
+
+      // Biometric authentication successful, now log the user in
+      this._auth$.next(true);
+      console.log('Biometric authentication successful');
+
+      // Optionally, you can store the authentication state or perform further actions
+      return true;
+    } catch (e) {
+      console.error('[AuthService] Biometric login failed', e);
+      return false;
+    }
   }
 }
