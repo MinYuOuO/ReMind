@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { SqliteDbService } from './db.service';
+import { DbInitService } from './db-inti.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class NotificationService {
-  constructor(private db: SqliteDbService) {}
+  constructor(private db: SqliteDbService, private dbInit: DbInitService) {}
 
   async scheduleBirthdayNotifications() {
     try {
@@ -90,6 +91,65 @@ export class NotificationService {
 
       if (notifications.length > 0) {
         await LocalNotifications.schedule({ notifications });
+
+        // Persist scheduled notifications as reminders in DB
+        try {
+          await this.dbInit.init();
+          await this.db.open();
+
+          const now = new Date().toISOString();
+          for (const n of notifications) {
+            const remId = 'rem_' + (n.id ?? Math.floor(Math.random() * 1000000));
+            const contactId = n.extra?.contactId ?? null;
+            const title = n.title ?? '';
+            const description = n.body ?? '';
+            // determine dueDate safely — schedule may have { at } or other shapes (use guards)
+            let dueDate = new Date().toISOString();
+            try {
+              if (n.schedule) {
+                if ('at' in n.schedule && n.schedule.at) {
+                  dueDate = new Date((n.schedule as any).at).toISOString();
+                } else if ('every' in n.schedule && (n.schedule as any).every) {
+                  dueDate = String((n.schedule as any).every);
+                }
+              }
+            } catch (_e) {
+              // fallback to now string on any parsing issue
+              dueDate = new Date().toISOString();
+            }
+            // Use default values for user_id/priority/status
+            const userId = 'u_local';
+            const priority = 'medium';
+            const status = 'pending';
+            const reminderType = (n.extra?.type === 'birthday' || n.extra?.type === 'birthday_reminder') ? 'birthday' : (n.extra?.type === 'new_contact' ? 'follow_up' : 'follow_up');
+
+            try {
+              // Persist only when the scheduled day is today (local date)
+              let shouldPersist = false;
+              try {
+                const due = new Date(dueDate);
+                const today = new Date();
+                if (!isNaN(due.getTime())) {
+                  shouldPersist = due.getFullYear() === today.getFullYear() && due.getMonth() === today.getMonth() && due.getDate() === today.getDate();
+                }
+              } catch (e) {
+                // if parsing fails, skip persist
+                shouldPersist = false;
+              }
+
+              if (shouldPersist) {
+                await this.db.run(
+                  `INSERT OR REPLACE INTO reminder (reminder_id, contact_id, user_id, reminder_type, due_date, title, description, priority, status, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)`,
+                  [remId, contactId, userId, reminderType, dueDate, title, description, priority, status, now]
+                );
+              }
+            } catch (e) {
+              console.warn('[Notification] Failed to persist reminder for notification', n, e);
+            }
+          }
+        } catch (e) {
+          console.warn('[Notification] Could not persist reminders to DB', e);
+        }
       }
 
       // Updated console log to include formatted birthday date
@@ -118,6 +178,20 @@ export class NotificationService {
           }
         ]
       });
+
+      // Persist the new-contact notification as a reminder
+      try {
+        await this.dbInit.init();
+        await this.db.open();
+        const now = new Date().toISOString();
+        const remId = 'rem_new_' + notificationId;
+        await this.db.run(
+          `INSERT OR REPLACE INTO reminder (reminder_id, contact_id, user_id, reminder_type, due_date, title, description, priority, status, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)`,
+          [remId, contact.contact_id, 'u_local', 'follow_up', new Date().toISOString(), `New Contact: ${contact.name}`, `Automatically generated notification for new contact`, 'medium', 'pending', now]
+        );
+      } catch (e) {
+        console.warn('[Notification] Could not persist new-contact reminder', e);
+      }
 
       console.log(`[Notification] New contact notification sent for ${contact.name}`);
     } catch (err) {

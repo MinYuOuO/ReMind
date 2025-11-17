@@ -29,6 +29,7 @@ import {
   lockClosedOutline,
   sparklesOutline,
   settingsOutline, callOutline, calendarOutline, mailOutline, eyeOutline, eyeOffOutline } from 'ionicons/icons';
+import { trashOutline } from 'ionicons/icons';
 
 import { AiSettingService } from '../core/services/ai-setting.service';
 import { ActivatedRoute } from '@angular/router';
@@ -51,6 +52,7 @@ addIcons({
   'call-outline': callOutline,
   'calendar-outline': calendarOutline,
   'mail-outline': mailOutline,
+	'trash-outline': trashOutline,
   eyeOutline,
   eyeOffOutline,
 });
@@ -138,6 +140,8 @@ export class SettingsPage implements OnInit {
   readonly eyeOutline = eyeOutline;
   readonly eyeOffOutline = eyeOffOutline;
 
+	// Reminders loaded for notification view
+	reminders: any[] = [];
   private buildCalendar(year = this.calYear, month = this.calMonth) {
     const firstOfMonth = new Date(year, month, 1);
     const startWeekday = firstOfMonth.getDay();
@@ -247,19 +251,94 @@ export class SettingsPage implements OnInit {
   ) {
     this.view = page;
 
-    // load personal card data when opening the card view
-    if (page === 'card') {
-      await this.loadPersonalCard();
-      // Log the loaded personal card data for debugging
-      console.log('[Settings] personal card opened:', {
-        user_id: this.personalUserId,
-        username: this.personalUsername,
-        contact_detail: this.personalContactDetails,
-        birthday: this.personalBirthday,
-        notes: this.personalNotes,
-      });
-    }
+		// load personal card data when opening the card view
+		if (page === 'card') {
+			await this.loadPersonalCard();
+			// Log the loaded personal card data for debugging
+			console.log('[Settings] personal card opened:', {
+				user_id: this.personalUserId,
+				username: this.personalUsername,
+				contact_detail: this.personalContactDetails,
+				birthday: this.personalBirthday,
+				notes: this.personalNotes,
+			});
+		}
+
+		// load reminders when opening notifications
+		if (page === 'notification') {
+			await this.loadReminders();
+		}
   }
+
+	// load reminders from DB for notification view
+	async loadReminders() {
+		try {
+			await this.dbInit.init();
+			await this.db.open();
+			// Fetch reminders, include contact name when possible
+			const rows = await this.db.query<any>(`
+				SELECT r.reminder_id, r.contact_id, r.user_id, r.reminder_type, r.due_date, r.title, r.description, r.priority, r.status, r.created_at, r.completed_at, c.name as contact_name
+				FROM reminder r
+				LEFT JOIN contact c ON c.contact_id = r.contact_id
+				ORDER BY datetime(r.due_date) DESC
+			`);
+			this.reminders = (rows || []).map(r => ({
+				...r,
+				due_date_display: r.due_date ? new Date(r.due_date).toLocaleString() : ''
+			}));
+			console.log('[Settings] loaded reminders:', this.reminders.length);
+		} catch (e) {
+			console.error('[Settings] loadReminders failed', e);
+			this.reminders = [];
+		}
+	}
+
+	// delete a single reminder by id
+	async deleteReminder(reminderId: string) {
+		if (!reminderId) return;
+		try {
+			if (!confirm('Delete this notification?')) return;
+			await this.dbInit.init();
+			await this.db.open();
+			await this.db.run(`DELETE FROM reminder WHERE reminder_id = ?`, [reminderId]);
+			try { await this.db.saveToStoreAndClose(); } catch(e) { /* ignore */ }
+			this.reminders = this.reminders.filter(r => r.reminder_id !== reminderId);
+		} catch (e) {
+			console.error('[Settings] deleteReminder failed', e);
+			alert('Failed to delete notification');
+		}
+	}
+
+	// clear all reminders (with confirmation)
+	async clearAllReminders() {
+		if (!confirm('Clear all notifications? This cannot be undone.')) return;
+		try {
+			await this.dbInit.init();
+			await this.db.open();
+			await this.db.run(`DELETE FROM reminder`);
+			try { await this.db.saveToStoreAndClose(); } catch(e) { /* ignore */ }
+			this.reminders = [];
+		} catch (e) {
+			console.error('[Settings] clearAllReminders failed', e);
+			alert('Failed to clear notifications');
+		}
+	}
+
+	// handle notification card click
+	onNotificationClick(notification: any) {
+		try {
+			console.log('[Settings] notification clicked', notification);
+			if (notification && notification.contact_id) {
+				// If you have a route to open contact details, implement navigation here.
+				// For now show a simple info dialog.
+				alert(`Open contact: ${notification.contact_id}`);
+			} else {
+				alert(notification?.title || 'Notification selected');
+			}
+		} catch (e) {
+			console.warn('[Settings] onNotificationClick handler failed', e);
+		}
+	}
 
   async saveAi() {
     this.saving = true;

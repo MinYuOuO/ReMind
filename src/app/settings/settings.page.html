@@ -241,7 +241,7 @@
           <ion-input class="field-detail" placeholder="Contact details" [(ngModel)]="personalContactDetails"></ion-input>
         </ion-item>
 
-        <ion-item lines="none" button (click)="toggleCalendar(true)">
+        <ion-item lines="none" class="input-row" button (click)="toggleCalendar(true)">
           <ion-icon name="calendar-outline" slot="start"></ion-icon>
           <ion-input [value]="personalBirthday" placeholder="Birthday (YYYY-MM-DD)" readonly></ion-input>
         </ion-item>
@@ -280,53 +280,29 @@
 
     <!-- ========== NOTIFICATION ========== -->
     <section *ngSwitchCase="'notification'" class="noti-page">
-      <div class="noti-section-title">Today</div>
-
-      <div class="noti-card">
-        <div class="noti-left">
-          <ion-icon name="mail-outline"></ion-icon>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px;">
+        <div class="noti-section-title">Notifications</div>
+        <div>
+          <ion-button fill="clear" (click)="clearAllReminders()">Clear All</ion-button>
         </div>
-        <div class="noti-body">
-          <div class="noti-title">It’s Min Yu’s Birthday !</div>
-          <div class="noti-sub">Send a quick message 🎉</div>
-        </div>
-        <div class="noti-action">Chat</div>
       </div>
 
-      <div class="noti-card">
-        <div class="noti-left">
-          <ion-icon name="mail-outline"></ion-icon>
-        </div>
-        <div class="noti-body">
-          <div class="noti-title">
-            You and Alex have been friends for a year !
+      <div *ngIf="reminders?.length === 0" style="color:#6b7aa6; padding: 12px;">No notifications</div>
+
+      <ng-container *ngFor="let r of reminders">
+        <div class="noti-card" style="position:relative;">
+          <div class="noti-left">
+            <ion-icon name="mail-outline"></ion-icon>
           </div>
-          <div class="noti-sub">Check past message</div>
-        </div>
-      </div>
-
-      <div class="noti-card">
-        <div class="noti-left">
-          <ion-icon name="mail-outline"></ion-icon>
-        </div>
-        <div class="noti-body">
-          <div class="noti-title">Haven’t talked to Wen Xin in 3 weeks</div>
-          <div class="noti-sub">Reach out and reconnect</div>
-        </div>
-        <div class="noti-action secondary">Message</div>
-      </div>
-
-      <div class="noti-card">
-        <div class="noti-left">
-          <ion-icon name="mail-outline"></ion-icon>
-        </div>
-        <div class="noti-body">
-          <div class="noti-title">
-            Reminder : meet Jia Jun for coffee tomorrow
+          <div class="noti-body" (click)="onNotificationClick(r)">
+            <div class="noti-title">{{ r.title }}<span *ngIf="r.contact_name"> — {{ r.contact_name }}</span></div>
+            <div class="noti-sub">{{ r.description || r.due_date_display }}</div>
           </div>
-          <div class="noti-sub">9:30 am</div>
+          <ion-button class="trash-btn" fill="solid" size="small" style="position:absolute; right:8px; top:8px;" (click)="$event.stopPropagation(); deleteReminder(r.reminder_id)">
+            <ion-icon name="trash-outline"></ion-icon>
+          </ion-button>
         </div>
-      </div>
+      </ng-container>
     </section>
   </ng-container>
 </ion-content>

@@ -205,6 +205,28 @@
   color: #2f4d6c;
 }
 
+/* Trash button styling for notification cards */
+.noti-card ion-button.trash-btn {
+  --background: #4f6ea5;
+  --color: #ffffff;
+  height: 40px;
+  width: 40px;
+  min-width: 0;
+  padding: 0;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 12px rgba(79,110,165,0.12);
+  --border-radius: 50%;
+}
+
+.noti-card ion-button.trash-btn ion-icon {
+  font-size: 18px;
+  color: #fff;
+  line-height: 1;
+}
+
 ion-header[translucent] {
   position: sticky;
   top: 0;
