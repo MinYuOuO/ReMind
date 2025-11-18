@@ -47,7 +47,7 @@ const uid = () =>
  */
 @Injectable({ providedIn: 'root' })
 export class ContactRepo {
-  constructor(private db: SqliteDbService) {}
+  constructor(private db: SqliteDbService) { }
 
   /**
    * 根据 userId 获取该用户的所有联系人
@@ -206,4 +206,23 @@ export class ContactRepo {
     if (!contactId) return;
     await this.db.run(`DELETE FROM contact WHERE contact_id = ?`, [contactId]);
   }
+
+  /**
+ * Get a single contact by contact_id
+ * Retrieve a contact record by its unique ID
+ *
+ * @param contactId - The contact_id to lookup
+ * @returns Promise<Contact | null> - The contact record, or null if not found
+ */
+  async getById(contactId: string): Promise<Contact | null> {
+    if (!contactId) return null;
+
+    const results = await this.db.query<Contact>(
+      `SELECT * FROM contact WHERE contact_id = ? LIMIT 1`,
+      [contactId]
+    );
+
+    return results.length > 0 ? results[0] : null;
+  }
+
 }

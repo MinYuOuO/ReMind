@@ -130,23 +130,38 @@ export class RoulettePage implements OnInit {
     this.view = 'roll';
   }
 
-  /** Click: Generate with AI (stubbed; replace with your API) */
-  async generateWithAI() {
-    const prompt = (this.question || '').trim();
+  private async ensureAiProviderConfigured(): Promise<'ready' | 'none'> {
+    const s = await this.aiSetting.getActive();
+    if (s.provider === 'openai' && s.apiKey?.trim()) {
+      this.aiService.useOpenAI(s.apiKey, s.model || 'gpt-4o-mini');
+      return 'ready';
+    }
+    if (s.provider === 'deepseek' && s.apiKey?.trim()) {
+      this.aiService.useDeepSeek(s.apiKey, s.model || 'deepseek-chat');
+      return 'ready';
+    }
+    // leave provider unset => AiService will return null
+    return 'none';
+  }
 
+  async generateWithAI() {
+    await this.ensureAiProviderConfigured();
+    
+    // Validation
     if (!this.selectedContact) {
-      alert('Please select a person');
+      alert('Please select a contact to generate personalized suggestions.');
       return;
     }
 
-    // 检查 AI 配置
     const configured = await this.aiSetting.isConfigured();
     if (!configured) {
-      const go = confirm('AI is not configured, go to setting?');
+      const go = confirm('AI is not configured. Go to settings?');
       if (go) {
-        // 这里可以导航到设置页面
+        // Navigate to settings page
+        // this.router.navigate(['/settings']);
         return;
       }
+      // Fallback to defaults if user declines
       this.useDefaults();
       return;
     }
@@ -154,19 +169,44 @@ export class RoulettePage implements OnInit {
     this.isGenerating = true;
 
     try {
-      // 使用 RouletteService 生成个性化建议
+      // ONLY call RouletteService - it handles AI internally
+      // IMPORTANT: Pass the user's question so AI can answer it!
+      const userQuestion = (this.question || '').trim();
+
       this.personalizedSuggestions =
         await this.rouletteService.getPersonalizedSuggestions(
           this.selectedContact.contact_id,
-          8
+          8,
+          userQuestion // Pass the question here!
         );
 
-      // 提取建议文本
+      // Extract suggestion text for the wheel
       const suggestions = this.personalizedSuggestions.map((s) => s.suggestion);
+
+      // Validate we got suggestions
+      if (suggestions.length === 0) {
+        throw new Error('No suggestions generated');
+      }
+
       this.setOptions(suggestions);
+      this.view = 'roll';
+
     } catch (error) {
-      console.error('AI-generated suggestions failed.:', error);
-      // 回退到默认选项
+      console.error('AI-generated suggestions failed:', error);
+
+      // Better error handling with specific messages
+      if (error instanceof Error) {
+        if (error.message.includes('not configured')) {
+          alert('AI service is not properly configured. Please check your settings.');
+        } else if (error.message.includes('No JSON')) {
+          alert('AI returned invalid response. Please try again or use default options.');
+        } else {
+          alert(`Failed to generate personalized suggestions: ${error.message}`);
+        }
+      } else {
+        alert('Failed to generate personalized suggestions. Using default options instead.');
+      }
+
       this.useDefaults();
     } finally {
       this.isGenerating = false;
@@ -175,20 +215,39 @@ export class RoulettePage implements OnInit {
 
   /** Replace with your real AI call; must resolve to an array of strings */
   async generateGenericWithAI() {
-    const prompt = (this.question || '').trim();
-    if (!prompt) {
+    // Check AI configuration
+    await this.ensureAiProviderConfigured();
+    const configured = await this.aiSetting.isConfigured();
+    if (!configured) {
+      const go = confirm('AI is not configured. Go to settings?');
+      if (go) {
+        // Navigate to settings
+        return;
+      }
       this.useDefaults();
       return;
     }
 
+    // Reset personalized suggestions since we're doing generic
+    this.personalizedSuggestions = [];
+
     this.isGenerating = true;
 
     try {
-      // use AiService generate general suggestions
-      const result = await this.aiService.generateRouletteSuggestions(8);
-      this.setOptions(result.suggestions);
+      // ONLY call RouletteService - never AiService directly!
+      // RouletteService should have a method for generic suggestions too
+      const suggestions = await this.rouletteService.getGenericAISuggestions(8);
+
+      if (!suggestions || suggestions.length === 0) {
+        throw new Error('No suggestions returned');
+      }
+
+      this.setOptions(suggestions);
+      this.view = 'roll';
+
     } catch (error) {
-      console.error('AI failed to generate general suggestions:', error);
+      console.error('Failed to generate generic suggestions:', error);
+      alert('Failed to generate suggestions. Using default options instead.');
       this.useDefaults();
     } finally {
       this.isGenerating = false;
@@ -292,7 +351,7 @@ export class RoulettePage implements OnInit {
 
     try {
       navigator.vibrate?.(20);
-    } catch {}
+    } catch { }
   }
 
   contactLabel(c: Contact): string {
@@ -302,7 +361,7 @@ export class RoulettePage implements OnInit {
   }
 
   getConfidenceDisplay(suggestion: PersonalizedSuggestion): string {
-    return `${Math.round(suggestion.confidence * 100)}%匹配`;
+    return `${Math.round(suggestion.confidence * 100)}% match`;
   }
 
   getCategoryIcon(category: string): string {

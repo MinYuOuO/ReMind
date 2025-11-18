@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { CognitiveService } from './cognitive.service';
 import { AiService } from './ai.service';
+import { ContactRepo } from '../repos/contact.repo';
+import { SqliteDbService } from './db.service';
 
 export interface PersonalizedSuggestion {
   suggestion: string;
@@ -9,143 +10,180 @@ export interface PersonalizedSuggestion {
   category: 'communication' | 'activity' | 'gesture' | 'follow_up';
 }
 
+interface ContactContext {
+  name: string;
+  relationship?: string;
+  recentInteractions: string[];
+  interests: string[];
+  communicationStyle: string[];
+  cognitiveUnits: Array<{
+    category: string;
+    essence: string;
+    confidence: number;
+  }>;
+}
+
 @Injectable({ providedIn: 'root' })
 export class RouletteService {
-
   constructor(
-    private cognitiveService: CognitiveService,
-    private aiService: AiService
+    private aiService: AiService,
+    private contactRepo: ContactRepo,
+    private db: SqliteDbService
   ) {}
 
-  // 为特定联系人生成个性化建议
-  async getPersonalizedSuggestions(contactId: string, count = 6): Promise<PersonalizedSuggestion[]> {
-    
-    // 获取联系人的认知背景
-    const context = await this.cognitiveService.getPersonalizedSuggestionsContext(contactId);
-    
-    // 使用AI生成个性化建议
-    const baseSuggestions = await this.aiService.generateRouletteSuggestions(count + 2); // 多生成几个用于筛选
-    
-    // 个性化处理建议
-    return this.personalizeSuggestions(baseSuggestions.suggestions, context, count);
-  }
-
-  private async personalizeSuggestions(
-    baseSuggestions: string[], 
-    context: { interests: string[]; communication_preferences: string[]; relationship_dynamics: string[] },
-    count: number
+  /**
+   * Generate personalized suggestions for a specific contact using AI
+   */
+  async getPersonalizedSuggestions(
+    contactId: string,
+    count = 8,
+    userQuestion?: string
   ): Promise<PersonalizedSuggestion[]> {
-    
-    const personalized: PersonalizedSuggestion[] = [];
+    try {
+      // Step 1: Get contact context
+      const context = await this.getContactContext(contactId);
 
-    for (const suggestion of baseSuggestions) {
-      if (personalized.length >= count) break;
+      // Step 2: Use AiService's new method to generate personalized suggestions
+      // Pass the user's question so AI can answer it!
+      const result = await this.aiService.generatePersonalizedRouletteSuggestions(
+        context,
+        count,
+        userQuestion
+      );
 
-      const personalization = this.findPersonalization(suggestion, context);
-      const confidence = this.calculateConfidence(suggestion, context);
-      
-      // 只保留高置信度的个性化建议
-      if (confidence >= 0.6) {
-        personalized.push({
-          suggestion,
-          personalization: personalization || 'Based on the characteristics of your relationship',
-          confidence,
-          category: this.categorizeSuggestion(suggestion)
-        });
-      }
+      // Return the suggestions directly from AI service
+      return result.suggestions;
+    } catch (error) {
+      console.error('Failed to generate personalized suggestions:', error);
+      // Fallback to generic suggestions
+      return this.getGenericSuggestions(count);
     }
-
-    // 如果个性化建议不足，补充通用建议
-    if (personalized.length < count) {
-      const remaining = count - personalized.length;
-      const genericSuggestions = await this.aiService.generateRouletteSuggestions(remaining);
-      
-      genericSuggestions.suggestions.forEach(suggestion => {
-        personalized.push({
-          suggestion,
-          personalization: 'General friendly advice',
-          confidence: 0.5,
-          category: this.categorizeSuggestion(suggestion)
-        });
-      });
-    }
-
-    return personalized.sort((a, b) => b.confidence - a.confidence);
   }
 
-  private findPersonalization(suggestion: string, context: any): string | null {
-    const suggestionLower = suggestion.toLowerCase();
+  /**
+   * Get comprehensive context about a contact for AI personalization
+   */
+  private async getContactContext(contactId: string): Promise<ContactContext> {
+    // Get contact info using ContactRepo
+    const contact = await this.contactRepo.getById(contactId);
+    
+    // Get recent interactions
+    const interactions = await this.db.query<{ user_summary: string }>(
+      `SELECT user_summary 
+       FROM interaction 
+       WHERE contact_id = ? 
+       ORDER BY interaction_date DESC 
+       LIMIT 5`,
+      [contactId]
+    );
 
-    // 检查兴趣匹配
-    for (const interest of context.interests) {
-      const interestKey = interest.split('(')[0].toLowerCase().trim();
-      if (suggestionLower.includes(interestKey)) {
-        return `考虑到TA对${interestKey}的兴趣`;
-      }
-    }
+    // Get cognitive units (learned patterns about this person)
+    const cognitiveUnits = await this.db.query<{
+      category: string;
+      essence: string;
+      confidence_score: number;
+    }>(
+      `SELECT category, essence, confidence_score 
+       FROM cognitive_unit 
+       WHERE contact_id = ? AND status = 'active'
+       ORDER BY confidence_score DESC 
+       LIMIT 10`,
+      [contactId]
+    );
 
-    // 检查沟通偏好匹配
-    for (const commPref of context.communication_preferences) {
-      const prefKey = commPref.split('(')[0].toLowerCase().trim();
-      if (this.checkCommunicationMatch(suggestionLower, prefKey)) {
-        return `符合TA${prefKey}的沟通风格`;
-      }
-    }
+    // Extract interests and communication style from cognitive units
+    const interests = cognitiveUnits
+      .filter(cu => cu.category === 'values' || cu.essence.toLowerCase().includes('interest'))
+      .map(cu => cu.essence);
 
-    return null;
+    const communicationStyle = cognitiveUnits
+      .filter(cu => cu.category === 'communication')
+      .map(cu => cu.essence);
+
+    return {
+      name: contact?.name || 'Contact',
+      relationship: contact?.relationship,
+      recentInteractions: interactions.map(i => i.user_summary).filter(Boolean),
+      interests,
+      communicationStyle,
+      cognitiveUnits: cognitiveUnits.map(cu => ({
+        category: cu.category,
+        essence: cu.essence,
+        confidence: cu.confidence_score
+      }))
+    };
   }
 
-  private checkCommunicationMatch(suggestion: string, communicationStyle: string): boolean {
-    const style = communicationStyle.toLowerCase();
-    
-    if (style.includes('direct') && (suggestion.includes('direct') || suggestion.includes('clear'))) {
-      return true;
+  /**
+   * Generate generic AI suggestions without contact context
+   * This is for when user doesn't select a contact but wants AI suggestions
+   */
+  async getGenericAISuggestions(count = 8): Promise<string[]> {
+    try {
+      const result = await this.aiService.generateRouletteSuggestions(count);
+      return result.suggestions;
+    } catch (error) {
+      console.error('Failed to generate generic AI suggestions:', error);
+      // Fallback to defaults
+      return this.getGenericSuggestions(count).map(s => s.suggestion);
     }
-    if (style.includes('tactful') && (suggestion.includes('tactful') || suggestion.includes('mild'))) {
-      return true;
-    }
-    if (style.includes('detailed') && (suggestion.includes('detailed') || suggestion.includes('specific'))) {
-      return true;
-    }
-    
-    return false;
   }
 
-  private calculateConfidence(suggestion: string, context: any): number {
-    let confidence = 0.5; // 基础置信度
-
-    const suggestionLower = suggestion.toLowerCase();
-
-    // 兴趣匹配加分
-    context.interests.forEach((interest: string) => {
-      const interestKey = interest.split('(')[0].toLowerCase().trim();
-      if (suggestionLower.includes(interestKey)) {
-        confidence += 0.3;
+  /**
+   * Fallback: Get generic suggestions when AI fails or is not available
+   */
+  private getGenericSuggestions(count: number): PersonalizedSuggestion[] {
+    const defaults = [
+      {
+        suggestion: 'Send a thoughtful check-in message',
+        personalization: 'General relationship maintenance',
+        confidence: 0.5,
+        category: 'communication' as const
+      },
+      {
+        suggestion: 'Schedule a casual coffee catch-up',
+        personalization: 'Great for staying connected',
+        confidence: 0.5,
+        category: 'activity' as const
+      },
+      {
+        suggestion: 'Share an interesting article or link',
+        personalization: 'Shows you think of them',
+        confidence: 0.5,
+        category: 'gesture' as const
+      },
+      {
+        suggestion: 'Ask about recent projects or interests',
+        personalization: 'Shows genuine interest',
+        confidence: 0.5,
+        category: 'communication' as const
+      },
+      {
+        suggestion: 'Plan a relaxing walk together',
+        personalization: 'Low-pressure quality time',
+        confidence: 0.5,
+        category: 'activity' as const
+      },
+      {
+        suggestion: 'Send an encouraging voice note',
+        personalization: 'Personal touch in communication',
+        confidence: 0.5,
+        category: 'communication' as const
+      },
+      {
+        suggestion: 'Recommend a book or movie',
+        personalization: 'Thoughtful gesture based on shared interests',
+        confidence: 0.5,
+        category: 'gesture' as const
+      },
+      {
+        suggestion: 'Celebrate their recent achievements',
+        personalization: 'Shows you pay attention',
+        confidence: 0.5,
+        category: 'follow_up' as const
       }
-    });
+    ];
 
-    // 沟通风格匹配加分
-    context.communication_preferences.forEach((pref: string) => {
-      const prefKey = pref.split('(')[0].toLowerCase().trim();
-      if (this.checkCommunicationMatch(suggestionLower, prefKey)) {
-        confidence += 0.2;
-      }
-    });
-
-    return Math.min(confidence, 1.0);
-  }
-
-  private categorizeSuggestion(suggestion: string): PersonalizedSuggestion['category'] {
-    const s = suggestion.toLowerCase();
-    
-    if (s.includes('information') || s.includes('telephone') || s.includes('voice')) {
-      return 'communication';
-    } else if (s.includes('coffee') || s.includes('lunch') || s.includes('walk') || s.includes('activity')) {
-      return 'activity';
-    } else if (s.includes('share') || s.includes('recommend') || s.includes('like')) {
-      return 'gesture';
-    } else {
-      return 'follow_up';
-    }
+    return defaults.slice(0, count);
   }
 }

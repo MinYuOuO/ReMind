@@ -49,13 +49,13 @@ function tryExtractJson(text: string): any | null {
   if (!text) return null;
   try {
     return JSON.parse(text);
-  } catch {}
+  } catch { }
 
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (jsonMatch) {
     try {
       return JSON.parse(jsonMatch[0]);
-    } catch {}
+    } catch { }
   }
 
   return null;
@@ -69,7 +69,7 @@ class OpenAIProvider implements AiProvider {
     private apiKey: string,
     private model = 'gpt-4o-mini',
     private baseUrl = 'https://api.openai.com/v1/chat/completions'
-  ) {}
+  ) { }
 
   private async chat(messages: any[], temperature = 0.2): Promise<string> {
     const res = await fetch(this.baseUrl, {
@@ -129,35 +129,35 @@ class OpenAIProvider implements AiProvider {
         .slice(0, 200),
       facts: Array.isArray(json.facts)
         ? json.facts
-            .map((v: any) => String(v))
-            .filter((f: string) => f.trim())
-            .slice(0, 5)
+          .map((v: any) => String(v))
+          .filter((f: string) => f.trim())
+          .slice(0, 5)
         : [],
       contact_notes: Array.isArray(json.contact_notes)
         ? json.contact_notes
-            .map((v: any) => String(v))
-            .filter((n: string) => n.trim())
-            .slice(0, 3)
+          .map((v: any) => String(v))
+          .filter((n: string) => n.trim())
+          .slice(0, 3)
         : [],
       categories: Array.isArray(json.categories)
         ? json.categories
-            .filter((c: any) => c && typeof c === 'object')
-            .map((c: any) => ({
-              category: [
-                'work_style',
-                'values',
-                'communication',
-                'behavior',
-              ].includes(c.category)
-                ? c.category
-                : 'behavior',
-              essence: String(c.essence || '')
-                .trim()
-                .slice(0, 150),
-              confidence: Math.min(Math.max(Number(c.confidence || 3), 1), 5),
-            }))
-            .filter((c: any) => c.essence && c.essence.length > 0)
-            .slice(0, 4)
+          .filter((c: any) => c && typeof c === 'object')
+          .map((c: any) => ({
+            category: [
+              'work_style',
+              'values',
+              'communication',
+              'behavior',
+            ].includes(c.category)
+              ? c.category
+              : 'behavior',
+            essence: String(c.essence || '')
+              .trim()
+              .slice(0, 150),
+            confidence: Math.min(Math.max(Number(c.confidence || 3), 1), 5),
+          }))
+          .filter((c: any) => c.essence && c.essence.length > 0)
+          .slice(0, 4)
         : [],
     };
   }
@@ -252,7 +252,7 @@ class DeepSeekProvider implements AiProvider {
     private apiKey: string,
     private model = 'deepseek-chat',
     private baseUrl = 'https://api.deepseek.com/v1'
-  ) {}
+  ) { }
 
   private async chat(messages: any[], temperature = 0.2): Promise<string> {
     const res = await fetch(`${this.baseUrl}/chat/completions`, {
@@ -301,35 +301,35 @@ class DeepSeekProvider implements AiProvider {
         .slice(0, 200),
       facts: Array.isArray(json.facts)
         ? json.facts
-            .map((v: any) => String(v))
-            .filter((f: string) => f.trim())
-            .slice(0, 5)
+          .map((v: any) => String(v))
+          .filter((f: string) => f.trim())
+          .slice(0, 5)
         : [],
       contact_notes: Array.isArray(json.contact_notes)
         ? json.contact_notes
-            .map((v: any) => String(v))
-            .filter((n: string) => n.trim())
-            .slice(0, 3)
+          .map((v: any) => String(v))
+          .filter((n: string) => n.trim())
+          .slice(0, 3)
         : [],
       categories: Array.isArray(json.categories)
         ? json.categories
-            .filter((c: any) => c && typeof c === 'object')
-            .map((c: any) => ({
-              category: [
-                'work_style',
-                'values',
-                'communication',
-                'behavior',
-              ].includes(c.category)
-                ? c.category
-                : 'behavior',
-              essence: String(c.essence || '')
-                .trim()
-                .slice(0, 150),
-              confidence: Math.min(Math.max(Number(c.confidence || 3), 1), 5),
-            }))
-            .filter((c: any) => c.essence.length > 0)
-            .slice(0, 4)
+          .filter((c: any) => c && typeof c === 'object')
+          .map((c: any) => ({
+            category: [
+              'work_style',
+              'values',
+              'communication',
+              'behavior',
+            ].includes(c.category)
+              ? c.category
+              : 'behavior',
+            essence: String(c.essence || '')
+              .trim()
+              .slice(0, 150),
+            confidence: Math.min(Math.max(Number(c.confidence || 3), 1), 5),
+          }))
+          .filter((c: any) => c.essence.length > 0)
+          .slice(0, 4)
         : [],
     };
   }
@@ -411,7 +411,7 @@ class DeepSeekProvider implements AiProvider {
 export class AiService {
   private provider: AiProvider | null = null;
 
-  constructor(private db: SqliteDbService, private insightRepo: InsightRepo) {}
+  constructor(private db: SqliteDbService, private insightRepo: InsightRepo) { }
 
   // Provider configuration
   useProvider(p: AiProvider) {
@@ -665,6 +665,198 @@ export class AiService {
       console.error('Roulette suggestions failed:', error);
       return { suggestions: defaults.slice(0, count) };
     }
+  }
+
+  async generatePersonalizedRouletteSuggestions(
+    contactContext: {
+      name: string;
+      relationship?: string;
+      recentInteractions: string[];
+      interests: string[];
+      communicationStyle: string[];
+      cognitiveUnits: Array<{
+        category: string;
+        essence: string;
+        confidence: number;
+      }>;
+    },
+    count = 8,
+    userQuestion?: string
+  ): Promise<{
+    suggestions: Array<{
+      suggestion: string;
+      personalization: string;
+      confidence: number;
+      category: 'communication' | 'activity' | 'gesture' | 'follow_up';
+    }>;
+    rawText?: string;
+  }> {
+    if (!this.provider) {
+      throw new Error('AI provider not configured');
+    }
+
+    try {
+      const prompt = this.buildPersonalizedRoulettePrompt(contactContext, count, userQuestion);
+      const response = await this.provider.generateText(prompt);
+
+      // Parse the JSON response
+      const jsonMatch = response.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) {
+        throw new Error('No JSON array in AI response');
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]);
+
+      if (!Array.isArray(parsed)) {
+        throw new Error('AI response is not an array');
+      }
+
+      const suggestions = parsed.map((item: any) => ({
+        suggestion: String(item.suggestion || '').trim(),
+        personalization: String(item.personalization || 'Based on relationship context').trim(),
+        confidence: Math.max(0.1, Math.min(1.0, Number(item.confidence) || 0.5)),
+        category: this.normalizeCategory(item.category)
+      }))
+        .filter(s => {
+          // Filter: must have content and be 1-3 words
+          const wordCount = s.suggestion.split(/\s+/).length;
+          return s.suggestion.length > 0 && wordCount >= 1 && wordCount <= 3;
+        });
+
+      return {
+        suggestions: suggestions.slice(0, count),
+        rawText: response
+      };
+    } catch (error) {
+      console.error('Failed to generate personalized roulette suggestions:', error);
+      throw error;
+    }
+  }
+
+  private buildPersonalizedRoulettePrompt(
+    context: {
+      name: string;
+      relationship?: string;
+      recentInteractions: string[];
+      interests: string[];
+      communicationStyle: string[];
+      cognitiveUnits: Array<{
+        category: string;
+        essence: string;
+        confidence: number;
+      }>;
+    },
+    count: number,
+    userQuestion?: string
+  ): string {
+    const parts: string[] = [];
+
+    // If user asked a specific question, make that the PRIMARY focus
+    if (userQuestion && userQuestion.trim().length > 0) {
+      parts.push(
+        `USER'S QUESTION: "${userQuestion}"`,
+        '',
+        `CRITICAL: The user asked a specific question. Generate ${count} suggestions that DIRECTLY answer or relate to their question.`,
+        `Do NOT generate generic relationship advice. Focus on their actual question.`,
+        ''
+      );
+    } else {
+      parts.push(
+        `Generate ${count} personalized suggestions for maintaining a relationship with ${context.name}.`,
+        ''
+      );
+    }
+
+    if (context.relationship) {
+      parts.push(`Relationship: ${context.relationship}`, '');
+    }
+
+    if (context.recentInteractions.length > 0) {
+      parts.push('Recent interactions:');
+      context.recentInteractions.slice(0, 3).forEach((int, i) => {
+        parts.push(`${i + 1}. ${int}`);
+      });
+      parts.push('');
+    }
+
+    if (context.interests.length > 0) {
+      parts.push('Their interests/preferences:');
+      context.interests.forEach(interest => {
+        parts.push(`- ${interest}`);
+      });
+      parts.push('');
+    }
+
+    if (context.communicationStyle.length > 0) {
+      parts.push('Communication style:');
+      context.communicationStyle.forEach(style => {
+        parts.push(`- ${style}`);
+      });
+      parts.push('');
+    }
+
+    if (context.cognitiveUnits.length > 0) {
+      parts.push('Additional context:');
+      context.cognitiveUnits.slice(0, 5).forEach(unit => {
+        parts.push(`- [${unit.category}] ${unit.essence} (confidence: ${unit.confidence}/5)`);
+      });
+      parts.push('');
+    }
+
+    parts.push(
+      'Requirements:',
+      userQuestion
+        ? '1. Each suggestion must DIRECTLY relate to answering the user\'s question (1-3 words only)'
+        : '1. Each suggestion must be VERY SHORT and actionable (1-3 words MAXIMUM)',
+      '2. Personalize based on the context above',
+      '3. Keep suggestions practical and doable',
+      '4. Return ONLY a JSON array with this exact structure:',
+      '[',
+      '  {',
+      '    "suggestion": "1-3 word action",',
+      '    "personalization": "why this fits them",',
+      '    "confidence": 0.5,',
+      '    "category": "communication"',
+      '  }',
+      ']',
+      '',
+      'CRITICAL: Each "suggestion" field must be 1-3 words ONLY. Examples:',
+      '- "Coffee Shop"',
+      '- "Hiking Trip"',
+      '- "Video Call"',
+      '- "Send Article"',
+      'NOT: "Schedule a coffee meeting at the local cafe"',
+      '',
+      'Valid categories: "communication", "activity", "gesture", "follow_up"',
+      'Confidence: 0.1 to 1.0 based on how well this matches their profile',
+      '',
+      userQuestion
+        ? 'REMEMBER: Answer the user\'s actual question! Don\'t ignore it!'
+        : 'Return ONLY the JSON array, no markdown, no explanation.'
+    );
+
+    return parts.join('\n');
+  }
+
+  private normalizeCategory(category: any): 'communication' | 'activity' | 'gesture' | 'follow_up' {
+    const cat = String(category || '').toLowerCase();
+
+    if (['communication', 'activity', 'gesture', 'follow_up'].includes(cat)) {
+      return cat as any;
+    }
+
+    // Intelligent fallback
+    if (cat.includes('message') || cat.includes('call') || cat.includes('text') || cat.includes('voice')) {
+      return 'communication';
+    }
+    if (cat.includes('coffee') || cat.includes('lunch') || cat.includes('meet') || cat.includes('walk')) {
+      return 'activity';
+    }
+    if (cat.includes('share') || cat.includes('gift') || cat.includes('send') || cat.includes('recommend')) {
+      return 'gesture';
+    }
+
+    return 'follow_up';
   }
 
   // AI Processing Log management
