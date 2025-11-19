@@ -8,7 +8,31 @@ import { SqliteDbService } from '../core/services/db.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="inspector">
+    <!-- Login Screen -->
+    <div *ngIf="!isAuthenticated" class="login-overlay">
+      <div class="login-box">
+        <h2>🔒 DB Inspector Access</h2>
+        <p class="login-subtitle">Authentication required</p>
+        <form (submit)="authenticate($event)">
+          <div class="form-group">
+            <label>Password</label>
+            <input 
+              type="password" 
+              [(ngModel)]="passwordInput" 
+              name="password"
+              placeholder="Enter password"
+              autocomplete="off"
+              class="password-input"
+            />
+          </div>
+          <div *ngIf="authError" class="auth-error">{{ authError }}</div>
+          <button type="submit" class="login-btn">Unlock</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Main Inspector (only shown when authenticated) -->
+    <div *ngIf="isAuthenticated" class="inspector">
       <header class="toolbar">
         <div class="toolbar-left">
           <h2>DB Inspector <span class="tag">debug</span></h2>
@@ -18,6 +42,7 @@ import { SqliteDbService } from '../core/services/db.service';
           <button (click)="refreshTables()" title="Refresh tables">Refresh</button>
           <button (click)="exportJson()" title="Open export in new tab">Open export</button>
           <button (click)="downloadExport()" title="Download export">Download</button>
+          <button (click)="logout()" class="logout-btn" title="Logout">Logout</button>
         </div>
       </header>
 
@@ -76,6 +101,111 @@ import { SqliteDbService } from '../core/services/db.service';
   `,
   styles: [`
     :host { display:block; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; color: #111; }
+    
+    /* Login Screen Styles */
+    .login-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
+    
+    .login-box {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 400px;
+      width: 90%;
+      animation: slideUp 0.4s ease-out;
+    }
+    
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .login-box h2 {
+      margin: 0 0 8px 0;
+      font-size: 24px;
+      color: #111;
+      text-align: center;
+    }
+    
+    .login-subtitle {
+      color: #6b7280;
+      text-align: center;
+      margin: 0 0 24px 0;
+      font-size: 14px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 8px;
+    }
+    
+    .password-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+    
+    .password-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .auth-error {
+      color: #dc2626;
+      font-size: 14px;
+      margin-bottom: 16px;
+      padding: 12px;
+      background: #fee2e2;
+      border-radius: 8px;
+      text-align: center;
+    }
+    
+    .login-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .login-btn:active {
+      transform: translateY(0);
+    }
+    
+    /* Existing Inspector Styles */
     .inspector { height:100%; display:flex; flex-direction:column; min-height: 100vh; background: #f4f6f8; }
     .toolbar { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:#0f1720; color:#fff; gap:12px; }
     .toolbar h2 { margin:0; font-size:18px; display:flex; align-items:center; gap:8px; }
@@ -84,6 +214,7 @@ import { SqliteDbService } from '../core/services/db.service';
     .table-search { padding:6px 8px; border-radius:6px; border:1px solid #cbd5e1; min-width:180px; }
     .toolbar button { background:#111827; color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; }
     .toolbar button:hover { opacity:0.9; }
+    .logout-btn { background:#dc2626 !important; }
 
     .content { display:flex; flex:1; gap:12px; padding:14px; box-sizing:border-box; }
     .sidebar { width:260px; background:#fff; border-radius:8px; padding:12px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:auto; height: calc(100vh - 100px); }
@@ -123,10 +254,17 @@ import { SqliteDbService } from '../core/services/db.service';
       .content { flex-direction:column; padding:10px; }
       .sidebar { width:100%; height:auto; order:2; }
       .main-panel { order:1; }
+      .login-box { padding: 24px; }
     }
   `]
 })
 export class DbInspectorComponent {
+  // Authentication state
+  private readonly CORRECT_PASSWORD = 'OfqzR6kYT5m[U#zM';
+  isAuthenticated = false;
+  passwordInput = '';
+  authError: string | null = null;
+
   // table list + UI state
   tables: Array<{ name: string; count?: number }> = [];
   loadingTables = false;
@@ -142,7 +280,34 @@ export class DbInspectorComponent {
   rawJson: string | null = null;
 
   constructor(private db: SqliteDbService) {
-    this.refreshTables();
+    // Check if already authenticated in session
+    this.isAuthenticated = sessionStorage.getItem('dbInspectorAuth') === 'true';
+    
+    if (this.isAuthenticated) {
+      this.refreshTables();
+    }
+  }
+
+  authenticate(event: Event) {
+    event.preventDefault();
+    
+    if (this.passwordInput === this.CORRECT_PASSWORD) {
+      this.isAuthenticated = true;
+      this.authError = null;
+      sessionStorage.setItem('dbInspectorAuth', 'true');
+      this.refreshTables();
+    } else {
+      this.authError = 'Incorrect password';
+      this.passwordInput = '';
+    }
+  }
+
+  logout() {
+    this.isAuthenticated = false;
+    this.passwordInput = '';
+    this.authError = null;
+    sessionStorage.removeItem('dbInspectorAuth');
+    this.clearResult();
   }
 
   // Filter helpers
@@ -248,7 +413,6 @@ export class DbInspectorComponent {
     return String(v);
   }
 
-  // Export helpers (avoid name collisions with template bindings)
   async getExportJson(): Promise<string> {
     return this.db.export();
   }
@@ -298,7 +462,6 @@ export class DbInspectorComponent {
     }
   }
 
-  // Template bindings
   exportJson = () => this.exportJsonAndOpen();
   downloadExport = () => this.exportJsonDownload();
 
