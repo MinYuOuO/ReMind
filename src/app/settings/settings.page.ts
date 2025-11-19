@@ -37,6 +37,12 @@ import {
 	eyeOffOutline,
 	downloadOutline,
 	documentOutline,
+	closeOutline,
+	checkmarkCircle,
+	closeCircle,
+	cardOutline,
+	shieldCheckmark,
+	rocket,
 } from 'ionicons/icons';
 import { trashOutline } from 'ionicons/icons';
 
@@ -64,6 +70,12 @@ addIcons({
 	'trash-outline': trashOutline,
 	eyeOutline,
 	eyeOffOutline,
+	'close-outline': closeOutline,
+	'checkmark-circle': checkmarkCircle,
+	'close-circle': closeCircle,
+	'card-outline': cardOutline,
+	'shield-checkmark': shieldCheckmark,
+	rocket,
 });
 
 // Add this small interface near the top of the file (after imports)
@@ -164,6 +176,19 @@ export class SettingsPage implements OnInit {
 
 	// Reminders loaded for notification view
 	reminders: any[] = [];
+
+	// Monetization modal state
+	showMonetizationModal = false;
+	monetizationView: 'upgrade' | 'payment' = 'upgrade';
+
+	// Payment form fields
+	cardNumber = '';
+	expiryDate = '';
+	cvv = '';
+	cardholderName = '';
+	billingEmail = '';
+	processingPayment = false;
+
 	private buildCalendar(year = this.calYear, month = this.calMonth) {
 		const firstOfMonth = new Date(year, month, 1);
 		const startWeekday = firstOfMonth.getDay();
@@ -1129,5 +1154,47 @@ export class SettingsPage implements OnInit {
 		this.navCtrl.navigateForward('/terms-of-service');
 	}
 
+	openMonetization() {
+		this.showMonetizationModal = true;
+		this.monetizationView = 'upgrade';
+	}
+
+	closeMonetization() {
+		this.showMonetizationModal = false;
+		this.monetizationView = 'upgrade';
+		// Reset form
+		this.cardNumber = '';
+		this.expiryDate = '';
+		this.cvv = '';
+		this.cardholderName = '';
+		this.billingEmail = '';
+	}
+
+	proceedToPayment() {
+		this.monetizationView = 'payment';
+	}
+
+	backToUpgrade() {
+		this.monetizationView = 'upgrade';
+	}
+
+	async processPayment(event: Event) {
+		event.preventDefault();
+		
+		// Basic validation
+		if (!this.cardNumber || !this.expiryDate || !this.cvv || !this.cardholderName || !this.billingEmail) {
+			alert('Please fill in all payment fields');
+			return;
+		}
+
+		this.processingPayment = true;
+
+		// Simulate payment processing
+		setTimeout(() => {
+			this.processingPayment = false;
+			alert('Payment Successful! 🎉\n\nWelcome to ReMind Pro!\nYour subscription is now active.');
+			this.closeMonetization();
+		}, 2000);
+	}
 
 }

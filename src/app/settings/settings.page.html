@@ -39,7 +39,7 @@
           <ion-label>AI Feature Settings</ion-label>
         </ion-item>
 
-        <ion-item button class="menu-card">
+        <ion-item button (click)="openMonetization()" class="menu-card">
           <ion-icon name="notifications-outline" slot="start"></ion-icon>
           <ion-label>Monotization</ion-label>
         </ion-item>
@@ -320,4 +320,116 @@
       </ng-container>
     </section>
   </ng-container>
+
+  <!-- ========== MONETIZATION MODAL ========== -->
+  <div class="modal-overlay" *ngIf="showMonetizationModal" (click)="closeMonetization()">
+    <div class="modal-content" (click)="$event.stopPropagation()" [class.payment-view]="monetizationView === 'payment'">
+      <!-- Upgrade View -->
+      <div *ngIf="monetizationView === 'upgrade'" class="upgrade-view">
+        <div class="modal-header">
+          <h2>Upgrade to ReMind Pro</h2>
+          <ion-button fill="clear" (click)="closeMonetization()">
+            <ion-icon name="close-outline"></ion-icon>
+          </ion-button>
+        </div>
+
+        <div class="upgrade-content">
+          <div class="pro-plan-hero">
+            <div class="plan-badge-hero">Premium Features</div>
+            <h3>ReMind Pro</h3>
+            <div class="price-hero">$9.99<span>/month</span></div>
+            <p class="plan-subtitle">Unlock the full potential of ReMind</p>
+          </div>
+
+          <div class="features-section">
+            <h4>What's Included:</h4>
+            <ul class="features-list-hero">
+              <li><ion-icon name="checkmark-circle"></ion-icon> <span><strong>AI features</strong> (AI insight, AI suggested Roulette, AI RSearch)</span></li>
+              <li><ion-icon name="checkmark-circle"></ion-icon> <span><strong>Advanced reminders</strong> (recurring, prediction-based)</span></li>
+              <li><ion-icon name="checkmark-circle"></ion-icon> <span><strong>Multi-profile support</strong></span></li>
+              <li><ion-icon name="checkmark-circle"></ion-icon> <span><strong>Cloud backup</strong></span></li>
+              <li><ion-icon name="checkmark-circle"></ion-icon> <span><strong>Premium themes and icons</strong></span></li>
+              <li><ion-icon name="checkmark-circle"></ion-icon> <span><strong>Priority support</strong></span></li>
+              <li><ion-icon name="checkmark-circle"></ion-icon> <span><strong>Export to Excel</strong></span></li>
+              <li><ion-icon name="checkmark-circle"></ion-icon> <span><strong>Unlimited contacts</strong></span></li>
+            </ul>
+          </div>
+
+          <ion-button expand="block" class="upgrade-btn-hero" (click)="proceedToPayment()">
+            <ion-icon name="rocket" slot="start"></ion-icon>
+            Upgrade Now - $9.99/month
+          </ion-button>
+
+          <p class="terms-note">Cancel anytime. No hidden fees.</p>
+        </div>
+      </div>
+
+      <!-- Payment View -->
+      <div *ngIf="monetizationView === 'payment'" class="payment-view-content">
+        <div class="payment-header">
+          <ion-button fill="clear" (click)="backToUpgrade()">
+            <ion-icon name="arrow-back"></ion-icon>
+          </ion-button>
+          <h2>Complete Your Purchase</h2>
+          <ion-button fill="clear" (click)="closeMonetization()">
+            <ion-icon name="close-outline"></ion-icon>
+          </ion-button>
+        </div>
+
+        <div class="payment-summary">
+          <h3>Order Summary</h3>
+          <div class="summary-row">
+            <span>ReMind Pro (Monthly)</span>
+            <span class="amount">$9.99</span>
+          </div>
+          <div class="summary-row total">
+            <span>Total</span>
+            <span class="amount">$9.99</span>
+          </div>
+        </div>
+
+        <form class="payment-form" (submit)="processPayment($event)">
+          <div class="form-section">
+            <label>Card Number</label>
+            <div class="card-input-wrapper">
+              <ion-input type="text" [(ngModel)]="cardNumber" name="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19"></ion-input>
+              <div class="card-icons">
+                <ion-icon name="card-outline"></ion-icon>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-section half">
+              <label>Expiry Date</label>
+              <ion-input type="text" [(ngModel)]="expiryDate" name="expiryDate" placeholder="MM/YY" maxlength="5"></ion-input>
+            </div>
+            <div class="form-section half">
+              <label>CVV</label>
+              <ion-input type="password" [(ngModel)]="cvv" name="cvv" placeholder="123" maxlength="3"></ion-input>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <label>Cardholder Name</label>
+            <ion-input type="text" [(ngModel)]="cardholderName" name="cardholderName" placeholder="John Doe"></ion-input>
+          </div>
+
+          <div class="form-section">
+            <label>Email</label>
+            <ion-input type="email" [(ngModel)]="billingEmail" name="billingEmail" placeholder="john@example.com"></ion-input>
+          </div>
+
+          <div class="security-note">
+            <ion-icon name="shield-checkmark"></ion-icon>
+            <span>Your payment information is encrypted and secure</span>
+          </div>
+
+          <ion-button expand="block" type="submit" class="pay-btn" [disabled]="processingPayment">
+            {{ processingPayment ? 'Processing...' : 'Pay $9.99' }}
+          </ion-button>
+        </form>
+      </div>
+    </div>
+  </div>
 </ion-content>

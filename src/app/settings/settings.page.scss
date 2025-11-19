@@ -638,6 +638,520 @@ ion-input {
   }
 }
 
+/* ===== MONETIZATION MODAL ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: app-fadeIn 0.3s ease-out both;
+  
+  // Account for safe area on mobile
+  padding-top: max(20px, env(safe-area-inset-top));
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+}
+
+.modal-content {
+  background: var(--app-card-bg);
+  border-radius: 20px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: app-slideInUp 0.4s ease-out both;
+  
+  &.payment-view {
+    max-width: 600px;
+  }
+}
+
+/* ===== UPGRADE VIEW ===== */
+.upgrade-view {
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 16px;
+  border-bottom: 2px solid var(--app-card-border);
+  flex-shrink: 0;
+  
+  h2 {
+    color: var(--app-text-dark);
+    font-weight: 800;
+    font-size: 1.3rem;
+    margin: 0;
+    flex: 1;
+    text-align: center;
+  }
+  
+  ion-button {
+    --color: var(--app-text-medium) !important;
+    margin: 0;
+    
+    ion-icon {
+      font-size: 24px;
+    }
+  }
+}
+
+.upgrade-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 24px 24px;
+  overflow-y: auto;
+  flex: 1;
+  animation: app-fadeIn 0.6s ease-out both;
+  
+  // Custom scrollbar
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: var(--app-text-medium);
+    border-radius: 3px;
+    opacity: 0.5;
+  }
+}
+
+.pro-plan-hero {
+  text-align: center;
+  padding: 24px 20px;
+  background: linear-gradient(135deg, var(--app-primary-color), #3560c8);
+  border-radius: 16px;
+  color: white;
+  box-shadow: 0 8px 24px rgba(93, 120, 176, 0.25);
+  position: relative;
+  animation: app-fadeInScale 0.6s ease-out 0.1s both;
+
+  .plan-badge-hero {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 4px 16px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    animation: app-pulse 2s infinite;
+  }
+
+  h3 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin: 8px 0;
+    color: white;
+  }
+
+  .price-hero {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 12px 0;
+    color: white;
+
+    span {
+      font-size: 1rem;
+      font-weight: 600;
+      opacity: 0.9;
+    }
+  }
+
+  .plan-subtitle {
+    font-size: 0.9rem;
+    opacity: 0.95;
+    margin: 6px 0 0;
+    font-weight: 500;
+  }
+}
+
+.features-section {
+  animation: app-fadeInUp 0.6s ease-out 0.2s both;
+
+  h4 {
+    color: var(--app-text-dark);
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0 0 12px;
+  }
+
+  .features-list-hero {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      color: var(--app-text-dark);
+      font-size: 0.9rem;
+      line-height: 1.4;
+
+      ion-icon {
+        font-size: 20px;
+        color: #10b981;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+
+      span {
+        flex: 1;
+
+        strong {
+          font-weight: 700;
+          color: var(--app-text-dark);
+        }
+      }
+    }
+  }
+}
+
+.upgrade-btn-hero {
+  margin-top: 4px;
+  --background: linear-gradient(135deg, #10b981, #059669) !important;
+  --box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3) !important;
+  font-weight: 800;
+  height: 52px;
+  font-size: 1rem;
+  animation: app-fadeInUp 0.6s ease-out 0.3s both;
+
+  ion-icon {
+    font-size: 18px;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.terms-note {
+  text-align: center;
+  color: var(--app-text-medium);
+  font-size: 0.8rem;
+  margin: 4px 0 0;
+  animation: app-fadeIn 0.6s ease-out 0.4s both;
+}
+
+/* Remove old pricing-cards styles */
+.pricing-cards,
+.pricing-card {
+  display: none;
+}
+
+/* ===== PAYMENT VIEW ===== */
+.payment-view-content {
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+  overflow: hidden;
+}
+
+.payment-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 16px;
+  border-bottom: 2px solid var(--app-card-border);
+  flex-shrink: 0;
+  
+  h2 {
+    color: var(--app-text-dark);
+    font-weight: 800;
+    font-size: 1.2rem;
+    margin: 0;
+    flex: 1;
+    text-align: center;
+  }
+  
+  ion-button {
+    --color: var(--app-text-medium) !important;
+    margin: 0;
+    
+    ion-icon {
+      font-size: 22px;
+    }
+  }
+}
+
+.payment-summary {
+  background: linear-gradient(135deg, rgba(79, 120, 230, 0.1), rgba(53, 96, 200, 0.05));
+  border: 2px solid var(--app-card-border);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 20px 24px 0;
+  animation: app-fadeIn 0.6s ease-out both;
+  flex-shrink: 0;
+  
+  h3 {
+    color: var(--app-text-dark);
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 12px;
+  }
+  
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    color: var(--app-text-dark);
+    font-size: 0.9rem;
+    
+    &.total {
+      border-top: 2px solid var(--app-card-border);
+      margin-top: 6px;
+      padding-top: 12px;
+      font-weight: 700;
+      font-size: 1rem;
+      
+      .amount {
+        color: var(--app-primary-color);
+        font-size: 1.3rem;
+      }
+    }
+  }
+}
+
+.payment-form {
+  padding: 20px 24px 24px;
+  overflow-y: auto;
+  flex: 1;
+  animation: app-fadeIn 0.6s ease-out 0.1s both;
+  
+  // Custom scrollbar
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: var(--app-text-medium);
+    border-radius: 3px;
+    opacity: 0.5;
+  }
+  
+  .form-section {
+    margin-bottom: 16px;
+    
+    &.half {
+      flex: 1;
+    }
+    
+    label {
+      display: block;
+      color: var(--app-text-dark);
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+    }
+    
+    ion-input {
+      --background: var(--app-card-bg) !important;
+      --color: var(--app-text-dark) !important;
+      --placeholder-color: var(--app-text-medium) !important;
+      --padding-start: 14px !important;
+      --padding-end: 14px !important;
+      
+      border: 2px solid var(--app-card-border);
+      border-radius: 10px;
+      height: 44px;
+      background: var(--app-card-bg);
+      transition: var(--app-transition-quick);
+      
+      &:focus-within {
+        border-color: var(--app-primary-color);
+        box-shadow: 0 0 0 3px rgba(79, 120, 230, 0.1);
+      }
+    }
+  }
+  
+  .form-row {
+    display: flex;
+    gap: 12px;
+  }
+  
+  .card-input-wrapper {
+    position: relative;
+    
+    ion-input {
+      padding-right: 45px !important;
+    }
+    
+    .card-icons {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      
+      ion-icon {
+        font-size: 22px;
+        color: var(--app-text-medium);
+      }
+    }
+  }
+  
+  .security-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 10px;
+    margin: 16px 0;
+    
+    ion-icon {
+      font-size: 18px;
+      color: #10b981;
+      flex-shrink: 0;
+    }
+    
+    span {
+      color: var(--app-text-dark);
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+  }
+  
+  .pay-btn {
+    --background: linear-gradient(135deg, #10b981, #059669) !important;
+    --box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3) !important;
+    height: 50px;
+    font-weight: 800;
+    font-size: 1rem;
+    margin-top: 6px;
+    
+    &:active:not([disabled]) {
+      transform: scale(0.98);
+    }
+    
+    &[disabled] {
+      opacity: 0.6;
+      --background: var(--app-text-medium) !important;
+    }
+  }
+}
+
+/* ===== RESPONSIVE ADJUSTMENTS ===== */
+@media (max-width: 768px) {
+  .modal-content {
+    max-width: 95vw;
+  }
+  
+  .form-row {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-overlay {
+    padding: 10px;
+    align-items: flex-start;
+  }
+  
+  .modal-content {
+    border-radius: 16px;
+    max-height: 90vh;
+    margin-top: 10px;
+  }
+  
+  .modal-header {
+    padding: 20px 20px 12px;
+
+    margin-top: 20px;
+    
+    h2 {
+      font-size: 1.1rem;
+    }
+    
+    ion-button ion-icon {
+      font-size: 22px;
+    }
+  }
+  
+  .upgrade-content,
+  .payment-form {
+    padding: 16px 20px 20px;
+  }
+  
+  .pro-plan-hero {
+    padding: 20px 16px;
+    
+    h3 {
+      font-size: 1.5rem;
+    }
+    
+    .price-hero {
+      font-size: 2rem;
+    }
+  }
+  
+  .features-section {
+    h4 {
+      font-size: 1rem;
+    }
+    
+    .features-list-hero li {
+      font-size: 0.85rem;
+      gap: 8px;
+      
+      ion-icon {
+        font-size: 18px;
+      }
+    }
+  }
+  
+  .upgrade-btn-hero {
+    height: 48px;
+    font-size: 0.95rem;
+  }
+  
+  .payment-summary {
+    margin: 16px 20px 0;
+    padding: 14px;
+    margin-top: 20px;
+  }
+  
+  .payment-header {
+    padding: 20px 20px 12px;
+
+    margin-top: 20px;
+    
+    h2 {
+      font-size: 1.1rem;
+    }
+  }
+}
+
 /* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 420px) {
   .calendar-cell {
