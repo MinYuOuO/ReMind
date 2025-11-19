@@ -546,9 +546,9 @@ export class FriendListPage implements OnInit {
   }
 
   async onSubmit() {
-    this.savingContact.set(true);
     if (!this.newContact.name) return;
-
+    
+    this.savingContact.set(true);
     try {
       await this.dbInit.init();
       await this.db.open();
@@ -604,6 +604,8 @@ export class FriendListPage implements OnInit {
       await this.load();
     } catch (err) {
       console.error('Failed to create/update contact:', err);
+    } finally {
+      this.savingContact.set(false);
     }
   }
 
