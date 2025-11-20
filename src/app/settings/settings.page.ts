@@ -53,6 +53,7 @@ import { SqliteDbService } from '../core/services/db.service';
 import { AuthService } from '../core/services/auth.service';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { utils as XLSXUtils, write as XLSXWrite, read as XLSXRead } from 'xlsx';
+import { Capacitor } from '@capacitor/core';
 
 addIcons({
 	'person-outline': personOutline,
@@ -871,33 +872,62 @@ export class SettingsPage implements OnInit {
 	}
 
 	// Download helper for JSON
-	private downloadFile(data: string, fileName: string, type: string) {
-		const blob = new Blob([data], { type });
-		const url = window.URL.createObjectURL(blob);
-		const link = document.createElement('a');
-		link.href = url;
-		link.download = fileName;
-		link.click();
-		window.URL.revokeObjectURL(url);
+	private async downloadFile(data: string, fileName: string, type: string) {
+		if (Capacitor.isNativePlatform()) {
+			try {
+				await Filesystem.writeFile({
+					path: fileName,
+					data,
+					directory: Directory.Documents,
+					encoding: Encoding.UTF8,
+				});
+				alert(`File saved to Documents: ${fileName}`);
+			} catch (e) {
+				console.error('[Settings] Native file save failed', e);
+				alert('Failed to save file on device.');
+			}
+		} else {
+			const blob = new Blob([data], { type });
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = fileName;
+			link.click();
+			window.URL.revokeObjectURL(url);
+		}
 	}
 
-	// Download helper for Excel workbook
-	private downloadExcel(workbook: any, fileName: string) {
+	private async downloadExcel(workbook: any, fileName: string) {
 		const wbout = XLSXWrite(workbook, {
 			bookType: 'xlsx',
 			type: 'array',
 		});
-		const blob = new Blob([wbout], {
-			type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-		});
-		const url = window.URL.createObjectURL(blob);
-		const link = document.createElement('a');
-		link.href = url;
-		link.download = fileName;
-		document.body.appendChild(link);
-		link.click();
-		document.body.removeChild(link);
-		window.URL.revokeObjectURL(url);
+		if (Capacitor.isNativePlatform()) {
+			try {
+				await Filesystem.writeFile({
+					path: fileName,
+					data: wbout instanceof Uint8Array ? Array.from(wbout) : wbout,
+					directory: Directory.Documents,
+					encoding: Encoding.UTF8, // For binary, this is ignored
+				});
+				alert(`Excel file saved to Documents: ${fileName}`);
+			} catch (e) {
+				console.error('[Settings] Native Excel save failed', e);
+				alert('Failed to save Excel file on device.');
+			}
+		} else {
+			const blob = new Blob([wbout], {
+				type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+			});
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = fileName;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			window.URL.revokeObjectURL(url);
+		}
 	}
 
 	// Export DB (JSON or Excel) exposed to template
@@ -953,19 +983,27 @@ export class SettingsPage implements OnInit {
 	async onExcelSelected(ev: Event) {
 		try {
 			const input = ev.target as HTMLInputElement;
-			if (!input.files || input.files.length === 0) return;
-			const f = input.files[0];
+			let buffer: ArrayBuffer;
+			let fileName = '';
+			if (Capacitor.isNativePlatform()) {
+				alert('Native Excel import requires the Capacitor File Picker plugin. Please use the web version or install the plugin.');
+				return;
+			} else {
+				if (!input.files || input.files.length === 0) return;
+				const f = input.files[0];
+				fileName = f.name;
+				buffer = await f.arrayBuffer();
+			}
 
 			if (
 				!confirm(
 					'Import Excel will ADD data to your database (existing data will be preserved). Continue?'
 				)
 			) {
-				input.value = '';
+				if (input) input.value = '';
 				return;
 			}
 
-			const buffer = await f.arrayBuffer();
 			const wb = XLSXRead(new Uint8Array(buffer), { type: 'array' });
 			await this.dbInit.init();
 			await this.db.open();
@@ -998,23 +1036,30 @@ export class SettingsPage implements OnInit {
 		}
 	}
 
-	// File input handler for JSON/backup uploads (template calls this)
 	async onSqliteSelected(ev: Event) {
 		try {
 			const input = ev.target as HTMLInputElement;
-			if (!input.files || input.files.length === 0) return;
-			const f = input.files[0];
+			let text: string;
+			let fileName = '';
+			if (Capacitor.isNativePlatform()) {
+				alert('Native JSON/SQLite import requires the Capacitor File Picker plugin. Please use the web version or install the plugin.');
+				return;
+			} else {
+				if (!input.files || input.files.length === 0) return;
+				const f = input.files[0];
+				fileName = f.name;
+				text = await f.text();
+			}
 
 			if (
 				!confirm(
 					'Import backup will ADD data to your database (existing data will be preserved). Continue?'
 				)
 			) {
-				input.value = '';
+				if (input) input.value = '';
 				return;
 			}
 
-			const text = await f.text();
 			let parsed: any;
 			try {
 				parsed = JSON.parse(text);
@@ -1026,7 +1071,7 @@ export class SettingsPage implements OnInit {
 					}
 				}
 			} catch (jsonErr) {
-				const name = (f.name || '').toLowerCase();
+				const name = (fileName || '').toLowerCase();
 				if (
 					name.endsWith('.db') ||
 					name.endsWith('.sqlite') ||
@@ -1035,18 +1080,18 @@ export class SettingsPage implements OnInit {
 					alert(
 						'Selected file appears to be a raw SQLite DB; this importer expects JSON backups. Raw DB replacement is not supported here.'
 					);
-					input.value = '';
+					if (input) input.value = '';
 					return;
 				}
 				console.error('[Settings] JSON parse failed', jsonErr);
 				alert('Failed to parse backup as JSON.');
-				input.value = '';
+				if (input) input.value = '';
 				return;
 			}
 
 			if (!parsed || typeof parsed !== 'object') {
 				alert('Backup file does not contain a valid object.');
-				input.value = '';
+				if (input) input.value = '';
 				return;
 			}
 
@@ -1101,7 +1146,7 @@ export class SettingsPage implements OnInit {
 
 			if (Object.keys(tableMap).length === 0) {
 				alert('No table data found in backup file.');
-				input.value = '';
+				if (input) input.value = '';
 				return;
 			}
 
@@ -1135,7 +1180,17 @@ export class SettingsPage implements OnInit {
 			if (input) input.value = '';
 		}
 	}
-	// ------------------ END IMPORT HANDLERS ------------------
+
+	// Helper for native: convert base64 to ArrayBuffer
+	private base64ToArrayBuffer(base64: string): ArrayBuffer {
+		const binaryString = window.atob(base64);
+		const len = binaryString.length;
+		const bytes = new Uint8Array(len);
+		for (let i = 0; i < len; i++) {
+			bytes[i] = binaryString.charCodeAt(i);
+		}
+		return bytes.buffer;
+	}
 
 	sendFeedback() {
 		// You can implement actual feedback submission logic here
